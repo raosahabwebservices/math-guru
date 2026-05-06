@@ -11,7 +11,9 @@ const { solveTextDoubt, solveImageDoubt } = require("./ai");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const root = path.join(__dirname, "..");
+
+// --- FOLDER PATHS FIXED HERE ---
+const root = __dirname; 
 const publicDir = path.join(root, "public");
 const dataDir = path.join(root, "data");
 const uploadDir = path.join(root, "uploads");
@@ -264,3 +266,4 @@ app.use((error, req, res, next) => {
 });
 
 ensureStore().then(() => app.listen(PORT, () => console.log(`MATHS GURU running on http://localhost:${PORT}`)));
+    
