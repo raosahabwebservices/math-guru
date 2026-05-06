@@ -1,4 +1,4 @@
-function safeText(value) {
+function safeText(value) { // 'F' ko chhota kar diya
   return String(value || "").replace(/[<>&]/g, "");
 }
 
@@ -40,7 +40,8 @@ async function loadHistory() {
       list.textContent = "No doubts yet. Ask your first doubt now.";
       return;
     }
-    list.innerHTML = data.doubts.map((d) => `<div class="history-item"><span class="badge">${safeText(d.type)}</span><h3>${safeText(d.question || "Image doubt")}</h3>${d.imagePath ? `<img src="${d.imagePath}" style="max-height:120px;border-radius:12px">` : ""}<p class="muted">${moneyDate(d.createdAt)}</p><button class="btn small ghost" data-view="${d.id}">View Solution</button></div>`).join("");
+    // Yahan image ke source (src) mein Railway ka link add kiya hai 👇
+    list.innerHTML = data.doubts.map((d) => `<div class="history-item"><span class="badge">${safeText(d.type)}</span><h3>${safeText(d.question || "Image doubt")}</h3>${d.imagePath ? `<img src="https://math-guru-production.up.railway.app${d.imagePath}" style="max-height:120px;border-radius:12px">` : ""}<p class="muted">${moneyDate(d.createdAt)}</p><button class="btn small ghost" data-view="${d.id}">View Solution</button></div>`).join("");
     list.querySelectorAll("[data-view]").forEach((btn) => btn.addEventListener("click", () => showSolution(data.doubts.find((d) => d.id === btn.dataset.view))));
   } catch (error) {
     list.textContent = error.message;
@@ -105,3 +106,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 });
+        
