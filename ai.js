@@ -1,35 +1,67 @@
 const fs = require("fs");
 const path = require("path");
 
+// ================================
+// TEXT DOUBT SOLVER
+// ================================
 async function solveTextDoubt(question) {
-  const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render!");
 
-  // Pro model har account par chalta hai
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+  if (!question || question.trim() === "") {
+    throw new Error("Question empty hai");
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: "You are MATHS GURU. Solve this: " + question }] }]
+      contents: [
+        {
+          parts: [
+            {
+              text:
+                "You are MATHS GURU. Solve step-by-step in Hindi + English.\n" +
+                "Explain formula and final answer clearly.\n\nQuestion:\n" +
+                question
+            }
+          ]
+        }
+      ]
     })
   });
 
   const data = await response.json();
+
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
   if (!response.ok) {
-    console.error("Gemini Error:", JSON.stringify(data));
-    throw new Error(data.error?.message || "Model Not Found");
+    console.error("Gemini Error:", data);
+    throw new Error(data?.error?.message || "Text model failed");
   }
 
-  return { solutionHindi: data.candidates[0].content.parts[0].text };
+  if (!text) {
+    throw new Error("No response from Gemini");
+  }
+
+  return { solutionHindi: text };
 }
 
+// ================================
+// IMAGE DOUBT SOLVER
+// ================================
 async function solveImageDoubt(imagePath, mimeType, question = "") {
-  const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
-  // Image ke liye Pro-Vision use hota hai
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`;
-  
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render!");
+
+  if (!fs.existsSync(imagePath)) {
+    throw new Error("Image file not found");
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
   const absolutePath = path.resolve(imagePath);
   const base64Image = fs.readFileSync(absolutePath, "base64");
 
@@ -37,19 +69,43 @@ async function solveImageDoubt(imagePath, mimeType, question = "") {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{
-        parts: [
-          { text: "Solve this maths image: " + question },
-          { inlineData: { mimeType, data: base64Image } }
-        ]
-      }]
+      contents: [
+        {
+          parts: [
+            {
+              text:
+                "You are MATHS GURU. Solve this image step-by-step in Hindi + English.\n\nHint: " +
+                question
+            },
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Image
+              }
+            }
+          ]
+        }
+      ]
     })
   });
 
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || "Image Model Error");
 
-  return { solutionHindi: data.candidates[0].content.parts[0].text };
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!response.ok) {
+    console.error("Gemini Image Error:", data);
+    throw new Error(data?.error?.message || "Image model failed");
+  }
+
+  if (!text) {
+    throw new Error("No response from image model");
+  }
+
+  return { solutionHindi: text };
 }
 
-module.exports = { solveTextDoubt, solveImageDoubt };
+module.exports = {
+  solveTextDoubt,
+  solveImageDoubt
+};
