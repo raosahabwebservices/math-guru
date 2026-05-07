@@ -1,84 +1,80 @@
 const fs = require("fs");
 const path = require("path");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-function getClient() {
-  const apiKey = process.env.GEMINI_API_KEY; 
-  if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render Settings");
-  return new GoogleGenerativeAI(apiKey);
-}
+async function solveTextDoubt(question) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY missing");
 
-function mathsPrompt(question) {
-  return `You are MATHS GURU, a kind bilingual maths tutor for Indian Class 1 to 12 students.
-Solve the maths doubt below. Keep the language simple and student-friendly.
+  // Hum seedha V1 API use karenge, koi beta-veta ka chakkar nahi
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-Return exactly these clearly separated sections:
+  const prompt = `You are MATHS GURU, a kind bilingual maths tutor. Solve this: ${question}
+  
+Return these sections clearly:
 QUESTION UNDERSTANDING:
 FORMULA USED:
-FORMULA KAISE USE HUA:
 STEP-BY-STEP SOLUTION:
 FINAL ANSWER:
 HINDI EXPLANATION:
-ENGLISH EXPLANATION:
+ENGLISH EXPLANATION:`;
 
-Rules:
-- If the question is unclear, state assumptions and still guide the student.
-- Use Hindi and English. Hindi explanation must be in simple Hindi/Hinglish.
-- Do not skip steps.
-- For image doubts, first read the question from the image.
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }]
+    })
+  });
 
-Student doubt: ${question || "Image question uploaded by student"}`;
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || "Gemini API Error");
+
+  const text = data.candidates[0].content.parts[0].text;
+  return parseSolution(text);
+}
+
+async function solveImageDoubt(imagePath, mimeType, question = "") {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+  const base64Image = fs.readFileSync(path.resolve(imagePath), "base64");
+
+  const body = {
+    contents: [{
+      parts: [
+        { text: `You are MATHS GURU. Solve this image question: ${question}` },
+        { inlineData: { mimeType, data: base64Image } }
+      ]
+    }]
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || "Gemini Image Error");
+
+  const text = data.candidates[0].content.parts[0].text;
+  return parseSolution(text);
 }
 
 function parseSolution(text) {
   const pick = (label) => {
-    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = new RegExp(`${escaped}:\\s*([\\s\\S]*?)(?=\\n[A-Z -]+(?:KAISE USE HUA|UNDERSTANDING|USED|SOLUTION|ANSWER|EXPLANATION):|$)`, "i");
+    const re = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n[A-Z ]+:|$)`, "i");
     const match = text.match(re);
     return match ? match[1].trim() : "";
   };
   return {
     raw: text,
-    questionUnderstanding: pick("QUESTION UNDERSTANDING"),
+    solutionHindi: pick("HINDI EXPLANATION") || text,
+    solutionEnglish: pick("ENGLISH EXPLANATION"),
     formulaUsed: pick("FORMULA USED"),
-    formulaHowUsed: pick("FORMULA KAISE USE HUA"),
     steps: pick("STEP-BY-STEP SOLUTION"),
-    finalAnswer: pick("FINAL ANSWER"),
-    solutionHindi: pick("HINDI EXPLANATION"),
-    solutionEnglish: pick("ENGLISH EXPLANATION")
+    finalAnswer: pick("FINAL ANSWER")
   };
-}
-
-async function solveTextDoubt(question) {
-  const genAI = getClient();
-  // FIXED MODEL NAME TO STABLE VERSION
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-  
-  const result = await model.generateContent(mathsPrompt(question));
-  const response = await result.response;
-  return parseSolution(response.text());
-}
-
-async function solveImageDoubt(imagePath, mimeType, question = "") {
-  const genAI = getClient();
-  // NOTE: Pro version sometimes needs 'gemini-pro-vision' for images
-  const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
-
-  const absolutePath = path.resolve(imagePath);
-  const base64Image = fs.readFileSync(absolutePath, "base64");
-
-  const result = await model.generateContent([
-    { text: mathsPrompt(question) },
-    {
-      inlineData: {
-        data: base64Image,
-        mimeType: mimeType
-      },
-    },
-  ]);
-  
-  const response = await result.response;
-  return parseSolution(response.text());
 }
 
 module.exports = { solveTextDoubt, solveImageDoubt };
