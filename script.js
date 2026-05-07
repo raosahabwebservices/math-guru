@@ -1,4 +1,4 @@
-const API = "https://math-guru-production.up.railway.app";
+const API = "https://math-guru.onrender.com";
 const upiId = "raos38908@okhdfcbank";
 const upiUri = `upi://pay?pa=${upiId}&pn=Rao%20Sahab&am=99&cu=INR&tn=MATHS%20GURU%20Premium`;
 
