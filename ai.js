@@ -1,62 +1,65 @@
-const fs = require("fs"); // 'c' chhota kar diya
+const fs = require("fs");
 const path = require("path");
 
-async function callGemini(payload) {
-  const apiKey = process.env.GEMINI_API_KEY;
+async function solveTextDoubt(question) {
+  // 1. Key check karein
+  const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
   
-  // Flash 1.5 sabse stable hai AI Studio keys ke liye
+  if (!apiKey) {
+    throw new Error("Render settings mein GEMINI_API_KEY nahi mili!");
+  }
+
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    
-    const data = await response.json();
-    
-    if (response.ok && data.candidates && data.candidates[0]) {
-      return data.candidates[0].content.parts[0].text;
-    } else {
-      throw new Error(data.error?.message || "Gemini API Error");
-    }
-  } catch (err) {
-    console.error("Gemini Error:", err.message);
-    throw err;
-  }
-}
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: "Solve this maths doubt: " + question }] }]
+    })
+  });
 
-function parseSolution(text) {
+  const data = await response.json();
+
+  if (!response.ok) {
+    // Agar error aata hai toh console mein print hoga
+    console.error("Gemini Error Details:", JSON.stringify(data));
+    throw new Error(data.error?.message || "Invalid API Key or Permission");
+  }
+
   return {
-    raw: text,
-    solutionHindi: text,
-    solutionEnglish: text,
-    formulaUsed: "Gemini AI",
-    steps: text,
+    solutionHindi: data.candidates[0].content.parts[0].text,
     finalAnswer: "Solved"
   };
 }
 
-async function solveTextDoubt(question) {
-  const payload = { contents: [{ parts: [{ text: "Solve this maths doubt step by step: " + question }] }] };
-  const result = await callGemini(payload);
-  return parseSolution(result);
-}
-
 async function solveImageDoubt(imagePath, mimeType, question = "") {
+  const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  
   const absolutePath = path.resolve(imagePath);
   const base64Image = fs.readFileSync(absolutePath, "base64");
-  const payload = {
-    contents: [{
-      parts: [
-        { text: "Solve this maths image doubt: " + question },
-        { inlineData: { mimeType, data: base64Image } }
-      ]
-    }]
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { text: "Solve this maths image: " + question },
+          { inlineData: { mimeType, data: base64Image } }
+        ]
+      }]
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || "Image API Error");
+
+  return {
+    solutionHindi: data.candidates[0].content.parts[0].text,
+    finalAnswer: "Solved"
   };
-  const result = await callGemini(payload);
-  return parseSolution(result);
 }
 
 module.exports = { solveTextDoubt, solveImageDoubt };
