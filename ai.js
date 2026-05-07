@@ -51,8 +51,8 @@ function parseSolution(text) {
 
 async function solveTextDoubt(question) {
   const genAI = getClient();
-  // FIXED MODEL NAME HERE
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+  // FIXED MODEL NAME TO STABLE VERSION
+  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
   
   const result = await model.generateContent(mathsPrompt(question));
   const response = await result.response;
@@ -61,8 +61,8 @@ async function solveTextDoubt(question) {
 
 async function solveImageDoubt(imagePath, mimeType, question = "") {
   const genAI = getClient();
-  // FIXED MODEL NAME HERE
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+  // NOTE: Pro version sometimes needs 'gemini-pro-vision' for images
+  const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
 
   const absolutePath = path.resolve(imagePath);
   const base64Image = fs.readFileSync(absolutePath, "base64");
