@@ -1,10 +1,13 @@
 const fs = require("fs");
 const path = require("path");
-const OpenAI = require("openai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
+// Gemini Client Setup
 function getClient() {
-  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY missing");
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  // Render ke Environment Variables mein GEMINI_API_KEY hona chahiye
+  const apiKey = process.env.GEMINI_API_KEY; 
+  if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render Settings");
+  return new GoogleGenerativeAI(apiKey);
 }
 
 function mathsPrompt(question) {
@@ -49,31 +52,33 @@ function parseSolution(text) {
 }
 
 async function solveTextDoubt(question) {
-  const client = getClient();
-  const response = await client.responses.create({
-    model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-    input: [{ role: "user", content: [{ type: "input_text", text: mathsPrompt(question) }] }],
-    temperature: 0.2
-  });
-  return parseSolution(response.output_text || "");
+  const genAI = getClient();
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  
+  const result = await model.generateContent(mathsPrompt(question));
+  const response = await result.response;
+  return parseSolution(response.text());
 }
 
 async function solveImageDoubt(imagePath, mimeType, question = "") {
-  const client = getClient();
+  const genAI = getClient();
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
   const absolutePath = path.resolve(imagePath);
   const base64Image = fs.readFileSync(absolutePath, "base64");
-  const response = await client.responses.create({
-    model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-    input: [{
-      role: "user",
-      content: [
-        { type: "input_text", text: mathsPrompt(question) },
-        { type: "input_image", image_url: `data:${mimeType};base64,${base64Image}`, detail: "high" }
-      ]
-    }],
-    temperature: 0.2
-  });
-  return parseSolution(response.output_text || "");
+
+  const result = await model.generateContent([
+    { text: mathsPrompt(question) },
+    {
+      inlineData: {
+        data: base64Image,
+        mimeType: mimeType
+      },
+    },
+  ]);
+  
+  const response = await result.response;
+  return parseSolution(response.text());
 }
 
 module.exports = { solveTextDoubt, solveImageDoubt };
