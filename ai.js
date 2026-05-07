@@ -1,64 +1,41 @@
 const fs = require("fs");
 const path = require("path");
 
-async function solveTextDoubt(question) {
+// --- DIRECT API CALL METHOD (NO LIBRARY) ---
+async function callGeminiAPI(payload) {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY missing");
+  if (!apiKey) throw new Error("GEMINI_API_KEY is missing in Render settings");
 
-  // Hum seedha V1 API use karenge, koi beta-veta ka chakkar nahi
+  // Humne version ko 'v1' kar diya hai jo sabse stable hai
   const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-  const prompt = `You are MATHS GURU, a kind bilingual maths tutor. Solve this: ${question}
-  
-Return these sections clearly:
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("Gemini Error Details:", data);
+    throw new Error(data.error?.message || "Gemini API failure");
+  }
+
+  return data.candidates[0].content.parts[0].text;
+}
+
+function mathsPrompt(question) {
+  return `You are MATHS GURU, a kind bilingual maths tutor for Indian students. 
+Solve this doubt clearly: ${question}
+
+Return these sections:
 QUESTION UNDERSTANDING:
 FORMULA USED:
 STEP-BY-STEP SOLUTION:
 FINAL ANSWER:
 HINDI EXPLANATION:
 ENGLISH EXPLANATION:`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
-  });
-
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || "Gemini API Error");
-
-  const text = data.candidates[0].content.parts[0].text;
-  return parseSolution(text);
-}
-
-async function solveImageDoubt(imagePath, mimeType, question = "") {
-  const apiKey = process.env.GEMINI_API_KEY;
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-  const base64Image = fs.readFileSync(path.resolve(imagePath), "base64");
-
-  const body = {
-    contents: [{
-      parts: [
-        { text: `You are MATHS GURU. Solve this image question: ${question}` },
-        { inlineData: { mimeType, data: base64Image } }
-      ]
-    }]
-  };
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || "Gemini Image Error");
-
-  const text = data.candidates[0].content.parts[0].text;
-  return parseSolution(text);
 }
 
 function parseSolution(text) {
@@ -69,12 +46,36 @@ function parseSolution(text) {
   };
   return {
     raw: text,
-    solutionHindi: pick("HINDI EXPLANATION") || text,
-    solutionEnglish: pick("ENGLISH EXPLANATION"),
-    formulaUsed: pick("FORMULA USED"),
-    steps: pick("STEP-BY-STEP SOLUTION"),
-    finalAnswer: pick("FINAL ANSWER")
+    solutionHindi: pick("HINDI EXPLANATION") || "Solution generated.",
+    solutionEnglish: pick("ENGLISH EXPLANATION") || text,
+    formulaUsed: pick("FORMULA USED") || "Standard Formula",
+    steps: pick("STEP-BY-STEP SOLUTION") || text,
+    finalAnswer: pick("FINAL ANSWER") || "See solution"
   };
+}
+
+async function solveTextDoubt(question) {
+  const payload = {
+    contents: [{ parts: [{ text: mathsPrompt(question) }] }]
+  };
+  const resultText = await callGeminiAPI(payload);
+  return parseSolution(resultText);
+}
+
+async function solveImageDoubt(imagePath, mimeType, question = "") {
+  const absolutePath = path.resolve(imagePath);
+  const base64Image = fs.readFileSync(absolutePath, "base64");
+
+  const payload = {
+    contents: [{
+      parts: [
+        { text: mathsPrompt(question || "Solve the problem in this image") },
+        { inlineData: { mimeType: mimeType, data: base64Image } }
+      ]
+    }]
+  };
+  const resultText = await callGeminiAPI(payload);
+  return parseSolution(resultText);
 }
 
 module.exports = { solveTextDoubt, solveImageDoubt };
