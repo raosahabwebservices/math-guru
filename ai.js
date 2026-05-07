@@ -1,50 +1,56 @@
 const fs = require("fs");
 const path = require("path");
 
-async function solveTextDoubt(question) {
+async function callGemini(payload) {
   const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
-  if (!apiKey) throw new Error("GEMINI_API_KEY missing!");
+  if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render!");
 
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  // Hum 2 alag-alag raste try karenge, koi toh khula hoga!
+  const versions = [
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+    "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent"
+  ];
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: "Solve this maths doubt step-by-step: " + question }] }]
-    })
-  });
+  let lastError;
+  for (let baseUrl of versions) {
+    try {
+      const response = await fetch(`${baseUrl}?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || "API Error");
+      const data = await response.json();
+      if (response.ok) return data.candidates[0].content.parts[0].text;
+      
+      lastError = data.error?.message || "Unknown API Error";
+    } catch (err) {
+      lastError = err.message;
+    }
+  }
+  
+  throw new Error("Sare Models Fail Ho Gaye: " + lastError);
+}
 
-  return { solutionHindi: data.candidates[0].content.parts[0].text };
+async function solveTextDoubt(question) {
+  const payload = { contents: [{ parts: [{ text: "Solve this maths doubt step-by-step: " + question }] }] };
+  const text = await callGemini(payload);
+  return { solutionHindi: text };
 }
 
 async function solveImageDoubt(imagePath, mimeType, question = "") {
-  const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  
   const absolutePath = path.resolve(imagePath);
   const base64Image = fs.readFileSync(absolutePath, "base64");
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { text: "Solve this maths problem: " + question },
-          { inlineData: { mimeType, data: base64Image } }
-        ]
-      }]
-    })
-  });
-
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || "Image API Error");
-
-  return { solutionHindi: data.candidates[0].content.parts[0].text };
+  const payload = {
+    contents: [{
+      parts: [
+        { text: "Solve this maths image problem: " + question },
+        { inlineData: { mimeType, data: base64Image } }
+      ]
+    }]
+  };
+  const text = await callGemini(payload);
+  return { solutionHindi: text };
 }
 
 module.exports = { solveTextDoubt, solveImageDoubt };
