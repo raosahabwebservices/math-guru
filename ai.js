@@ -1,81 +1,63 @@
 const fs = require("fs");
 const path = require("path");
 
-// --- DIRECT API CALL METHOD (NO LIBRARY) ---
-async function callGeminiAPI(payload) {
+async function callGemini(payload) {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY is missing in Render settings");
+  
+  // Hum 3 alag-alag raste try karenge taaki koi toh chale!
+  const endpoints = [
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`
+  ];
 
-  // Humne version ko 'v1' kar diya hai jo sabse stable hai
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error("Gemini Error Details:", data);
-    throw new Error(data.error?.message || "Gemini API failure");
+  let lastError;
+  for (let url of endpoints) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (response.ok) return data.candidates[0].content.parts[0].text;
+      lastError = data.error?.message || "API Error";
+    } catch (err) {
+      lastError = err.message;
+    }
   }
-
-  return data.candidates[0].content.parts[0].text;
-}
-
-function mathsPrompt(question) {
-  return `You are MATHS GURU, a kind bilingual maths tutor for Indian students. 
-Solve this doubt clearly: ${question}
-
-Return these sections:
-QUESTION UNDERSTANDING:
-FORMULA USED:
-STEP-BY-STEP SOLUTION:
-FINAL ANSWER:
-HINDI EXPLANATION:
-ENGLISH EXPLANATION:`;
+  throw new Error("Sare raste band hain: " + lastError);
 }
 
 function parseSolution(text) {
-  const pick = (label) => {
-    const re = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n[A-Z ]+:|$)`, "i");
-    const match = text.match(re);
-    return match ? match[1].trim() : "";
-  };
   return {
     raw: text,
-    solutionHindi: pick("HINDI EXPLANATION") || "Solution generated.",
-    solutionEnglish: pick("ENGLISH EXPLANATION") || text,
-    formulaUsed: pick("FORMULA USED") || "Standard Formula",
-    steps: pick("STEP-BY-STEP SOLUTION") || text,
-    finalAnswer: pick("FINAL ANSWER") || "See solution"
+    solutionHindi: text,
+    solutionEnglish: text,
+    formulaUsed: "AI Generated",
+    steps: text,
+    finalAnswer: "Solved"
   };
 }
 
 async function solveTextDoubt(question) {
-  const payload = {
-    contents: [{ parts: [{ text: mathsPrompt(question) }] }]
-  };
-  const resultText = await callGeminiAPI(payload);
-  return parseSolution(resultText);
+  const payload = { contents: [{ parts: [{ text: "Solve this maths doubt: " + question }] }] };
+  const result = await callGemini(payload);
+  return parseSolution(result);
 }
 
 async function solveImageDoubt(imagePath, mimeType, question = "") {
-  const absolutePath = path.resolve(imagePath);
-  const base64Image = fs.readFileSync(absolutePath, "base64");
-
+  const base64Image = fs.readFileSync(path.resolve(imagePath), "base64");
   const payload = {
     contents: [{
       parts: [
-        { text: mathsPrompt(question || "Solve the problem in this image") },
-        { inlineData: { mimeType: mimeType, data: base64Image } }
+        { text: "Solve this maths image doubt: " + question },
+        { inlineData: { mimeType, data: base64Image } }
       ]
     }]
   };
-  const resultText = await callGeminiAPI(payload);
-  return parseSolution(resultText);
+  const result = await callGemini(payload);
+  return parseSolution(result);
 }
 
 module.exports = { solveTextDoubt, solveImageDoubt };
