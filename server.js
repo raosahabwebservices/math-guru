@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config(); // Yeh line theek ki hai (small 'r')
 
 const path = require("path");
 const fs = require("fs").promises;
@@ -12,9 +12,8 @@ const { solveTextDoubt, solveImageDoubt } = require("./ai");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- FOLDER PATHS FIXED HERE ---
+// --- FOLDER PATHS ---
 const root = __dirname; 
-const publicDir = path.join(root, "public");
 const dataDir = path.join(root, "data");
 const uploadDir = path.join(root, "uploads");
 
@@ -40,7 +39,7 @@ const upload = multer({
   }
 });
 
-// --- CORS POLICY FIXED HERE (BRAHMASTRA) ---
+// --- CORS POLICY ---
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*"); 
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -50,11 +49,9 @@ app.use((req, res, next) => {
   }
   next();
 });
-// -------------------------------------------
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(publicDir));
 app.use("/uploads", express.static(uploadDir));
 
 async function ensureStore() {
@@ -106,6 +103,12 @@ async function findCurrentUser(req) {
   const users = await readJson("users");
   return { users, user: users.find((u) => u.id === req.user.id) };
 }
+
+// --- ROUTES ---
+
+app.get("/", (req, res) => {
+  res.send("Maths Guru Backend is Live on Render!");
+});
 
 app.post("/api/signup", async (req, res, next) => {
   try {
@@ -265,16 +268,10 @@ app.put("/api/admin/payment/:id", requireAdmin, async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-app.get("/api/admin/contacts", requireAdmin, async (req, res, next) => {
-  try { res.json({ contacts: await readJson("contacts") }); } catch (error) { next(error); }
-});
-
-app.get("*", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
-
 app.use((error, req, res, next) => {
   console.error(error);
   res.status(error.status || 500).json({ message: error.message || "Server error" });
 });
 
-ensureStore().then(() => app.listen(PORT, () => console.log(`MATHS GURU running on http://localhost:${PORT}`)));
-  
+ensureStore().then(() => app.listen(PORT, "0.0.0.0", () => console.log(`MATHS GURU running on port ${PORT}`)));
+      
