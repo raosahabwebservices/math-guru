@@ -2,9 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Gemini Client Setup
 function getClient() {
-  // Render ke Environment Variables mein GEMINI_API_KEY hona chahiye
   const apiKey = process.env.GEMINI_API_KEY; 
   if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render Settings");
   return new GoogleGenerativeAI(apiKey);
@@ -53,7 +51,8 @@ function parseSolution(text) {
 
 async function solveTextDoubt(question) {
   const genAI = getClient();
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  // FIXED MODEL NAME HERE
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
   
   const result = await model.generateContent(mathsPrompt(question));
   const response = await result.response;
@@ -62,7 +61,8 @@ async function solveTextDoubt(question) {
 
 async function solveImageDoubt(imagePath, mimeType, question = "") {
   const genAI = getClient();
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  // FIXED MODEL NAME HERE
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
   const absolutePath = path.resolve(imagePath);
   const base64Image = fs.readFileSync(absolutePath, "base64");
