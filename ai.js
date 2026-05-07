@@ -1,64 +1,50 @@
 const fs = require("fs");
 const path = require("path");
 
-async function callGemini(parts) {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
+async function solveTextDoubt(question) {
+  const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
+  if (!apiKey) throw new Error("GEMINI_API_KEY missing!");
 
-  if (!apiKey) throw new Error("API Key missing");
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-
-  const res = await fetch(url, {
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{ parts }]
+      contents: [{ parts: [{ text: "Solve this maths doubt step-by-step: " + question }] }]
     })
   });
 
-  const data = await res.json();
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || "API Error");
 
-  if (!res.ok) {
-    console.log("ERROR:", data);
-    throw new Error(data?.error?.message || "API Error");
-  }
-
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+  return { solutionHindi: data.candidates[0].content.parts[0].text };
 }
 
-// TEXT
-async function solveTextDoubt(question) {
-  const prompt = `
-Solve step by step in Hindi + English:
-Question: ${question}
-`;
-
-  const result = await callGemini([{ text: prompt }]);
-
-  return {
-    solutionHindi: result,
-    finalAnswer: "Solved"
-  };
-}
-
-// IMAGE
 async function solveImageDoubt(imagePath, mimeType, question = "") {
-  const base64Image = fs.readFileSync(path.resolve(imagePath), "base64");
+  const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : null;
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  
+  const absolutePath = path.resolve(imagePath);
+  const base64Image = fs.readFileSync(absolutePath, "base64");
 
-  const prompt = `
-Solve maths from image step-by-step in Hindi + English.
-Extra question: ${question}
-`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { text: "Solve this maths problem: " + question },
+          { inlineData: { mimeType, data: base64Image } }
+        ]
+      }]
+    })
+  });
 
-  const result = await callGemini([
-    { text: prompt },
-    { inlineData: { mimeType, data: base64Image } }
-  ]);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || "Image API Error");
 
-  return {
-    solutionHindi: result,
-    finalAnswer: "Solved"
-  };
+  return { solutionHindi: data.candidates[0].content.parts[0].text };
 }
 
 module.exports = { solveTextDoubt, solveImageDoubt };
