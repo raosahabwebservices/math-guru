@@ -1,4 +1,4 @@
-// ✅ FIX: URL ko ekdum sahi kiya (math-guru.onrender.com)
+// ✅ URL Setup: Local aur Render dono ke liye perfect
 const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
   ? "http://localhost:3000"
   : "https://math-guru.onrender.com";
@@ -9,23 +9,16 @@ const upiUri = `upi://pay?pa=${upiId}&pn=Rao%20Sahab&am=99&cu=INR&tn=MATHS%20GUR
 // =============================
 // TOKEN HELPERS
 // =============================
-function token() {
-  return localStorage.getItem("mg_token") || "";
-}
-
-function adminToken() {
-  return localStorage.getItem("mg_admin_token") || "";
-}
+function token() { return localStorage.getItem("mg_token") || ""; }
+function adminToken() { return localStorage.getItem("mg_admin_token") || ""; }
 
 function setUser(data) {
-  // ✅ Yahan ensure kar rahe hain ki data sahi format mein ho
   if (data.token) localStorage.setItem("mg_token", data.token);
   if (data.user) localStorage.setItem("mg_user", JSON.stringify(data.user));
 }
 
 function logout() {
-  localStorage.removeItem("mg_token");
-  localStorage.removeItem("mg_user");
+  localStorage.clear(); // Saara kachra ek saath saaf
   location.href = "login.html";
 }
 
@@ -36,25 +29,20 @@ function msg(el, text, type = "notice") {
   if (!el) return;
   el.className = `notice ${type}`;
   el.textContent = text;
-  el.style.display = "block"; // hidden class ki jagah direct display
+  el.style.display = "block";
 }
 
 // =============================
-// SAFE FETCH WRAPPER (FIXED)
+// SAFE FETCH WRAPPER (ENHANCED)
 // =============================
 async function request(path, options = {}) {
   const headers = {};
-
-  // Agar body FormData nahi hai, toh JSON header dalo
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
-  // Token attach karo
   const auth = options.admin ? adminToken() : token();
-  if (auth) {
-    headers["Authorization"] = `Bearer ${auth}`;
-  }
+  if (auth) headers["Authorization"] = `Bearer ${auth}`;
 
   try {
     const res = await fetch(API + path, {
@@ -62,7 +50,13 @@ async function request(path, options = {}) {
       headers: { ...headers, ...(options.headers || {}) }
     });
 
-    // Logout if token expired (401 error)
+    // ⚡ FIX: Agar 404 ya server error se HTML mile toh JSON error se bacho
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+       console.error("Server sent non-JSON response:", await res.text());
+       throw new Error("Server Error: Path not found (404)");
+    }
+
     if (res.status === 401 && !path.includes("/login")) {
        logout();
        return;
@@ -78,86 +72,55 @@ async function request(path, options = {}) {
 }
 
 // =============================
-// INIT USER (Login Loop Check)
-// =============================
-async function requireStudent() {
-  if (!token()) {
-    location.href = "login.html";
-    return;
-  }
-  try {
-    const data = await request("/api/profile");
-    if (data && data.user) {
-        setUser(data);
-        return data.user;
-    }
-  } catch (err) {
-    console.log("Auth failed, redirecting...");
-    logout();
-  }
-}
-
-// =============================
-// DOM READY
+// DOM READY & FORMS
 // =============================
 document.addEventListener("DOMContentLoaded", () => {
-  // Footer Year
+  // Footer & Username UI
   const year = document.querySelector("#year");
   if (year) year.textContent = new Date().getFullYear();
 
-  // Logout Buttons
-  document.querySelectorAll("[data-logout]")
-    .forEach(b => b.addEventListener("click", (e) => {
-        e.preventDefault();
-        logout();
-    }));
-
-  // Update Username in UI
   const userData = localStorage.getItem("mg_user");
   if (userData) {
     const user = JSON.parse(userData);
-    document.querySelectorAll("[data-auth-name]")
-      .forEach(el => {
+    document.querySelectorAll("[data-auth-name]").forEach(el => {
         el.textContent = user.name || "Student";
-      });
+    });
   }
 
-  // =============================
-  // LOGIN FORM FIX
-  // =============================
+  // Logout Handling
+  document.querySelectorAll("[data-logout]").forEach(b => b.addEventListener("click", (e) => {
+      e.preventDefault();
+      logout();
+  }));
+
+  // Login Form
   const login = document.querySelector("#loginForm");
   if (login) {
     login.addEventListener("submit", async e => {
       e.preventDefault();
       const box = document.querySelector("#formMsg");
-      const formData = new FormData(login);
-      const body = Object.fromEntries(formData.entries());
-
+      const body = Object.fromEntries(new FormData(login).entries());
       try {
         msg(box, "Logging in...", "notice");
         const data = await request("/api/login", {
           method: "POST",
           body: JSON.stringify(body)
         });
-
         if (data.token) {
           setUser(data);
           location.href = "dashboard.html";
         }
-      } catch (err) {
-        msg(box, err.message, "error");
-      }
+      } catch (err) { msg(box, err.message, "error"); }
     });
   }
 
-  // Same logic for Signup
+  // Signup Form
   const signup = document.querySelector("#signupForm");
   if (signup) {
     signup.addEventListener("submit", async e => {
       e.preventDefault();
       const box = document.querySelector("#formMsg");
       const body = Object.fromEntries(new FormData(signup).entries());
-
       try {
         const data = await request("/api/signup", {
           method: "POST",
@@ -165,9 +128,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         setUser(data);
         location.href = "dashboard.html";
-      } catch (err) {
-        msg(box, err.message, "error");
-      }
+      } catch (err) { msg(box, err.message, "error"); }
     });
   }
 });
+  
