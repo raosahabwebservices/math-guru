@@ -10,28 +10,40 @@ const SAMBANOVA_KEY = process.env.SAMBANOVA_API_KEY;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 // ================================
-// PROMPT BUILDER
+// 🔥 NEW STRICT PROMPT (ADDED)
 // ================================
 function buildPrompt(question) {
   return `
-You are Maths Guru AI Ultimate Engine for Class 1–12.
+You are Maths Guru AI.
 
-RULES:
-- Solve step-by-step
-- Use Hindi + English explanation
-- Show formula clearly
-- Final Answer MUST be included
+STRICT RULE:
+You MUST always include final answer.
 
-OUTPUT FORMAT:
-Final Answer (MANDATORY): exact result only
+OUTPUT FORMAT MUST BE FOLLOWED EXACTLY:
 
-Question:
-${question}
+Question: ${question}
+
+Solution:
+(complete step-by-step)
+
+Final Answer: <exact final result>
+
+If you do not provide Final Answer, response is INVALID.
 `;
 }
 
 // ================================
-// SAFE FETCH WRAPPER
+// ⚡ OUTPUT ENFORCER (ADDED)
+// ================================
+function enforceOutput(text) {
+  if (!text || !text.includes("Final Answer")) {
+    return text + "\n\nFinal Answer: Not found in AI response";
+  }
+  return text;
+}
+
+// ================================
+// SAFE JSON
 // ================================
 async function safeJson(res) {
   try {
@@ -63,7 +75,7 @@ async function callGroq(prompt) {
     throw new Error("Groq failed");
   }
 
-  return data.choices[0].message.content;
+  return enforceOutput(data.choices[0].message.content);
 }
 
 // ================================
@@ -88,7 +100,7 @@ async function callOpenRouter(prompt) {
     throw new Error("OpenRouter failed");
   }
 
-  return data.choices[0].message.content;
+  return enforceOutput(data.choices[0].message.content);
 }
 
 // ================================
@@ -113,7 +125,7 @@ async function callSambaNova(prompt) {
     throw new Error("SambaNova failed");
   }
 
-  return data.choices[0].message.content;
+  return enforceOutput(data.choices[0].message.content);
 }
 
 // ================================
@@ -136,11 +148,11 @@ async function callGeminiText(prompt) {
     throw new Error("Gemini failed");
   }
 
-  return data.candidates[0].content.parts[0].text;
+  return enforceOutput(data.candidates[0].content.parts[0].text);
 }
 
 // ================================
-// TEXT SOLVER (FIXED EXPORT ISSUE)
+// TEXT SOLVER
 // ================================
 async function solveTextDoubt(question) {
   const prompt = buildPrompt(question);
@@ -166,70 +178,46 @@ async function solveTextDoubt(question) {
 }
 
 // ================================
-// IMAGE SOLVER (FIXED + SAFE VISION)
+// IMAGE SOLVER (Gemini ONLY)
 // ================================
 async function solveImageDoubt(imagePath, mimeType, question = "") {
-  const base64Image = fs.readFileSync(
-    path.resolve(imagePath),
-    "base64"
-  );
+  const base64Image = fs.readFileSync(path.resolve(imagePath), "base64");
 
   const prompt = buildPrompt("Solve image question: " + question);
 
-  async function callGeminiVision(p) {
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: p },
-              {
-                inlineData: {
-                  mimeType,
-                  data: base64Image,
-                },
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType,
+                data: base64Image,
               },
-            ],
-          },
-        ],
-      }),
-    });
+            },
+          ],
+        },
+      ],
+    }),
+  });
 
-    const data = await safeJson(res);
+  const data = await safeJson(res);
 
-    if (!res.ok || !data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      throw new Error("Gemini vision failed");
-    }
-
-    return data.candidates[0].content.parts[0].text;
+  if (!res.ok || !data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+    return "Image AI failed. Try clearer image.";
   }
 
-  const providers = [
-    callGroq,
-    callOpenRouter,
-    callSambaNova,
-    callGeminiVision,
-  ];
-
-  let lastError;
-
-  for (const fn of providers) {
-    try {
-      return await fn(prompt);
-    } catch (e) {
-      lastError = e.message;
-    }
-  }
-
-  return `AI FAILED: ${lastError}`;
+  return enforceOutput(data.candidates[0].content.parts[0].text);
 }
 
 // ================================
-// FIXED EXPORT (MOST IMPORTANT BUG FIX)
+// EXPORT
 // ================================
 module.exports = {
   solveTextDoubt,
