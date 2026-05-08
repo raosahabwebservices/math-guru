@@ -56,7 +56,7 @@ const upload = multer({
 });
 
 // =============================
-// MIDDLEWARE (FIXED)
+// MIDDLEWARE
 // =============================
 app.use(cors({
   origin: "*", 
@@ -115,15 +115,12 @@ function publicUser(user) {
 // =============================
 app.get("/", (req, res) => res.send("Maths Guru Backend Live 🚀"));
 
-// SIGNUP
 app.post("/api/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) return res.status(400).json({ message: "All fields required" });
-
     const users = await readJson("users");
     if (users.find(u => u.email === email.toLowerCase())) return res.status(409).json({ message: "Email exists" });
-
     const user = {
       id: generateId(),
       name,
@@ -134,30 +131,24 @@ app.post("/api/signup", async (req, res) => {
       premiumActive: false,
       createdAt: new Date().toISOString(),
     };
-
     users.push(user);
     await writeJson("users", users);
-
     res.json({ token: signToken({ id: user.id }), user: publicUser(user) });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// LOGIN
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const users = await readJson("users");
     const user = users.find(u => u.email === String(email || "").toLowerCase());
-
     if (!user || !(await bcrypt.compare(password || "", user.passwordHash))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
     res.json({ token: signToken({ id: user.id }), user: publicUser(user) });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// PROFILE
 app.get("/api/profile", requireAuth, async (req, res) => {
   try {
     const users = await readJson("users");
@@ -167,7 +158,7 @@ app.get("/api/profile", requireAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// TEXT DOUBT
+// ✅ FIXED TEXT DOUBT ROUTE
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
   try {
     const { question } = req.body;
@@ -178,15 +169,33 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
     const limits = user.premiumActive ? 100 : 10;
     if ((user.textUsed || 0) >= limits) return res.status(402).json({ message: "Limit reached" });
 
+    // AI solve karega (Returns Object now)
     const solution = await solveTextDoubt(question);
     user.textUsed = (user.textUsed || 0) + 1;
+
+    // Doubts list mein save karna
+    const doubts = await readJson("doubts");
+    const doubt = {
+        id: generateId(),
+        userId: user.id,
+        type: "text",
+        question,
+        solution, // Full object save hoga
+        createdAt: new Date().toISOString()
+    };
+    doubts.unshift(doubt);
     
     await writeJson("users", users);
-    res.json({ solution, user: publicUser(user) });
-  } catch (err) { res.status(500).json({ message: "AI failed" }); }
+    await writeJson("doubts", doubts);
+
+    res.json({ doubt, user: publicUser(user) });
+  } catch (err) { 
+    console.error(err);
+    res.status(500).json({ message: "AI failed" }); 
+  }
 });
 
-// IMAGE DOUBT
+// ✅ FIXED IMAGE DOUBT ROUTE
 app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "Image required" });
@@ -198,6 +207,7 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
     const limits = user.premiumActive ? 100 : 3;
     if ((user.imageUsed || 0) >= limits) return res.status(402).json({ message: "Limit reached" });
 
+    // AI solve karega (Returns Object now)
     const solution = await solveImageDoubt(
       path.join(uploadDir, req.file.filename),
       req.file.mimetype,
@@ -205,9 +215,26 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
     );
 
     user.imageUsed = (user.imageUsed || 0) + 1;
+
+    const doubts = await readJson("doubts");
+    const doubt = {
+        id: generateId(),
+        userId: user.id,
+        type: "image",
+        imagePath: `/uploads/${req.file.filename}`,
+        solution, // Full object save hoga
+        createdAt: new Date().toISOString()
+    };
+    doubts.unshift(doubt);
+
     await writeJson("users", users);
-    res.json({ solution, user: publicUser(user) });
-  } catch (err) { res.status(500).json({ message: "AI failed" }); }
+    await writeJson("doubts", doubts);
+
+    res.json({ doubt, user: publicUser(user) });
+  } catch (err) { 
+    console.error(err);
+    res.status(500).json({ message: "AI failed" }); 
+  }
 });
 
 // =============================
