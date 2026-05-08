@@ -1,51 +1,82 @@
-const fs = require("fs");
+  const fs = require("fs");
 const path = require("path");
 
-const MODEL = "gemini-2.0-flash";
+// Free-tier friendly model priority
+const MODELS = [
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-flash-8b",
+  "gemini-1.5-pro-latest"
+];
+
+// ================================
+// COMMON REQUEST FUNCTION
+// ================================
+async function callGemini(contents) {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY missing in Render!");
+  }
+
+  let lastError = "All models failed";
+
+  for (const MODEL of MODELS) {
+    try {
+      const url =
+        `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${apiKey}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ contents })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error(`Gemini Error (${MODEL}):`, data);
+        lastError =
+          data?.error?.message ||
+          `Request failed on ${MODEL}`;
+        continue;
+      }
+
+      const text =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (text) return text;
+
+      lastError = `No response from ${MODEL}`;
+    } catch (err) {
+      console.error(`Fetch Error (${MODEL}):`, err);
+      lastError = err.message;
+    }
+  }
+
+  throw new Error(lastError);
+}
 
 // ================================
 // TEXT DOUBT SOLVER
 // ================================
 async function solveTextDoubt(question) {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-
-  if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render!");
-  if (!question?.trim()) throw new Error("Question empty hai");
-
-  const url =
-    `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${apiKey}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [
-            {
-              text:
-                "You are MATHS GURU. Solve step-by-step in Hindi + English. Explain formula and final answer clearly.\n\nQuestion:\n" +
-                question
-            }
-          ]
-        }
-      ]
-    })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error("Gemini Error:", data);
-    throw new Error(data?.error?.message || "Text model failed");
+  if (!question?.trim()) {
+    throw new Error("Question empty hai");
   }
 
-  const text =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) throw new Error("No response from Gemini");
+  const text = await callGemini([
+    {
+      parts: [
+        {
+          text:
+            "You are MATHS GURU. Solve step-by-step in Hindi + English. Explain formula and final answer clearly.\n\nQuestion:\n" +
+            question
+        }
+      ]
+    }
+  ]);
 
   return {
     solutionHindi: text,
@@ -57,57 +88,37 @@ async function solveTextDoubt(question) {
 // ================================
 // IMAGE DOUBT SOLVER
 // ================================
-async function solveImageDoubt(imagePath, mimeType, question = "") {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-
-  if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render!");
-  if (!fs.existsSync(imagePath)) throw new Error("Image file not found");
+async function solveImageDoubt(
+  imagePath,
+  mimeType,
+  question = ""
+) {
+  if (!fs.existsSync(imagePath)) {
+    throw new Error("Image file not found");
+  }
 
   const base64Image = fs.readFileSync(
     path.resolve(imagePath),
     "base64"
   );
 
-  const url =
-    `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${apiKey}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      contents: [
+  const text = await callGemini([
+    {
+      parts: [
         {
-          parts: [
-            {
-              text:
-                "You are MATHS GURU. Solve this image maths question step-by-step in Hindi + English.\n\nHint: " +
-                question
-            },
-            {
-              inlineData: {
-                mimeType,
-                data: base64Image
-              }
-            }
-          ]
+          text:
+            "You are MATHS GURU. Solve this image maths question step-by-step in Hindi + English.\n\nHint: " +
+            question
+        },
+        {
+          inlineData: {
+            mimeType,
+            data: base64Image
+          }
         }
       ]
-    })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error("Gemini Image Error:", data);
-    throw new Error(data?.error?.message || "Image model failed");
-  }
-
-  const text =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) throw new Error("No response from image model");
+    }
+  ]);
 
   return {
     solutionHindi: text,
