@@ -29,7 +29,7 @@ const files = {
 };
 
 // =============================
-// MULTER CONFIG
+// MULTER
 // =============================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
@@ -46,7 +46,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
-      return cb(new Error("Only image uploads allowed"));
+      return cb(new Error("Only images allowed"));
     }
     cb(null, true);
   }
@@ -142,7 +142,7 @@ function validateEmail(email) {
 }
 
 // =============================
-// FIND USER
+// USER FINDER
 // =============================
 async function findCurrentUser(req) {
   const users = await readJson("users");
@@ -153,38 +153,34 @@ async function findCurrentUser(req) {
 // =============================
 // ROUTES
 // =============================
-
 app.get("/", (req, res) => {
-  res.send("Maths Guru Backend is Live 🚀");
+  res.send("Maths Guru Backend Live 🚀");
 });
 
 // ---------- SIGNUP ----------
 app.post("/api/signup", async (req, res, next) => {
   try {
-    const name = String(req.body.name || "").trim();
-    const email = String(req.body.email || "").trim().toLowerCase();
-    const password = String(req.body.password || "");
+    const { name, email, password } = req.body;
 
-    if (name.length < 2)
+    if (!name || name.length < 2)
       return res.status(400).json({ message: "Name required" });
 
     if (!validateEmail(email))
       return res.status(400).json({ message: "Valid email required" });
 
-    if (password.length < 6)
-      return res.status(400).json({ message: "Min 6 characters password" });
+    if (!password || password.length < 6)
+      return res.status(400).json({ message: "Weak password" });
 
     const users = await readJson("users");
 
-    if (users.some((u) => u.email === email))
-      return res.status(409).json({ message: "Email already exists" });
+    if (users.some((u) => u.email === email.toLowerCase()))
+      return res.status(409).json({ message: "Email exists" });
 
     const user = {
       id: id(),
       name,
-      email,
+      email: email.toLowerCase(),
       passwordHash: await bcrypt.hash(password, 12),
-      planType: "free",
       textUsed: 0,
       imageUsed: 0,
       premiumActive: false,
@@ -206,14 +202,17 @@ app.post("/api/signup", async (req, res, next) => {
 // ---------- LOGIN ----------
 app.post("/api/login", async (req, res, next) => {
   try {
-    const email = String(req.body.email || "").trim().toLowerCase();
+    const { email, password } = req.body;
+
     const users = await readJson("users");
 
-    const user = users.find((u) => u.email === email);
+    const user = users.find(
+      (u) => u.email === String(email || "").toLowerCase()
+    );
 
     if (
       !user ||
-      !(await bcrypt.compare(String(req.body.password || ""), user.passwordHash))
+      !(await bcrypt.compare(password || "", user.passwordHash))
     ) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -231,9 +230,7 @@ app.post("/api/login", async (req, res, next) => {
 app.get("/api/profile", requireAuth, async (req, res, next) => {
   try {
     const { user } = await findCurrentUser(req);
-
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "Not found" });
 
     res.json({ user: publicUser(user) });
   } catch (err) {
@@ -241,19 +238,29 @@ app.get("/api/profile", requireAuth, async (req, res, next) => {
   }
 });
 
-// ---------- TEXT DOUBT ----------
+// =============================
+// TEXT DOUBT (SAFE)
+// =============================
 app.post("/api/doubt/text", requireAuth, async (req, res, next) => {
   try {
     const question = String(req.body.question || "").trim();
 
-    const { users, user } = await findCurrentUser(req);
+    if (question.length < 2)
+      return res.status(400).json({ message: "Invalid question" });
 
+    const { users, user } = await findCurrentUser(req);
     const limits = getLimits(user);
 
     if (user.textUsed >= limits.text)
       return res.status(402).json({ message: "Limit reached" });
 
-    const solution = await solveTextDoubt(question);
+    let solution;
+
+    try {
+      solution = await solveTextDoubt(question);
+    } catch (e) {
+      return res.status(500).json({ message: "AI failed" });
+    }
 
     user.textUsed++;
 
@@ -264,9 +271,7 @@ app.post("/api/doubt/text", requireAuth, async (req, res, next) => {
       userId: user.id,
       type: "text",
       question,
-      solutionHindi: solution.solutionHindi,
-      solutionEnglish: solution.solutionEnglish,
-      createdAt: new Date().toISOString()
+      solution
     };
 
     doubts.unshift(doubt);
@@ -280,7 +285,9 @@ app.post("/api/doubt/text", requireAuth, async (req, res, next) => {
   }
 });
 
-// ---------- IMAGE DOUBT ----------
+// =============================
+// IMAGE DOUBT (SAFE)
+// =============================
 app.post(
   "/api/doubt/image",
   requireAuth,
@@ -291,21 +298,22 @@ app.post(
         return res.status(400).json({ message: "Image required" });
 
       const { users, user } = await findCurrentUser(req);
-
       const limits = getLimits(user);
 
       if (user.imageUsed >= limits.image)
         return res.status(402).json({ message: "Limit reached" });
 
-      const question = String(req.body.question || "");
+      let solution;
 
-      const imagePath = `/uploads/${req.file.filename}`;
-
-      const solution = await solveImageDoubt(
-        path.join(uploadDir, req.file.filename),
-        req.file.mimetype,
-        question
-      );
+      try {
+        solution = await solveImageDoubt(
+          path.join(uploadDir, req.file.filename),
+          req.file.mimetype,
+          req.body.question || ""
+        );
+      } catch {
+        return res.status(500).json({ message: "AI failed" });
+      }
 
       user.imageUsed++;
 
@@ -315,11 +323,8 @@ app.post(
         id: id(),
         userId: user.id,
         type: "image",
-        question,
-        imagePath,
-        solutionHindi: solution.solutionHindi,
-        solutionEnglish: solution.solutionEnglish,
-        createdAt: new Date().toISOString()
+        imagePath: `/uploads/${req.file.filename}`,
+        solution
       };
 
       doubts.unshift(doubt);
@@ -334,27 +339,6 @@ app.post(
   }
 );
 
-// ---------- CONTACT ----------
-app.post("/api/contact", async (req, res, next) => {
-  try {
-    const contacts = await readJson("contacts");
-
-    contacts.unshift({
-      id: id(),
-      name: req.body.name,
-      email: req.body.email,
-      message: req.body.message,
-      createdAt: new Date().toISOString()
-    });
-
-    await writeJson("contacts", contacts);
-
-    res.json({ message: "Message saved" });
-  } catch (err) {
-    next(err);
-  }
-});
-
 // =============================
 // ERROR HANDLER
 // =============================
@@ -364,10 +348,10 @@ app.use((err, req, res, next) => {
 });
 
 // =============================
-// START SERVER
+// START
 // =============================
 ensureStore().then(() => {
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`MATHS GURU running on port ${PORT}`);
+    console.log(`MATHS GURU running on ${PORT}`);
   });
 });
