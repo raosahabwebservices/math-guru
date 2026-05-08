@@ -6,6 +6,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const fs = require('fs').promises;
+const fsSync = require('fs'); // Directory check ke liye
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 
@@ -16,18 +17,34 @@ app.use(express.json());
 const dataDir = path.join(__dirname, 'data');
 const uploadDir = path.join(__dirname, 'uploads');
 
+// 🔥 RENDER FIX: Agar folders missing hain toh auto-create karega
+if (!fsSync.existsSync(dataDir)) fsSync.mkdirSync(dataDir, { recursive: true });
+if (!fsSync.existsSync(uploadDir)) fsSync.mkdirSync(uploadDir, { recursive: true });
+
 // ==========================================
 // 2. HELPERS (Database & Auth)
 // ==========================================
+
+// ✅ SAFE READ: Khali file hone par crash nahi hoga
 async function readJson(file) {
     try {
-        const data = await fs.readFile(path.join(dataDir, `${file}.json`), 'utf8');
+        const filePath = path.join(dataDir, `${file}.json`);
+        const data = await fs.readFile(filePath, 'utf8');
+        if (!data || data.trim() === "") return [];
         return JSON.parse(data);
-    } catch { return []; }
+    } catch (err) {
+        return []; 
+    }
 }
 
+// ✅ SAFE WRITE: Data sunder tarike se save karega
 async function writeJson(file, data) {
-    await fs.writeFile(path.join(dataDir, `${file}.json`), JSON.stringify(data, null, 2));
+    try {
+        const filePath = path.join(dataDir, `${file}.json`);
+        await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+    } catch (err) {
+        console.error(`Error writing ${file}:`, err);
+    }
 }
 
 const signToken = (user) => jwt.sign(user, process.env.JWT_SECRET || 'secret123', { expiresIn: '7d' });
@@ -91,7 +108,7 @@ app.get("/api/profile", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 4. ADMIN ROUTES
+// 4. ADMIN & DOUBT ROUTES
 // ==========================================
 
 app.post("/api/admin/login", async (req, res) => {
@@ -120,20 +137,6 @@ app.get("/api/admin/dashboard", requireAuth, async (req, res) => {
         });
     } catch (err) { res.status(500).json({ message: "Stats load failed" }); }
 });
-
-app.get("/api/admin/payments", requireAuth, async (req, res) => {
-    const payments = await readJson("payments");
-    res.json({ payments: payments || [] });
-});
-
-app.get("/api/admin/contacts", requireAuth, async (req, res) => {
-    const contacts = await readJson("contacts");
-    res.json({ contacts: contacts || [] });
-});
-
-// ==========================================
-// 5. DOUBT ROUTES
-// ==========================================
 
 app.get("/api/doubts/history", requireAuth, async (req, res) => {
     const doubts = await readJson("doubts");
@@ -167,7 +170,7 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 6. STATIC FILES & FALLBACK (Root Fix)
+// 5. STATIC FILES & FALLBACK (Root Fix)
 // ==========================================
 app.use(express.static(__dirname)); 
 app.use('/uploads', express.static(uploadDir));
@@ -180,4 +183,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is LIVE on port ${PORT}`);
 });
-            
