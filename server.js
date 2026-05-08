@@ -1,6 +1,13 @@
-// =========================
-// ADMIN ROUTES
-// =========================
+// ==========================================
+// 1. MIDDLEWARES (Hamesha Sabse Upar)
+// ==========================================
+app.use(cors());
+app.use(express.json());
+// Ensure require('dotenv').config() is at the very top of your file!
+
+// ==========================================
+// 2. ADMIN ROUTES
+// ==========================================
 
 // ✅ ADMIN LOGIN ROUTE (Fixed for .env & JSON)
 app.post("/api/admin/login", async (req, res) => {
@@ -36,9 +43,9 @@ app.post("/api/admin/login", async (req, res) => {
   }
 });
 
-// =========================
-// DOUBT SOLVING ROUTES
-// =========================
+// ==========================================
+// 3. DOUBT SOLVING ROUTES
+// ==========================================
 
 // ✅ UPDATED TEXT DOUBT ROUTE (With Language Support)
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
@@ -51,7 +58,6 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
     const limits = user.premiumActive ? 100 : 10;
     if ((user.textUsed || 0) >= limits) return res.status(402).json({ message: "Limit reached" });
 
-    // AI solve karega (question + language)
     const solution = await solveTextDoubt(question, language || "Hinglish");
     
     user.textUsed = (user.textUsed || 0) + 1;
@@ -82,12 +88,11 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
 
     const users = await readJson("users");
     const user = users.find(u => u.id === req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json = ({ message: "User not found" });
 
     const limits = user.premiumActive ? 100 : 3;
     if ((user.imageUsed || 0) >= limits) return res.status(402).json({ message: "Limit reached" });
 
-    // AI image solve karega (image + language)
     const solution = await solveImageDoubt(
       path.join(uploadDir, req.file.filename),
       req.file.mimetype,
@@ -115,3 +120,15 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
     res.status(500).json({ message: "AI failed" }); 
   }
 });
+
+// ==========================================
+// 4. STATIC FILES (Hamesha Routes Ke NICHE)
+// ==========================================
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(uploadDir));
+
+// Fallback for SPA (optional)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+  
