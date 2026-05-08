@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "id": "admin-1",
+    "name": "Harshit Admin",
+    "email": "admin@mathsguru.local",
+    "password": "Admin@12345"
+  }
+]
