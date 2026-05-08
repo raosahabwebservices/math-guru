@@ -169,4 +169,62 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is LIVE on port ${PORT}`);
 });
-                       
+   // ==========================================
+// ADMIN API ROUTES (Keep these ABOVE app.get('*'))
+// ==========================================
+
+// 1. Admin Login
+app.post("/api/admin/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+            const token = signToken({ id: "admin-root", role: "admin" });
+            return res.json({ token, user: { id: "admin-root", name: "Super Admin", role: "admin" } });
+        }
+        res.status(401).json({ message: "Galat Admin Credentials!" });
+    } catch (err) { res.status(500).json({ message: "Login Failed" }); }
+});
+
+// 2. Admin Dashboard Stats
+app.get("/api/admin/dashboard", requireAuth, async (req, res) => {
+    const users = await readJson("users");
+    const doubts = await readJson("doubts");
+    res.json({
+        stats: { totalUsers: users.length, totalDoubts: doubts.length, premiumUsers: users.filter(u => u.premiumActive).length },
+        users: users.slice(0, 50),
+        recentDoubts: doubts.slice(0, 10)
+    });
+});
+
+// 3. Admin Payments (Table fix)
+app.get("/api/admin/payments", requireAuth, async (req, res) => {
+    const payments = await readJson("payments");
+    res.json({ payments: payments || [] });
+});
+
+// 4. Admin Contacts
+app.get("/api/admin/contacts", requireAuth, async (req, res) => {
+    const contacts = await readJson("contacts");
+    res.json({ contacts: contacts || [] });
+});
+
+// 5. Payment Approve/Reject (Important for Table Actions)
+app.put("/api/admin/payment/:id", requireAuth, async (req, res) => {
+    const { action, userId } = req.body;
+    const payments = await readJson("payments");
+    const users = await readJson("users");
+    
+    const idx = payments.findIndex(p => p.id === req.params.id);
+    if (idx !== -1) {
+        payments[idx].status = action === 'approve' ? 'approved' : 'rejected';
+        if (action === 'approve') {
+            const uIdx = users.findIndex(u => u.id === userId);
+            if (uIdx !== -1) users[uIdx].premiumActive = true;
+        }
+        await writeJson("payments", payments);
+        await writeJson("users", users);
+        return res.json({ message: "Updated" });
+    }
+    res.status(404).json({ message: "Not found" });
+});
+
