@@ -1,30 +1,32 @@
 const fs = require("fs");
 const path = require("path");
 
+const MODEL = "gemini-2.0-flash";
+
 // ================================
 // TEXT DOUBT SOLVER
 // ================================
 async function solveTextDoubt(question) {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
+
   if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render!");
+  if (!question?.trim()) throw new Error("Question empty hai");
 
-  if (!question || question.trim() === "") {
-    throw new Error("Question empty hai");
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const url =
+    `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${apiKey}`;
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       contents: [
         {
           parts: [
             {
               text:
-                "You are MATHS GURU. Solve step-by-step in Hindi + English.\n" +
-                "Explain formula and final answer clearly.\n\nQuestion:\n" +
+                "You are MATHS GURU. Solve step-by-step in Hindi + English. Explain formula and final answer clearly.\n\nQuestion:\n" +
                 question
             }
           ]
@@ -35,18 +37,21 @@ async function solveTextDoubt(question) {
 
   const data = await response.json();
 
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
   if (!response.ok) {
     console.error("Gemini Error:", data);
     throw new Error(data?.error?.message || "Text model failed");
   }
 
-  if (!text) {
-    throw new Error("No response from Gemini");
-  }
+  const text =
+    data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-  return { solutionHindi: text };
+  if (!text) throw new Error("No response from Gemini");
+
+  return {
+    solutionHindi: text,
+    solutionEnglish: text,
+    formulaUsed: ""
+  };
 }
 
 // ================================
@@ -54,32 +59,35 @@ async function solveTextDoubt(question) {
 // ================================
 async function solveImageDoubt(imagePath, mimeType, question = "") {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
+
   if (!apiKey) throw new Error("GEMINI_API_KEY missing in Render!");
+  if (!fs.existsSync(imagePath)) throw new Error("Image file not found");
 
-  if (!fs.existsSync(imagePath)) {
-    throw new Error("Image file not found");
-  }
+  const base64Image = fs.readFileSync(
+    path.resolve(imagePath),
+    "base64"
+  );
 
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-  const absolutePath = path.resolve(imagePath);
-  const base64Image = fs.readFileSync(absolutePath, "base64");
+  const url =
+    `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${apiKey}`;
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       contents: [
         {
           parts: [
             {
               text:
-                "You are MATHS GURU. Solve this image step-by-step in Hindi + English.\n\nHint: " +
+                "You are MATHS GURU. Solve this image maths question step-by-step in Hindi + English.\n\nHint: " +
                 question
             },
             {
               inlineData: {
-                mimeType: mimeType,
+                mimeType,
                 data: base64Image
               }
             }
@@ -91,18 +99,21 @@ async function solveImageDoubt(imagePath, mimeType, question = "") {
 
   const data = await response.json();
 
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
   if (!response.ok) {
     console.error("Gemini Image Error:", data);
     throw new Error(data?.error?.message || "Image model failed");
   }
 
-  if (!text) {
-    throw new Error("No response from image model");
-  }
+  const text =
+    data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-  return { solutionHindi: text };
+  if (!text) throw new Error("No response from image model");
+
+  return {
+    solutionHindi: text,
+    solutionEnglish: text,
+    formulaUsed: ""
+  };
 }
 
 module.exports = {
