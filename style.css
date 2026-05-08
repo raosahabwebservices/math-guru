@@ -276,4 +276,27 @@ textarea { min-height: 120px; resize: vertical; }
   font-size: 12px;
   font-weight: 850;
   }
-  
+  /* Table ko columns mein todne ke liye final fix */
+#adminPanel table {
+  display: table !important; /* Table ko table ki tarah rakhega */
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+#adminPanel tr {
+  display: table-row !important; /* Har user ek nayi line mein */
+}
+
+#adminPanel th, #adminPanel td {
+  display: table-cell !important; /* Har data apne alag column mein */
+  padding: 12px 15px !important;
+  text-align: left !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+#adminPanel th {
+  background: #f1f5f9 !important;
+  font-weight: 800 !important;
+  color: var(--muted) !important;
+}
+
