@@ -3,33 +3,35 @@ function safeText(value) {
 }
 
 // =========================
-// SOLUTION RENDER (SAFE)
+// SOLUTION RENDER (FIXED)
 // =========================
 function renderSolution(doubt) {
+  // AI se aaya hua solution object
   const s = doubt?.solution || {};
 
   return `
-Question Understanding:
-${s.questionUnderstanding || "Saved question: " + (doubt?.question || "Image doubt")}
-
-Formula Used:
-${s.formulaUsed || "See full answer"}
-
-Formula Kaise Use Hua:
-${s.formulaHowUsed || "Explained in solution"}
-
-Step-by-step Solution:
-${s.steps || s.raw || s.solutionHindi || ""}
-
-Final Answer:
-${s.finalAnswer || "N/A"}
-
-Hindi Explanation:
-${s.solutionHindi || ""}
-
-English Explanation:
-${s.solutionEnglish || ""}
-`;
+    <div class="sol-box">
+      <h3 style="color:#2563eb; font-weight:bold; margin-bottom:5px;">Question Understanding:</h3>
+      <p>${s.understanding || "Saved question: " + (doubt?.question || "Image doubt")}</p>
+      
+      <h3 style="color:#2563eb; font-weight:bold; margin-top:15px; margin-bottom:5px;">Formula Used:</h3>
+      <p>${s.formula || "Applied in solution steps"}</p>
+      
+      <h3 style="color:#2563eb; font-weight:bold; margin-top:15px; margin-bottom:5px;">Step-by-step Solution:</h3>
+      <div style="background:#f8fafc; padding:15px; border-radius:8px; white-space:pre-wrap; border:1px solid #e2e8f0; margin:10px 0; font-family: monospace;">${s.solution || "Processing solution..."}</div>
+      
+      <h3 style="color:#059669; font-weight:bold; margin-top:15px; margin-bottom:5px;">Final Answer:</h3>
+      <p style="font-size:1.2rem; color:#059669;"><strong>${s.finalAnswer || "Solved"}</strong></p>
+      
+      <hr style="margin:20px 0; border:0; border-top:1px solid #ddd">
+      
+      <h3 style="color:#7c3aed; font-weight:bold;">Hindi Explanation:</h3>
+      <p>${s.hindi || "Upar steps dekhein"}</p>
+      
+      <h3 style="color:#7c3aed; font-weight:bold; margin-top:10px;">English Explanation:</h3>
+      <p>${s.english || "See solution above"}</p>
+    </div>
+  `;
 }
 
 // =========================
@@ -41,7 +43,8 @@ function showSolution(doubt) {
 
   if (!panel || !content) return;
 
-  content.textContent = renderSolution(doubt);
+  // content.textContent ki jagah innerHTML taaki styling dikhe
+  content.innerHTML = renderSolution(doubt);
   panel.classList.remove("hidden");
   panel.scrollIntoView({ behavior: "smooth" });
 }
@@ -59,6 +62,11 @@ async function loadProfileBits() {
   if (plan) plan.textContent = user?.premiumActive ? "Premium" : "Free";
   if (textLeft) textLeft.textContent = user?.remainingText ?? 0;
   if (imageLeft) imageLeft.textContent = user?.remainingImage ?? 0;
+
+  const limitText = document.querySelector("#limitText");
+  const limitImage = document.querySelector("#limitImage");
+  if (limitText) limitText.textContent = user?.remainingText ?? 0;
+  if (limitImage) limitImage.textContent = user?.remainingImage ?? 0;
 
   return user;
 }
@@ -79,18 +87,18 @@ async function loadHistory() {
     }
 
     list.innerHTML = data.doubts.map((d) => `
-      <div class="history-item">
-        <span class="badge">${safeText(d.type)}</span>
-        <h3>${safeText(d.question || "Image doubt")}</h3>
+      <div class="history-item card" style="margin-bottom:15px; padding:15px; border:1px solid #eee;">
+        <span class="badge" style="background:#e0e7ff; color:#4338ca; padding:2px 8px; border-radius:4px; font-size:12px;">${safeText(d.type).toUpperCase()}</span>
+        <h3 style="margin:10px 0;">${safeText(d.question || "Image doubt")}</h3>
 
         ${d.imagePath ? `
-          <img src="https://math-guru-production.up.railway.app${d.imagePath}" 
-          style="max-height:120px;border-radius:12px">
+          <img src="${API}${d.imagePath}" 
+          style="max-height:120px;border-radius:12px; margin-bottom:10px; display:block;">
         ` : ""}
 
-        <p class="muted">${moneyDate(d.createdAt)}</p>
+        <p class="muted" style="font-size:12px;">${new Date(d.createdAt).toLocaleDateString()}</p>
 
-        <button class="btn small ghost" data-view="${d.id}">
+        <button class="btn small ghost" data-view="${d.id}" style="margin-top:10px;">
           View Solution
         </button>
       </div>
@@ -112,7 +120,6 @@ async function loadHistory() {
 // INIT
 // =========================
 document.addEventListener("DOMContentLoaded", async () => {
-
   await loadProfileBits();
   loadHistory();
 
@@ -131,11 +138,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // TEXT DOUBT
   // =========================
   const textForm = document.querySelector("#textDoubtForm");
-
   if (textForm) {
     textForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-
       const box = document.querySelector("#textMsg");
       msg(box, "Solving...", "notice");
 
@@ -144,21 +149,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           method: "POST",
           body: JSON.stringify(Object.fromEntries(new FormData(textForm)))
         });
-
-        // 🔥 FIX IMPORTANT
-        setUser(data.user);
-
+        setUser(data);
         msg(box, "Solved successfully", "success");
         showSolution(data.doubt);
-
         await loadProfileBits();
-
       } catch (err) {
         msg(box, err.message, "error");
-
-        if (err.message.includes("limit")) {
-          setTimeout(() => location.href = "upgrade.html", 1000);
-        }
       }
     });
   }
@@ -167,11 +163,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // IMAGE DOUBT
   // =========================
   const imageForm = document.querySelector("#imageDoubtForm");
-
   if (imageForm) {
     imageForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-
       const box = document.querySelector("#imageMsg");
       msg(box, "Processing image...", "notice");
 
@@ -180,23 +174,14 @@ document.addEventListener("DOMContentLoaded", async () => {
           method: "POST",
           body: new FormData(imageForm)
         });
-
-        // 🔥 FIX IMPORTANT
-        setUser(data.user);
-
+        setUser(data);
         msg(box, "Solved successfully", "success");
         showSolution(data.doubt);
-
         await loadProfileBits();
-
       } catch (err) {
         msg(box, err.message, "error");
-
-        if (err.message.includes("limit")) {
-          setTimeout(() => location.href = "upgrade.html", 1000);
-        }
       }
     });
   }
-
 });
+      
