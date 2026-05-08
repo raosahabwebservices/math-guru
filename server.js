@@ -1,20 +1,22 @@
 // ==========================================
-// 1. MIDDLEWARES (Hamesha Sabse Upar)
+// 1. MIDDLEWARES (Sabse upar rakhein)
 // ==========================================
+const path = require('path');
+require('dotenv').config(); // Sabse pehle env load karein
+
 app.use(cors());
 app.use(express.json());
-// Ensure require('dotenv').config() is at the very top of your file!
 
 // ==========================================
 // 2. ADMIN ROUTES
 // ==========================================
 
-// ✅ ADMIN LOGIN ROUTE (Fixed for .env & JSON)
+// ✅ ADMIN LOGIN: Pehle .env check karega, fir admins.json
 app.post("/api/admin/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Pehle .env variables se check karein (Fastest way)
+    // 1. Check from .env
     if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
       const token = signToken({ id: "admin-root", role: "admin" });
       return res.json({ 
@@ -23,7 +25,7 @@ app.post("/api/admin/login", async (req, res) => {
       });
     }
 
-    // 2. Phir admins.json file check karein
+    // 2. Check from admins.json
     const admins = await readJson("admins");
     const admin = admins.find(a => a.email === email && a.password === password);
 
@@ -47,7 +49,7 @@ app.post("/api/admin/login", async (req, res) => {
 // 3. DOUBT SOLVING ROUTES
 // ==========================================
 
-// ✅ UPDATED TEXT DOUBT ROUTE (With Language Support)
+// ✅ TEXT DOUBT (With Language Support)
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
   try {
     const { question, language } = req.body; 
@@ -81,14 +83,14 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
   }
 });
 
-// ✅ UPDATED IMAGE DOUBT ROUTE (With Language Support)
+// ✅ IMAGE DOUBT (With Language Support)
 app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "Image required" });
 
     const users = await readJson("users");
     const user = users.find(u => u.id === req.user.id);
-    if (!user) return res.status(404).json = ({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const limits = user.premiumActive ? 100 : 3;
     if ((user.imageUsed || 0) >= limits) return res.status(402).json({ message: "Limit reached" });
@@ -122,13 +124,12 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
 });
 
 // ==========================================
-// 4. STATIC FILES (Hamesha Routes Ke NICHE)
+// 4. STATIC FILES & FALLBACK (Sabse Niche)
 // ==========================================
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadDir));
 
-// Fallback for SPA (optional)
+// Render/SPA support: Agar koi route na mile toh index bhej do
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-  
