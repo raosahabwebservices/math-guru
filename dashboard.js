@@ -2,42 +2,52 @@ function safeText(value) {
   return String(value || "").replace(/[<>&]/g, "");
 }
 
+// ⚡ Helpers for Gaps
+function cleanAIResponse(text) {
+  if (!text) return "";
+  return text
+    .replace(/\\\[|\\\]|\\\(|\\\)/g, "") 
+    .replace(/\*\*/g, "")               
+    .trim();
+}
+
 // =========================
-// SOLUTION RENDER (PREMIUM UI)
+// SOLUTION RENDER (CLEAN)
 // =========================
 function renderSolution(doubt) {
   const s = doubt?.solution || {};
 
-  // Is container se width control hogi aur solution failega nahi
   return `
-    <div style="max-width:800px; margin:0 auto; text-align:left;">
-      <div class="sol-card" style="background:white; padding:20px; border-radius:12px; border:1px solid #e2e8f0;">
+    <div class="sol-container">
+      <div class="sol-card">
         
-        <h3 style="color:#2563eb; font-weight:bold; margin-bottom:8px; font-size:1.1rem;">Question Understanding:</h3>
-        <p style="color:#475569; margin-bottom:20px;">${s.understanding || "Analyzed question detail."}</p>
+        <h3 class="sol-title">Question Understanding:</h3>
+        <p class="sol-text">${cleanAIResponse(s.understanding || "Analyzed question detail.")}</p>
         
-        <h3 style="color:#2563eb; font-weight:bold; margin-bottom:8px; font-size:1.1rem;">Formula Used:</h3>
-        <p style="color:#475569; margin-bottom:20px;">${s.formula || "Basic calculation principles."}</p>
+        <h3 class="sol-title">Formula Used:</h3>
+        <p class="sol-text">${cleanAIResponse(s.formula || "Applied in steps.")}</p>
         
-        <h3 style="color:#2563eb; font-weight:bold; margin-bottom:8px; font-size:1.1rem;">Step-by-step Solution:</h3>
-        <div style="background:#f8fafc; padding:18px; border-radius:8px; white-space:pre-wrap; border:1px solid #cbd5e1; margin:10px 0; font-family: 'Courier New', Courier, monospace; color:#1e293b; line-height:1.6;">${s.solution || "Solution steps..."}</div>
-        
-        <div style="background:#ecfdf5; padding:15px; border-radius:10px; border-left:5px solid #10b981; margin:25px 0;">
-          <h3 style="color:#065f46; font-weight:bold; margin:0; font-size:1.1rem;">Final Answer:</h3>
-          <p style="font-size:1.4rem; color:#047857; margin-top:5px; font-weight:800;">${s.finalAnswer || "Solved"}</p>
+        <h3 class="sol-title">Step-by-step Solution:</h3>
+        <div class="sol-steps-box">
+          ${cleanAIResponse(s.solution || "Solution steps...")}
         </div>
         
-        <hr style="margin:25px 0; border:0; border-top:1px solid #e2e8f0">
+        <div class="final-ans-box">
+          <h3 class="ans-label">Final Answer:</h3>
+          <p class="ans-value">${cleanAIResponse(s.finalAnswer || "Solved")}</p>
+        </div>
         
-        <div class="explanation-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
-          <div style="background:#f5f3ff; padding:15px; border-radius:8px; border:1px solid #ddd6fe;">
-            <h3 style="color:#7c3aed; font-weight:bold; margin-bottom:8px;">Hindi Explanation:</h3>
-            <p style="color:#4c1d95; font-size:0.95rem;">${s.hindi || "Upar steps dekhein."}</p>
+        <hr class="sol-divider">
+        
+        <div class="explanation-grid">
+          <div class="exp-box hindi">
+            <h3 class="exp-title">Hindi Explanation:</h3>
+            <p>${cleanAIResponse(s.hindi || "Upar steps dekhein.")}</p>
           </div>
           
-          <div style="background:#eff6ff; padding:15px; border-radius:8px; border:1px solid #bfdbfe;">
-            <h3 style="color:#1d4ed8; font-weight:bold; margin-bottom:8px;">English Explanation:</h3>
-            <p style="color:#1e3a8a; font-size:0.95rem;">${s.english || "See detailed solution above."}</p>
+          <div class="exp-box english">
+            <h3 class="exp-title">English Explanation:</h3>
+            <p>${cleanAIResponse(s.english || "See solution above.")}</p>
           </div>
         </div>
       </div>
@@ -54,16 +64,13 @@ function showSolution(doubt) {
 
   if (!panel || !content) return;
 
-  // Clear background and set innerHTML
-  content.style.background = "transparent"; 
   content.innerHTML = renderSolution(doubt);
-  
   panel.classList.remove("hidden");
   panel.scrollIntoView({ behavior: "smooth" });
 }
 
 // =========================
-// PROFILE (SAME)
+// PROFILE
 // =========================
 async function loadProfileBits() {
   const user = await requireStudent();
@@ -84,7 +91,7 @@ async function loadProfileBits() {
 }
 
 // =========================
-// HISTORY (SAME)
+// HISTORY
 // =========================
 async function loadHistory() {
   const list = document.querySelector("#historyList");
@@ -98,12 +105,12 @@ async function loadHistory() {
     }
 
     list.innerHTML = data.doubts.map((d) => `
-      <div class="history-item card" style="margin-bottom:15px; padding:15px; border:1px solid #eee;">
-        <span class="badge" style="background:#e0e7ff; color:#4338ca; padding:2px 8px; border-radius:4px; font-size:12px;">${safeText(d.type).toUpperCase()}</span>
-        <h3 style="margin:10px 0;">${safeText(d.question || "Image doubt")}</h3>
-        ${d.imagePath ? `<img src="${API}${d.imagePath}" style="max-height:120px;border-radius:12px; margin-bottom:10px; display:block;">` : ""}
-        <p class="muted" style="font-size:12px;">${new Date(d.createdAt).toLocaleDateString()}</p>
-        <button class="btn small ghost" data-view="${d.id}" style="margin-top:10px;">View Solution</button>
+      <div class="history-item card">
+        <span class="badge">${safeText(d.type).toUpperCase()}</span>
+        <h3>${safeText(d.question || "Image doubt")}</h3>
+        ${d.imagePath ? `<img src="${API}${d.imagePath}" class="history-img">` : ""}
+        <p class="muted">${new Date(d.createdAt).toLocaleDateString()}</p>
+        <button class="btn small ghost" data-view="${d.id}">View Solution</button>
       </div>
     `).join("");
 
@@ -119,7 +126,7 @@ async function loadHistory() {
 }
 
 // =========================
-// INIT (SAME)
+// INIT
 // =========================
 document.addEventListener("DOMContentLoaded", async () => {
   await loadProfileBits();
@@ -172,4 +179,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 });
-                                                   
+    
