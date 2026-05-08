@@ -18,7 +18,7 @@ function setUser(data) {
 }
 
 function logout() {
-  localStorage.clear(); // Saara kachra ek saath saaf
+  localStorage.clear(); 
   location.href = "login.html";
 }
 
@@ -50,10 +50,8 @@ async function request(path, options = {}) {
       headers: { ...headers, ...(options.headers || {}) }
     });
 
-    // ⚡ FIX: Agar 404 ya server error se HTML mile toh JSON error se bacho
     const contentType = res.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-       console.error("Server sent non-JSON response:", await res.text());
        throw new Error("Server Error: Path not found (404)");
     }
 
@@ -70,6 +68,34 @@ async function request(path, options = {}) {
     throw err;
   }
 }
+
+// =============================
+// ⚡ REQUIRE STUDENT (Loop Killer)
+// =============================
+async function requireStudent() {
+  const t = token();
+  if (!t) {
+    logout();
+    return;
+  }
+
+  try {
+    // Backend se user profile mangta hai
+    const data = await request("/api/profile");
+    if (data && data.user) {
+      localStorage.setItem("mg_user", JSON.stringify(data.user));
+      return data.user;
+    } else {
+      throw new Error("Invalid User");
+    }
+  } catch (err) {
+    console.error("Auth check failed:", err);
+    logout();
+  }
+}
+
+// Taaki dashboard.js ise use kar sake
+window.requireStudent = requireStudent;
 
 // =============================
 // DOM READY & FORMS
@@ -122,6 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const box = document.querySelector("#formMsg");
       const body = Object.fromEntries(new FormData(signup).entries());
       try {
+        msg(box, "Creating account...", "notice");
         const data = await request("/api/signup", {
           method: "POST",
           body: JSON.stringify(body)
@@ -132,4 +159,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-  
+        
