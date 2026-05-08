@@ -1,8 +1,12 @@
 // ==========================================
-// 1. MIDDLEWARES (Sabse upar rakhein)
+// 1. INITIALIZATION & MIDDLEWARES
 // ==========================================
+const express = require('express'); // 👈 Missing tha
 const path = require('path');
-require('dotenv').config(); // Sabse pehle env load karein
+const cors = require('cors'); // 👈 Missing tha
+require('dotenv').config();
+
+const app = express(); // 🔥 YE SABSE ZAROORI HAI (Isi ki wajah se crash ho raha tha)
 
 app.use(cors());
 app.use(express.json());
@@ -124,12 +128,18 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
 });
 
 // ==========================================
-// 4. STATIC FILES & FALLBACK (Sabse Niche)
+// 4. STATIC FILES & FALLBACK (Hamesha Routes ke Niche)
 // ==========================================
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(uploadDir));
 
-// Render/SPA support: Agar koi route na mile toh index bhej do
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// 🔥 Server Port Setup
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
+});
+      
