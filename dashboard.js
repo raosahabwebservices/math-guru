@@ -1,109 +1,202 @@
-function safeText(value) { // 'F' ko chhota kar diya
+function safeText(value) {
   return String(value || "").replace(/[<>&]/g, "");
 }
 
+// =========================
+// SOLUTION RENDER (SAFE)
+// =========================
 function renderSolution(doubt) {
-  const s = doubt.solution || {};
-  return `Question Understanding:\n${s.questionUnderstanding || "Saved question: " + (doubt.question || "Image doubt")}\n\nFormula Used:\n${s.formulaUsed || doubt.formulaUsed || "See full answer"}\n\nFormula Kaise Use Hua:\n${s.formulaHowUsed || "Explained in solution"}\n\nStep-by-step Solution:\n${s.steps || s.raw || ""}\n\nFinal Answer:\n${s.finalAnswer || ""}\n\nHindi Explanation:\n${doubt.solutionHindi || s.solutionHindi || ""}\n\nEnglish Explanation:\n${doubt.solutionEnglish || s.solutionEnglish || ""}`;
+  const s = doubt?.solution || {};
+
+  return `
+Question Understanding:
+${s.questionUnderstanding || "Saved question: " + (doubt?.question || "Image doubt")}
+
+Formula Used:
+${s.formulaUsed || "See full answer"}
+
+Formula Kaise Use Hua:
+${s.formulaHowUsed || "Explained in solution"}
+
+Step-by-step Solution:
+${s.steps || s.raw || s.solutionHindi || ""}
+
+Final Answer:
+${s.finalAnswer || "N/A"}
+
+Hindi Explanation:
+${s.solutionHindi || ""}
+
+English Explanation:
+${s.solutionEnglish || ""}
+`;
 }
 
+// =========================
+// SHOW SOLUTION
+// =========================
 function showSolution(doubt) {
   const panel = document.querySelector("#solutionPanel");
   const content = document.querySelector("#solutionContent");
+
   if (!panel || !content) return;
+
   content.textContent = renderSolution(doubt);
   panel.classList.remove("hidden");
   panel.scrollIntoView({ behavior: "smooth" });
 }
 
+// =========================
+// PROFILE
+// =========================
 async function loadProfileBits() {
   const user = await requireStudent();
+
   const plan = document.querySelector("#planType");
   const textLeft = document.querySelector("#textLeft");
   const imageLeft = document.querySelector("#imageLeft");
-  const limitText = document.querySelector("#limitText");
-  const limitImage = document.querySelector("#limitImage");
-  if (plan) plan.textContent = user.premiumActive ? "Premium" : "Free";
-  if (textLeft) textLeft.textContent = user.remainingText;
-  if (imageLeft) imageLeft.textContent = user.remainingImage;
-  if (limitText) limitText.textContent = user.remainingText;
-  if (limitImage) limitImage.textContent = user.remainingImage;
+
+  if (plan) plan.textContent = user?.premiumActive ? "Premium" : "Free";
+  if (textLeft) textLeft.textContent = user?.remainingText ?? 0;
+  if (imageLeft) imageLeft.textContent = user?.remainingImage ?? 0;
+
   return user;
 }
 
+// =========================
+// HISTORY (FIXED)
+// =========================
 async function loadHistory() {
   const list = document.querySelector("#historyList");
   if (!list) return;
+
   try {
     const data = await request("/api/doubts/history");
-    if (!data.doubts.length) {
-      list.textContent = "No doubts yet. Ask your first doubt now.";
+
+    if (!data?.doubts || data.doubts.length === 0) {
+      list.textContent = "No doubts yet. Ask your first doubt.";
       return;
     }
-    // Yahan image ke source (src) mein Railway ka link add kiya hai 👇
-    list.innerHTML = data.doubts.map((d) => `<div class="history-item"><span class="badge">${safeText(d.type)}</span><h3>${safeText(d.question || "Image doubt")}</h3>${d.imagePath ? `<img src="https://math-guru-production.up.railway.app${d.imagePath}" style="max-height:120px;border-radius:12px">` : ""}<p class="muted">${moneyDate(d.createdAt)}</p><button class="btn small ghost" data-view="${d.id}">View Solution</button></div>`).join("");
-    list.querySelectorAll("[data-view]").forEach((btn) => btn.addEventListener("click", () => showSolution(data.doubts.find((d) => d.id === btn.dataset.view))));
-  } catch (error) {
-    list.textContent = error.message;
+
+    list.innerHTML = data.doubts.map((d) => `
+      <div class="history-item">
+        <span class="badge">${safeText(d.type)}</span>
+        <h3>${safeText(d.question || "Image doubt")}</h3>
+
+        ${d.imagePath ? `
+          <img src="https://math-guru-production.up.railway.app${d.imagePath}" 
+          style="max-height:120px;border-radius:12px">
+        ` : ""}
+
+        <p class="muted">${moneyDate(d.createdAt)}</p>
+
+        <button class="btn small ghost" data-view="${d.id}">
+          View Solution
+        </button>
+      </div>
+    `).join("");
+
+    list.querySelectorAll("[data-view]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const doubt = data.doubts.find((d) => d.id === btn.dataset.view);
+        if (doubt) showSolution(doubt);
+      })
+    );
+
+  } catch (err) {
+    list.textContent = "Failed to load history";
   }
 }
 
+// =========================
+// INIT
+// =========================
 document.addEventListener("DOMContentLoaded", async () => {
-  if (document.querySelector("#planType") || document.querySelector("#limitText") || document.querySelector("#paymentForm")) await loadProfileBits();
+
+  await loadProfileBits();
   loadHistory();
 
-  document.querySelectorAll("[data-tab]").forEach((tab) => tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
-    tab.classList.add("active");
-    document.querySelector("#textDoubtForm").classList.toggle("hidden", tab.dataset.tab !== "text");
-    document.querySelector("#imageDoubtForm").classList.toggle("hidden", tab.dataset.tab !== "image");
-  }));
+  // TAB SWITCH
+  document.querySelectorAll("[data-tab]").forEach((tab) =>
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
 
+      document.querySelector("#textDoubtForm")?.classList.toggle("hidden", tab.dataset.tab !== "text");
+      document.querySelector("#imageDoubtForm")?.classList.toggle("hidden", tab.dataset.tab !== "image");
+    })
+  );
+
+  // =========================
+  // TEXT DOUBT
+  // =========================
   const textForm = document.querySelector("#textDoubtForm");
-  if (textForm) textForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const box = document.querySelector("#textMsg");
-    msg(box, "Solving your doubt with AI...", "notice");
-    try {
-      const data = await request("/api/doubt/text", { method: "POST", body: JSON.stringify(Object.fromEntries(new FormData(textForm))) });
-      setUser(data);
-      msg(box, "Solved successfully.", "success");
-      showSolution(data.doubt);
-      await loadProfileBits();
-    } catch (error) {
-      msg(box, error.message, "error");
-      if (error.message.includes("limit")) setTimeout(() => location.href = "upgrade.html", 1200);
-    }
-  });
 
+  if (textForm) {
+    textForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const box = document.querySelector("#textMsg");
+      msg(box, "Solving...", "notice");
+
+      try {
+        const data = await request("/api/doubt/text", {
+          method: "POST",
+          body: JSON.stringify(Object.fromEntries(new FormData(textForm)))
+        });
+
+        // 🔥 FIX IMPORTANT
+        setUser(data.user);
+
+        msg(box, "Solved successfully", "success");
+        showSolution(data.doubt);
+
+        await loadProfileBits();
+
+      } catch (err) {
+        msg(box, err.message, "error");
+
+        if (err.message.includes("limit")) {
+          setTimeout(() => location.href = "upgrade.html", 1000);
+        }
+      }
+    });
+  }
+
+  // =========================
+  // IMAGE DOUBT
+  // =========================
   const imageForm = document.querySelector("#imageDoubtForm");
-  if (imageForm) imageForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const box = document.querySelector("#imageMsg");
-    msg(box, "Reading image and solving with AI...", "notice");
-    try {
-      const data = await request("/api/doubt/image", { method: "POST", body: new FormData(imageForm) });
-      setUser(data);
-      msg(box, "Solved successfully.", "success");
-      showSolution(data.doubt);
-      await loadProfileBits();
-    } catch (error) {
-      msg(box, error.message, "error");
-      if (error.message.includes("limit")) setTimeout(() => location.href = "upgrade.html", 1200);
-    }
-  });
 
-  const payment = document.querySelector("#paymentForm");
-  if (payment) payment.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const box = document.querySelector("#paymentMsg");
-    try {
-      const data = await request("/api/payment", { method: "POST", body: new FormData(payment) });
-      payment.reset();
-      msg(box, data.message, "success");
-    } catch (error) {
-      msg(box, error.message, "error");
-    }
-  });
+  if (imageForm) {
+    imageForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const box = document.querySelector("#imageMsg");
+      msg(box, "Processing image...", "notice");
+
+      try {
+        const data = await request("/api/doubt/image", {
+          method: "POST",
+          body: new FormData(imageForm)
+        });
+
+        // 🔥 FIX IMPORTANT
+        setUser(data.user);
+
+        msg(box, "Solved successfully", "success");
+        showSolution(data.doubt);
+
+        await loadProfileBits();
+
+      } catch (err) {
+        msg(box, err.message, "error");
+
+        if (err.message.includes("limit")) {
+          setTimeout(() => location.href = "upgrade.html", 1000);
+        }
+      }
+    });
+  }
+
 });
-        
