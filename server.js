@@ -17,7 +17,7 @@ const dataDir = path.join(__dirname, 'data');
 const uploadDir = path.join(__dirname, 'uploads');
 
 // ==========================================
-// 2. HELPERS
+// 2. HELPERS (Database & Auth)
 // ==========================================
 async function readJson(file) {
     try {
@@ -44,11 +44,17 @@ const requireAuth = (req, res, next) => {
 };
 
 const upload = multer({ dest: uploadDir });
-const solveTextDoubt = async (q, lang) => `AI Solution in ${lang} for: ${q}`;
-const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, premiumActive: u.premiumActive, textUsed: u.textUsed, imageUsed: u.imageUsed });
+const publicUser = (u) => ({ 
+    id: u.id, 
+    name: u.name, 
+    email: u.email, 
+    premiumActive: u.premiumActive,
+    remainingText: (u.premiumActive ? 100 : 10) - (u.textUsed || 0),
+    remainingImage: (u.premiumActive ? 100 : 3) - (u.imageUsed || 0)
+});
 
 // ==========================================
-// 3. ADMIN ROUTES (Dashboard Fix Included)
+// 3. ADMIN ROUTES (Dashboard Fix)
 // ==========================================
 
 app.post("/api/admin/login", async (req, res) => {
@@ -71,11 +77,7 @@ app.get("/api/admin/dashboard", requireAuth, async (req, res) => {
         const users = await readJson("users");
         const doubts = await readJson("doubts");
         res.json({
-            stats: {
-                totalUsers: users.length,
-                totalDoubts: doubts.length,
-                premiumUsers: users.filter(u => u.premiumActive).length
-            },
+            stats: { totalUsers: users.length, totalDoubts: doubts.length, premiumUsers: users.filter(u => u.premiumActive).length },
             users: users.slice(0, 50),
             recentDoubts: doubts.slice(0, 10)
         });
@@ -93,44 +95,62 @@ app.get("/api/admin/contacts", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 4. STUDENT DOUBT ROUTES
+// 4. STUDENT ROUTES (Loop Killer)
 // ==========================================
+
+// ✅ Ye dashboard loop rokne ke liye sabse zaroori hai
+app.get("/api/profile", requireAuth, async (req, res) => {
+    const users = await readJson("users");
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ user: publicUser(user) });
+});
+
+app.get("/api/doubts/history", requireAuth, async (req, res) => {
+    const doubts = await readJson("doubts");
+    const userDoubts = doubts.filter(d => d.userId === req.user.id);
+    res.json({ doubts: userDoubts });
+});
 
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
     try {
         const { question, language } = req.body;
         const users = await readJson("users");
         const user = users.find(u => u.id === req.user.id);
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        const solution = await solveTextDoubt(question, language || "Hinglish");
-        user.textUsed = (user.textUsed || 0) + 1;
         
+        // Dummy solution - Replace with your AI function
+        const solution = {
+            understanding: "I have analyzed your math question.",
+            formula: "Basic Arithmetic",
+            solution: "1 + 1 = 2",
+            finalAnswer: "2",
+            hindi: "Iska jawab 2 hai.",
+            english: "The answer is 2."
+        };
+
+        user.textUsed = (user.textUsed || 0) + 1;
         const doubts = await readJson("doubts");
-        doubts.unshift({ id: Date.now().toString(), userId: user.id, type: "text", question, solution, createdAt: new Date() });
+        const doubt = { id: Date.now().toString(), userId: user.id, type: "text", question, solution, createdAt: new Date() };
+        doubts.unshift(doubt);
 
         await writeJson("users", users);
         await writeJson("doubts", doubts);
-        res.json({ solution, user: publicUser(user) });
+        res.json({ doubt, user: publicUser(user) });
     } catch (err) { res.status(500).json({ message: "AI failed" }); }
 });
 
 // ==========================================
-// 5. STATIC FILES & FALLBACK (FIXED FOR ROOT FILES)
+// 5. STATIC FILES (Root Fix)
 // ==========================================
-
-// ✅ Fix: Files GitHub par bahar hain, isliye seedha root path use kar rahe hain
 app.use(express.static(__dirname)); 
 app.use('/uploads', express.static(uploadDir));
 
-// Fallback: Agar koi route match na ho, toh index.html bhej do
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 🔥 Server Listen
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is LIVE on port ${PORT}`);
 });
-         
+    
