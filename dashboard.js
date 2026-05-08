@@ -2,12 +2,14 @@ function safeText(value) {
   return String(value || "").replace(/[<>&]/g, "");
 }
 
-// ⚡ Helpers for Gaps
+// ⚡ Final Gaps Killer Function
 function cleanAIResponse(text) {
   if (!text) return "";
   return text
-    .replace(/\\\[|\\\]|\\\(|\\\)/g, "") 
-    .replace(/\*\*/g, "")               
+    .replace(/\\\[|\\\]|\\\(|\\\)/g, "") // LaTeX brackets remove
+    .replace(/\*\*/g, "")               // Bold symbols remove
+    .replace(/\n\s*\n/g, "\n")          // ⚡ Double/Triple empty lines ko single line banayegi
+    .replace(/\n{2,}/g, "\n")           // Extra line breaks ko tight kar dega
     .trim();
 }
 
@@ -64,6 +66,7 @@ function showSolution(doubt) {
 
   if (!panel || !content) return;
 
+  // Background clean aur content render
   content.innerHTML = renderSolution(doubt);
   panel.classList.remove("hidden");
   panel.scrollIntoView({ behavior: "smooth" });
@@ -107,10 +110,10 @@ async function loadHistory() {
     list.innerHTML = data.doubts.map((d) => `
       <div class="history-item card">
         <span class="badge">${safeText(d.type).toUpperCase()}</span>
-        <h3>${safeText(d.question || "Image doubt")}</h3>
-        ${d.imagePath ? `<img src="${API}${d.imagePath}" class="history-img">` : ""}
+        <h3 style="margin: 10px 0;">${safeText(d.question || "Image doubt")}</h3>
+        ${d.imagePath ? `<img src="${API}${d.imagePath}" class="history-img" style="max-height:120px; border-radius:12px; display:block; margin-bottom:10px;">` : ""}
         <p class="muted">${new Date(d.createdAt).toLocaleDateString()}</p>
-        <button class="btn small ghost" data-view="${d.id}">View Solution</button>
+        <button class="btn small ghost" data-view="${d.id}" style="margin-top:10px;">View Solution</button>
       </div>
     `).join("");
 
