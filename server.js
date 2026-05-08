@@ -1,4 +1,35 @@
-        // ... baaki saara code upar ka same rahega ...
+// =========================
+// ADMIN ROUTES
+// =========================
+
+// ✅ ADMIN LOGIN ROUTE (Ise add karo varna <!DOCTYPE error aayega)
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const admins = await readJson("admins"); // Ensure data/admins.json exists
+    
+    const admin = admins.find(a => a.email === email && a.password === password);
+
+    if (!admin) {
+      return res.status(401).json({ message: "Opps! Galat credentials hain." });
+    }
+
+    // Role 'admin' dena zaroori hai requireAuth ke liye
+    const token = signToken({ id: admin.id, role: 'admin' });
+    
+    res.json({ 
+      token, 
+      user: { id: admin.id, name: admin.name, email: admin.email, role: 'admin' } 
+    });
+  } catch (err) {
+    console.error("Admin Login Error:", err);
+    res.status(500).json({ message: "Admin Login Failed" });
+  }
+});
+
+// =========================
+// DOUBT SOLVING ROUTES
+// =========================
 
 // ✅ UPDATED TEXT DOUBT ROUTE
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
@@ -76,6 +107,3 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
     res.status(500).json({ message: "AI failed" }); 
   }
 });
-
-// ... baaki niche ka code same ...
-      
