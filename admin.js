@@ -2,7 +2,8 @@
 // HELPERS
 // =========================
 function esc(v) {
-  return String(value || "").replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
+  // ⚡ FIXED: Yahan 'value' likha tha jo undefined error deta, ab 'v' kar diya hai
+  return String(v || "").replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
 }
 
 function adminToken() {
@@ -22,7 +23,7 @@ async function adminReq(path, options = {}) {
   // Agar response JSON nahi hai (HTML mil gaya), toh error handle karein
   const contentType = res.headers.get("content-type");
   if (!contentType || !contentType.includes("application/json")) {
-    throw new Error("Server error: Path not found or Server is down.");
+    throw new Error("Server error: Path not found. Check if server.js has the route.");
   }
 
   const data = await res.json();
@@ -47,13 +48,12 @@ async function approvePayment(id, action, userId) {
       body: JSON.stringify({ action, userId })
     });
     alert("Action successful!");
-    await loadAdmin(); // Reload data
+    await loadAdmin(); 
   } catch (e) {
     alert("Error: " + e.message);
   }
 }
 
-// Manual activation for users
 async function manualActivate(userId) {
   if (!confirm("Activate Premium for this user?")) return;
   try {
@@ -71,6 +71,7 @@ async function manualActivate(userId) {
 async function loadAdmin() {
   try {
     setAdminView(true);
+    // Promise.all se data jaldi load hota hai
     const [dash, pays, contacts] = await Promise.all([
       adminReq("/api/admin/dashboard"),
       adminReq("/api/admin/payments"),
@@ -88,51 +89,64 @@ async function loadAdmin() {
       `).join("");
     }
 
-    // Render Payments
-    document.querySelector("#paymentsTable").innerHTML = pays.payments.map(p => `
-      <tr>
-        <td>${esc(p.userName)}<br><span class="muted">${esc(p.userEmail)}</span></td>
-        <td>${esc(p.utr)}</td>
-        <td><span class="badge ${p.status}">${p.status}</span></td>
-        <td>${p.screenshot ? `<a class="brand" target="_blank" href="${API}${p.screenshot}">View</a>` : "-"}</td>
-        <td>
-          <button class="btn small" onclick="approvePayment('${p.id}','approve','${p.userId}')">Approve</button>
-          <button class="btn small danger" onclick="approvePayment('${p.id}','reject')">Reject</button>
-        </td>
-      </tr>
-    `).join("") || "<tr><td colspan='5'>No payments</td></tr>";
+    // Render Payments Table
+    const pTable = document.querySelector("#paymentsTable");
+    if (pTable) {
+      pTable.innerHTML = pays.payments.map(p => `
+        <tr>
+          <td>${esc(p.userName || p.user?.name)}<br><span class="muted">${esc(p.userEmail || p.user?.email)}</span></td>
+          <td>${esc(p.utr)}</td>
+          <td><span class="badge ${p.status}">${p.status}</span></td>
+          <td>${p.screenshot ? `<a class="brand" target="_blank" href="${API}${p.screenshot}">View</a>` : "-"}</td>
+          <td>
+            <button class="btn small" onclick="approvePayment('${p.id}','approve','${p.userId}')">Approve</button>
+            <button class="btn small danger" onclick="approvePayment('${p.id}','reject')">Reject</button>
+          </td>
+        </tr>
+      `).join("") || "<tr><td colspan='5'>No pending payments</td></tr>";
+    }
 
-    // Render Users
-    document.querySelector("#usersTable").innerHTML = dash.users.map(u => `
-      <tr>
-        <td>${esc(u.name)}</td>
-        <td>${esc(u.email)}</td>
-        <td><span class="badge">${u.premiumActive ? "Premium" : "Free"}</span></td>
-        <td>Txt: ${u.textUsed || 0}, Img: ${u.imageUsed || 0}</td>
-        <td><button class="btn small ghost" onclick="manualActivate('${u.id}')">Activate</button></td>
-      </tr>
-    `).join("");
+    // Render Users Table
+    const uTable = document.querySelector("#usersTable");
+    if (uTable) {
+      uTable.innerHTML = dash.users.map(u => `
+        <tr>
+          <td>${esc(u.name)}</td>
+          <td>${esc(u.email)}</td>
+          <td><span class="badge">${u.premiumActive ? "Premium" : "Free"}</span></td>
+          <td>Txt: ${u.textUsed || 0}, Img: ${u.imageUsed || 0}</td>
+          <td><button class="btn small ghost" onclick="manualActivate('${u.id}')">Activate</button></td>
+        </tr>
+      `).join("");
+    }
 
     // Render Doubts
-    document.querySelector("#adminDoubts").innerHTML = dash.recentDoubts.map(d => `
-      <div class="history-item card" style="margin-bottom:10px;">
-        <span class="badge">${esc(d.type).toUpperCase()}</span> 
-        <strong>${esc(d.question || "Image doubt")}</strong>
-        <p class="muted">User ID: ${d.userId} | ${new Date(d.createdAt).toLocaleString()}</p>
-      </div>
-    `).join("") || "No doubts yet";
+    const dList = document.querySelector("#adminDoubts");
+    if (dList) {
+      dList.innerHTML = dash.recentDoubts.map(d => `
+        <div class="history-item card" style="margin-bottom:10px;">
+          <span class="badge">${esc(d.type).toUpperCase()}</span> 
+          <strong>${esc(d.question || "Image doubt")}</strong>
+          <p class="muted">User: ${esc(d.userId)} | ${new Date(d.createdAt).toLocaleString()}</p>
+        </div>
+      `).join("") || "No doubts yet";
+    }
 
     // Render Contacts
-    document.querySelector("#contactsList").innerHTML = contacts.contacts.map(c => `
-      <div class="history-item card" style="margin-bottom:10px;">
-        <strong>${esc(c.name)}</strong> (${esc(c.email)})
-        <p>${esc(c.message)}</p>
-        <p class="muted">${new Date(c.createdAt).toLocaleString()}</p>
-      </div>
-    `).join("") || "No messages";
+    const cList = document.querySelector("#contactsList");
+    if (cList) {
+      cList.innerHTML = contacts.contacts.map(c => `
+        <div class="history-item card" style="margin-bottom:10px;">
+          <strong>${esc(c.name)}</strong> (${esc(c.email)})
+          <p>${esc(c.message)}</p>
+          <p class="muted">${new Date(c.createdAt).toLocaleString()}</p>
+        </div>
+      `).join("") || "No messages";
+    }
 
   } catch (e) {
     console.error("Admin Load Error:", e);
+    // Agar token expire ho jaye ya error aaye toh login par bhej do
     localStorage.removeItem("mg_admin_token");
     setAdminView(false);
   }
@@ -152,15 +166,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const formData = Object.fromEntries(new FormData(e.target));
 
       try {
-        // Direct fetch to handle login
         const res = await fetch(`${API}/api/admin/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData)
         });
 
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("Server sent HTML instead of JSON. Check route order in server.js");
+        }
+
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Invalid Admin");
+        if (!res.ok) throw new Error(data.message || "Invalid Admin Credentials");
 
         localStorage.setItem("mg_admin_token", data.token);
         await loadAdmin();
@@ -177,14 +195,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("mg_admin_token");
-      setAdminView(false);
       window.location.reload();
     });
   }
 
-  // Auto-load if token exists
   if (adminToken()) {
     loadAdmin();
   }
 });
-                               
+      
