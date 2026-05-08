@@ -1,13 +1,15 @@
 // ==========================================
-// 1. INITIALIZATION & MIDDLEWARES
+// 1. INITIALIZATION (Sabse Upar)
 // ==========================================
-const express = require('express'); // 👈 Missing tha
-const path = require('path');
-const cors = require('cors'); // 👈 Missing tha
 require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
 
-const app = express(); // 🔥 YE SABSE ZAROORI HAI (Isi ki wajah se crash ho raha tha)
+// Yahan hum apna app initialize kar rahe hain
+const app = express();
 
+// Middlewares - Inhe routes se pehle hona chahiye
 app.use(cors());
 app.use(express.json());
 
@@ -15,12 +17,11 @@ app.use(express.json());
 // 2. ADMIN ROUTES
 // ==========================================
 
-// ✅ ADMIN LOGIN: Pehle .env check karega, fir admins.json
 app.post("/api/admin/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Check from .env
+    // .env check
     if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
       const token = signToken({ id: "admin-root", role: "admin" });
       return res.json({ 
@@ -29,7 +30,7 @@ app.post("/api/admin/login", async (req, res) => {
       });
     }
 
-    // 2. Check from admins.json
+    // JSON database check
     const admins = await readJson("admins");
     const admin = admins.find(a => a.email === email && a.password === password);
 
@@ -42,7 +43,6 @@ app.post("/api/admin/login", async (req, res) => {
       token, 
       user: { id: admin.id, name: admin.name, email: admin.email, role: 'admin' } 
     });
-
   } catch (err) {
     console.error("Admin Login Error:", err);
     res.status(500).json({ message: "Admin Login Failed" });
@@ -53,7 +53,6 @@ app.post("/api/admin/login", async (req, res) => {
 // 3. DOUBT SOLVING ROUTES
 // ==========================================
 
-// ✅ TEXT DOUBT (With Language Support)
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
   try {
     const { question, language } = req.body; 
@@ -87,7 +86,6 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
   }
 });
 
-// ✅ IMAGE DOUBT (With Language Support)
 app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "Image required" });
@@ -128,16 +126,19 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
 });
 
 // ==========================================
-// 4. STATIC FILES & FALLBACK (Hamesha Routes ke Niche)
+// 4. STATIC FILES & FALLBACK (API Routes Ke NICHE)
 // ==========================================
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(uploadDir));
 
+// ✅ Sabse Pehle API Check Hogi, Agar Kuch Match Nahi Hua Toh Static Dhoondega
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Fallback for SPA (Render Fix)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 🔥 Server Port Setup
+// 🔥 Server Listen
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
