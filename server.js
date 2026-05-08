@@ -30,6 +30,13 @@ const files = {
 };
 
 // =============================
+// UTIL: ID GENERATOR
+// =============================
+function generateId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+}
+
+// =============================
 // MULTER CONFIG
 // =============================
 const storage = multer.diskStorage({
@@ -49,7 +56,7 @@ const upload = multer({
 });
 
 // =============================
-// MIDDLEWARE (FIXED FOR LOGIN LOOP)
+// MIDDLEWARE (FIXED)
 // =============================
 app.use(cors({
   origin: "*", 
@@ -108,6 +115,7 @@ function publicUser(user) {
 // =============================
 app.get("/", (req, res) => res.send("Maths Guru Backend Live 🚀"));
 
+// SIGNUP
 app.post("/api/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -117,7 +125,7 @@ app.post("/api/signup", async (req, res) => {
     if (users.find(u => u.email === email.toLowerCase())) return res.status(409).json({ message: "Email exists" });
 
     const user = {
-      id: `${Date.now()}`,
+      id: generateId(),
       name,
       email: email.toLowerCase(),
       passwordHash: await bcrypt.hash(password, 12),
@@ -134,6 +142,7 @@ app.post("/api/signup", async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
+// LOGIN
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -148,12 +157,26 @@ app.post("/api/login", async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
+// PROFILE
+app.get("/api/profile", requireAuth, async (req, res) => {
+  try {
+    const users = await readJson("users");
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) return res.status(404).json({ message: "Not found" });
+    res.json({ user: publicUser(user) });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// TEXT DOUBT
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
   try {
     const { question } = req.body;
     const users = await readJson("users");
     const user = users.find(u => u.id === req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    const limits = user.premiumActive ? 100 : 10;
+    if ((user.textUsed || 0) >= limits) return res.status(402).json({ message: "Limit reached" });
 
     const solution = await solveTextDoubt(question);
     user.textUsed = (user.textUsed || 0) + 1;
@@ -163,9 +186,36 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ message: "AI failed" }); }
 });
 
+// IMAGE DOUBT
+app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "Image required" });
+
+    const users = await readJson("users");
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const limits = user.premiumActive ? 100 : 3;
+    if ((user.imageUsed || 0) >= limits) return res.status(402).json({ message: "Limit reached" });
+
+    const solution = await solveImageDoubt(
+      path.join(uploadDir, req.file.filename),
+      req.file.mimetype,
+      req.body.question || ""
+    );
+
+    user.imageUsed = (user.imageUsed || 0) + 1;
+    await writeJson("users", users);
+    res.json({ solution, user: publicUser(user) });
+  } catch (err) { res.status(500).json({ message: "AI failed" }); }
+});
+
 // =============================
 // START
 // =============================
 ensureStore().then(() => {
-  app.listen(PORT, () => console.log(`Maths Guru running on ${PORT}`));
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Maths Guru running on ${PORT}`);
+  });
 });
+      
