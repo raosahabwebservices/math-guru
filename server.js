@@ -44,6 +44,7 @@ const requireAuth = (req, res, next) => {
 };
 
 const upload = multer({ dest: uploadDir });
+
 const publicUser = (u) => ({ 
     id: u.id, 
     name: u.name, 
@@ -54,7 +55,43 @@ const publicUser = (u) => ({
 });
 
 // ==========================================
-// 3. ADMIN ROUTES (Dashboard Fix)
+// 3. AUTH ROUTES (Signup & Login)
+// ==========================================
+
+app.post("/api/signup", async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+        const users = await readJson("users");
+        if (users.find(u => u.email === email)) return res.status(400).json({ message: "Email already exists" });
+        
+        const newUser = { id: Date.now().toString(), name, email, password, premiumActive: false, textUsed: 0, imageUsed: 0 };
+        users.push(newUser);
+        await writeJson("users", users);
+        
+        res.json({ token: signToken({ id: newUser.id }), user: publicUser(newUser) });
+    } catch (err) { res.status(500).json({ message: "Signup Failed" }); }
+});
+
+app.post("/api/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const users = await readJson("users");
+        const user = users.find(u => u.email === email && u.password === password);
+        if (!user) return res.status(401).json({ message: "Invalid Credentials" });
+        
+        res.json({ token: signToken({ id: user.id }), user: publicUser(user) });
+    } catch (err) { res.status(500).json({ message: "Login Failed" }); }
+});
+
+app.get("/api/profile", requireAuth, async (req, res) => {
+    const users = await readJson("users");
+    const user = users.find(u => u.id === req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ user: publicUser(user) });
+});
+
+// ==========================================
+// 4. ADMIN ROUTES
 // ==========================================
 
 app.post("/api/admin/login", async (req, res) => {
@@ -95,30 +132,20 @@ app.get("/api/admin/contacts", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 4. STUDENT ROUTES (Loop Killer)
+// 5. DOUBT ROUTES
 // ==========================================
-
-// ✅ Ye dashboard loop rokne ke liye sabse zaroori hai
-app.get("/api/profile", requireAuth, async (req, res) => {
-    const users = await readJson("users");
-    const user = users.find(u => u.id === req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ user: publicUser(user) });
-});
 
 app.get("/api/doubts/history", requireAuth, async (req, res) => {
     const doubts = await readJson("doubts");
-    const userDoubts = doubts.filter(d => d.userId === req.user.id);
-    res.json({ doubts: userDoubts });
+    res.json({ doubts: doubts.filter(d => d.userId === req.user.id) });
 });
 
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
     try {
-        const { question, language } = req.body;
+        const { question } = req.body;
         const users = await readJson("users");
         const user = users.find(u => u.id === req.user.id);
         
-        // Dummy solution - Replace with your AI function
         const solution = {
             understanding: "I have analyzed your math question.",
             formula: "Basic Arithmetic",
@@ -140,7 +167,7 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 5. STATIC FILES (Root Fix)
+// 6. STATIC FILES & FALLBACK (Root Fix)
 // ==========================================
 app.use(express.static(__dirname)); 
 app.use('/uploads', express.static(uploadDir));
@@ -153,4 +180,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is LIVE on port ${PORT}`);
 });
-    
+            
