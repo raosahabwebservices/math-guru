@@ -10,29 +10,13 @@ const SAMBANOVA_KEY = process.env.SAMBANOVA_API_KEY;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
 // ================================
-// PROMPT BUILDER (MERGED CLEAN)
+// PROMPT
 // ================================
 function buildPrompt(question) {
   return `
-You are Maths Guru AI Ultimate Engine, a premium multi-model mathematics tutor designed for maximum accuracy, speed, and student satisfaction.
+You are Maths Guru AI Ultimate Engine.
 
-MISSION:
-Solve any maths question from Class 1 to 12 step-by-step in Hindi + English.
-
-RULES:
-- Clear steps
-- Formula used
-- Final answer
-- Exam-ready format
-
-CLASSIFICATION:
-- Class 1–5: basic maths
-- Class 6–8: intermediate
-- Class 9–10: advanced
-- Class 11–12: expert level
-
-INSTRUCTIONS:
-Always explain in simple language and show steps clearly.
+Solve step-by-step in Hindi + English.
 
 Question:
 ${question}
@@ -40,7 +24,7 @@ ${question}
 }
 
 // ================================
-// 1. GROQ
+// GROQ
 // ================================
 async function callGroq(prompt) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -62,7 +46,7 @@ async function callGroq(prompt) {
 }
 
 // ================================
-// 2. OPENROUTER
+// OPENROUTER
 // ================================
 async function callOpenRouter(prompt) {
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -84,7 +68,7 @@ async function callOpenRouter(prompt) {
 }
 
 // ================================
-// 3. SAMBANOVA
+// SAMBANOVA
 // ================================
 async function callSambaNova(prompt) {
   const res = await fetch("https://api.sambanova.ai/v1/chat/completions", {
@@ -106,7 +90,7 @@ async function callSambaNova(prompt) {
 }
 
 // ================================
-// 4. GEMINI (FINAL)
+// GEMINI
 // ================================
 async function callGemini(prompt) {
   const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
@@ -126,34 +110,64 @@ async function callGemini(prompt) {
 }
 
 // ================================
-// MAIN ROUTER (FINAL FLOW)
+// TEXT SOLVER (✔ FIXED)
 // ================================
-async function solveMath(question) {
-  if (!question?.trim()) {
-    throw new Error("Question empty");
-  }
-
+async function solveTextDoubt(question) {
   const prompt = buildPrompt(question);
 
   try {
     return await callGroq(prompt);
-  } catch (e1) {
-    console.log("Groq failed → OpenRouter");
-
+  } catch {
     try {
       return await callOpenRouter(prompt);
-    } catch (e2) {
-      console.log("OpenRouter failed → SambaNova");
-
+    } catch {
       try {
         return await callSambaNova(prompt);
-      } catch (e3) {
-        console.log("SambaNova failed → Gemini");
-
+      } catch {
         return await callGemini(prompt);
       }
     }
   }
 }
 
-module.exports = { solveMath };
+// ================================
+// IMAGE SOLVER (✔ FIXED)
+// ================================
+async function solveImageDoubt(imagePath, mimeType, question = "") {
+  const base64Image = fs.readFileSync(path.resolve(imagePath), "base64");
+
+  const prompt = buildPrompt(
+    "Solve this image question: " + question
+  );
+
+  // Direct Gemini vision call
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType, data: base64Image } }
+          ]
+        }
+      ]
+    })
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error("Image solve failed");
+
+  return data.candidates[0].content.parts[0].text;
+}
+
+// ================================
+// EXPORT (IMPORTANT FIX)
+// ================================
+module.exports = {
+  solveTextDoubt,
+  solveImageDoubt
+};
