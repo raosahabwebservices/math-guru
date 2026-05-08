@@ -51,12 +51,10 @@ const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, premiumActi
 // 3. ADMIN ROUTES (Dashboard Fix Included)
 // ==========================================
 
-// ✅ ADMIN LOGIN
 app.post("/api/admin/login", async (req, res) => {
     try {
         const { email, password } = req.body;
         if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-            // Role admin dena bahut zaroori hai Dashboard access ke liye
             const token = signToken({ id: "admin-root", role: "admin" });
             return res.json({ token, user: { id: "admin-root", name: "Super Admin", role: "admin" } });
         }
@@ -68,7 +66,6 @@ app.post("/api/admin/login", async (req, res) => {
     } catch (err) { res.status(500).json({ message: "Login Failed" }); }
 });
 
-// ✅ ADMIN DASHBOARD DATA (Iske bina loop chalega)
 app.get("/api/admin/dashboard", requireAuth, async (req, res) => {
     try {
         const users = await readJson("users");
@@ -85,13 +82,11 @@ app.get("/api/admin/dashboard", requireAuth, async (req, res) => {
     } catch (err) { res.status(500).json({ message: "Stats load failed" }); }
 });
 
-// ✅ ADMIN PAYMENTS (Fix for dashboard loading)
 app.get("/api/admin/payments", requireAuth, async (req, res) => {
     const payments = await readJson("payments");
     res.json({ payments: payments || [] });
 });
 
-// ✅ ADMIN CONTACTS (Fix for dashboard loading)
 app.get("/api/admin/contacts", requireAuth, async (req, res) => {
     const contacts = await readJson("contacts");
     res.json({ contacts: contacts || [] });
@@ -121,17 +116,21 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 5. STATIC & FALLBACK
+// 5. STATIC FILES & FALLBACK (FIXED FOR ROOT FILES)
 // ==========================================
-app.use(express.static(path.join(__dirname, 'public')));
+
+// ✅ Fix: Files GitHub par bahar hain, isliye seedha root path use kar rahe hain
+app.use(express.static(__dirname)); 
 app.use('/uploads', express.static(uploadDir));
 
+// Fallback: Agar koi route match na ho, toh index.html bhej do
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 🔥 LISTEN
+// 🔥 Server Listen
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is LIVE on port ${PORT}`);
 });
+         
