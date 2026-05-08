@@ -1,1 +1,61 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Upgrade | MATHS GURU</title><script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script><link rel="stylesheet" href="style.css"></head><body><nav class="nav"><div class="nav-inner"><a class="brand" href="index.html">MATHS GURU</a><div class="links"><a href="dashboard.html">Dashboard</a><a href="ask-doubt.html">Ask Doubt</a><button class="btn small ghost" data-logout>Logout</button></div></div></nav><main class="container"><h1 class="section-title">Upgrade to Premium</h1><p class="muted">Pay ₹99 by UPI, submit UTR, and admin will approve premium access.</p><section class="grid two" style="margin-top:24px"><div class="qr float"><h2>Scan QR to pay</h2><img id="upiQr" alt="UPI QR for raos38908@okhdfcbank"><h3>UPI ID: raos38908@okhdfcbank</h3><a id="upiPayLink" class="btn" href="#">Open UPI App</a></div><form id="paymentForm" class="card form full"><h2>Submit payment request</h2><div class="notice">Amount: ₹99 | Plan: 100 text + 100 image doubts</div><div><label class="label">UTR Number</label><input name="utr" required minlength="6" placeholder="Enter bank/UPI UTR"></div><div><label class="label">Screenshot optional</label><input name="screenshot" type="file" accept="image/*"></div><button class="btn" type="submit">Submit for Approval</button><div id="paymentMsg" class="hidden"></div></form></section></main><script src="script.js"></script><script src="dashboard.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upgrade | MATHS GURU</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a class="brand" href="index.html">MATHS GURU</a>
+            <div class="links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="ask-doubt.html">Ask Doubt</a>
+                <button class="btn small ghost" data-logout>Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1 class="section-title">Upgrade to Premium</h1>
+        <p class="muted">Pay ₹99 by UPI, submit UTR, and admin will approve premium access.</p>
+
+        <section class="grid two" style="margin-top:24px">
+            <div class="qr float">
+                <h2>Scan QR to pay</h2>
+                <img src="qr.png" id="upiQr" alt="UPI QR" style="width:220px; border-radius:12px; margin:15px auto; display:block; border:1px solid #eee;">
+                
+                <h3>UPI ID: raos38908@okhdfcbank</h3>
+                
+                <a id="upiPayLink" class="btn" href="upi://pay?pa=raos38908@okhdfcbank&pn=MathsGuru&am=99&cu=INR" style="display:block; text-align:center;">
+                    Open UPI App
+                </a>
+            </div>
+
+            <form id="paymentForm" class="card form full">
+                <h2>Submit payment request</h2>
+                <div class="notice">Amount: ₹99 | Plan: 100 text + 100 image doubts</div>
+                
+                <div>
+                    <label class="label">UTR Number</label>
+                    <input name="utr" required minlength="6" placeholder="Enter bank/UPI UTR">
+                </div>
+                
+                <div>
+                    <label class="label">Screenshot optional</label>
+                    <input name="screenshot" type="file" accept="image/*">
+                </div>
+                
+                <button class="btn" type="submit">Submit for Approval</button>
+                <div id="paymentMsg" class="hidden"></div>
+            </form>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
