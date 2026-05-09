@@ -180,6 +180,22 @@ app.get("/api/admin/dashboard", requireAuth, async (req, res) => {
         recentDoubts: doubts.slice(0, 10)
     });
 });
+// User ko manually premium banane ke liye
+app.post("/api/admin/activate/:id", requireAuth, async (req, res) => {
+    try {
+        const users = await readJson("users");
+        const idx = users.findIndex(u => u.id === req.params.id);
+        
+        if (idx !== -1) {
+            users[idx].premiumActive = true; // Premium on kar diya
+            await writeJson("users", users);
+            return res.json({ message: "User activated successfully!" });
+        }
+        res.status(404).json({ message: "User nahi mila" });
+    } catch (e) {
+        res.status(500).json({ message: "Server error" });
+    }
+});
 
 app.get("/api/admin/payments", requireAuth, async (req, res) => {
     const payments = await readJson("payments");
