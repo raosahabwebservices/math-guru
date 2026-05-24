@@ -8,7 +8,7 @@ const cors = require('cors');
 const fsSync = require('fs'); 
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const mongoose = require('mongoose'); // ✅ MONGOOSE IMPORTED PERFECTLY
+const mongoose = require('mongoose'); // ✅ MONGOOSE CONNECTED
 
 // ✅ ASLI AI IMPORT (ai.js ko link kiya)
 const { solveTextDoubt, solveImageDoubt } = require('./ai');
@@ -35,7 +35,7 @@ mongoose.connect(mongoURI)
 const userSchema = new mongoose.Schema({
     name: String,
     email: { type: String, unique: true, required: true },
-    password: String, // bcrypt logic stays as you handle it
+    password: String, 
     premiumActive: { type: Boolean, default: false },
     textUsed: { type: Number, default: 0 },
     imageUsed: { type: Number, default: 0 },
@@ -53,7 +53,6 @@ const doubtSchema = new mongoose.Schema({
 });
 const Doubt = mongoose.model('Doubt', doubtSchema);
 
-// Extras for Admin fallback lists
 const Payment = mongoose.model('Payment', new mongoose.Schema({ data: Object }, { strict: false }));
 const Contact = mongoose.model('Contact', new mongoose.Schema({ data: Object }, { strict: false }));
 
@@ -117,15 +116,12 @@ app.get("/api/profile", requireAuth, async (req, res) => {
 // ==========================================
 // 4. ASLI AI DOUBT ROUTES
 // ==========================================
-
-// ✅ TEXT DOUBT (OpenRouter GPT-4o-mini connect kiya)
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
     try {
         const { question, language } = req.body;
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: "User not found" });
         
-        // Asli AI Call
         const solution = await solveTextDoubt(question, language || "Hinglish");
 
         user.textUsed = (user.textUsed || 0) + 1;
@@ -135,12 +131,10 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
         await doubt.save();
 
         const mappedDoubt = { id: doubt._id.toString(), userId: doubt.userId, type: doubt.type, question, solution, createdAt: doubt.createdAt };
-
         res.json({ doubt: mappedDoubt, user: publicUser(user) });
     } catch (err) { res.status(500).json({ message: "AI Error: " + err.message }); }
 });
 
-// ✅ IMAGE DOUBT (404 Fix aur AI Connect)
 app.post("/api/doubt/image", requireAuth, upload.single('image'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: "No image uploaded" });
@@ -149,29 +143,15 @@ app.post("/api/doubt/image", requireAuth, upload.single('image'), async (req, re
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        // Asli AI Call (Image wala)
         const solution = await solveImageDoubt(req.file.path, req.file.mimetype, question, language);
 
         user.imageUsed = (user.imageUsed || 0) + 1;
         await user.save();
 
-        const doubt = new Doubt({ 
-            userId: user._id.toString(), 
-            type: "image", 
-            imagePath: `/uploads/${req.file.filename}`, 
-            solution 
-        });
+        const doubt = new Doubt({ userId: user._id.toString(), type: "image", imagePath: `/uploads/${req.file.filename}`, solution });
         await doubt.save();
 
-        const mappedDoubt = { 
-            id: doubt._id.toString(), 
-            userId: doubt.userId, 
-            type: doubt.type, 
-            imagePath: doubt.imagePath, 
-            solution, 
-            createdAt: doubt.createdAt 
-        };
-
+        const mappedDoubt = { id: doubt._id.toString(), userId: doubt.userId, type: doubt.type, imagePath: doubt.imagePath, solution, createdAt: doubt.createdAt };
         res.json({ doubt: mappedDoubt, user: publicUser(user) });
     } catch (err) { res.status(500).json({ message: "Image AI Error" }); }
 });
@@ -187,9 +167,8 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 5. ADMIN API ROUTES (Hamesha Static/Fallback ke UPAR rakhein)
+// 5. ADMIN API ROUTES
 // ==========================================
-
 app.post("/api/admin/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -228,13 +207,9 @@ app.get("/api/admin/dashboard", requireAuth, async (req, res) => {
 app.post("/api/admin/activate/:id", requireAuth, async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(req.params.id, { premiumActive: true }, { new: true });
-        if (updatedUser) {
-            return res.json({ message: "User activated successfully!" });
-        }
+        if (updatedUser) return res.json({ message: "User activated successfully!" });
         res.status(404).json({ message: "User nahi mila" });
-    } catch (e) {
-        res.status(500).json({ message: "Server error" });
-    }
+    } catch (e) { res.status(500).json({ message: "Server error" }); }
 });
 
 app.get("/api/admin/payments", requireAuth, async (req, res) => {
@@ -252,9 +227,8 @@ app.get("/api/admin/contacts", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 6. STATIC FILES & FALLBACK (Ye hamesha SABSE NICHE rahega)
+// 6. STATIC FILES & FALLBACK (SABSE NICHE)
 // ==========================================
-
 app.use(express.static(__dirname)); 
 app.use('/uploads', express.static(uploadDir));
 
