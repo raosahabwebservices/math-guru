@@ -1,4 +1,3 @@
-
 // ==========================================
 // 1. INITIALIZATION & IMPORTS
 // ==========================================
@@ -9,7 +8,7 @@ const cors = require('cors');
 const fsSync = require('fs'); 
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const mongoose = require('mongoose'); // ✅ MONGOOSE ADD KIYA
+const mongoose = require('mongoose'); // ✅ MONGOOSE IMPORTED PERFECTLY
 
 // ✅ ASLI AI IMPORT (ai.js ko link kiya)
 const { solveTextDoubt, solveImageDoubt } = require('./ai');
@@ -21,10 +20,10 @@ app.use(express.json());
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fsSync.existsSync(uploadDir)) fsSync.mkdirSync(uploadDir, { recursive: true });
 
-  
+// ==========================================
 // 1B. MONGODB DATABASE CONNECTION
 // ==========================================
-const mongoURI = process.env.MONGO_URI || "mongodb://mathguru498_db_user:Harshit7880@ac-ah5f53g-shard-00-00.c9q0v1g.mongodb.net:27017,ac-ah5f53g-shard-00-01.c9q0v1g.mongodb.net:27017,ac-ah5f53g-shard-00-02.c9q0v1g.mongodb.net:27017/?ssl=true&replicaSet=atlas-umu4lu-shard-0&authSource=admin&appName=Cluster0";
+const mongoURI = process.env.MONGO_URI || "mongodb+srv://mathguru498_db_user:Harshit7880@cluster0.c9q0v1g.mongodb.net/mathsguru?retryWrites=true&w=majority&appName=Cluster0";
 
 mongoose.connect(mongoURI)
   .then(() => console.log("🚀 Badhai ho! Maths Guru DB successfully connect ho gaya."))
@@ -135,7 +134,6 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
         const doubt = new Doubt({ userId: user._id.toString(), type: "text", question, solution });
         await doubt.save();
 
-        // Convert to look identical to your previous response
         const mappedDoubt = { id: doubt._id.toString(), userId: doubt.userId, type: doubt.type, question, solution, createdAt: doubt.createdAt };
 
         res.json({ doubt: mappedDoubt, user: publicUser(user) });
@@ -227,7 +225,6 @@ app.get("/api/admin/dashboard", requireAuth, async (req, res) => {
     } catch (err) { res.status(500).json({ message: "Dashboard Error" }); }
 });
 
-// User ko manually premium banane ke liye
 app.post("/api/admin/activate/:id", requireAuth, async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(req.params.id, { premiumActive: true }, { new: true });
@@ -270,9 +267,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is LIVE on port ${PORT}`);
 });
-        
-
-
-
-
-
+               
