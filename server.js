@@ -21,10 +21,11 @@ app.use(express.json());
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fsSync.existsSync(uploadDir)) fsSync.mkdirSync(uploadDir, { recursive: true });
 
-// ==========================================
+  
 // 1B. MONGODB DATABASE CONNECTION
 // ==========================================
-const mongoURI = process.env.MONGO_URI;
+const mongoURI = process.env.MONGO_URI || "mongodb://mathguru498_db_user:Harshit7880@ac-ah5f53g-shard-00-00.c9q0v1g.mongodb.net:27017,ac-ah5f53g-shard-00-01.c9q0v1g.mongodb.net:27017,ac-ah5f53g-shard-00-02.c9q0v1g.mongodb.net:27017/?ssl=true&replicaSet=atlas-umu4lu-shard-0&authSource=admin&appName=Cluster0";
+
 mongoose.connect(mongoURI)
   .then(() => console.log("🚀 Badhai ho! Maths Guru DB successfully connect ho gaya."))
   .catch(err => console.error("❌ Database connection fail:", err));
