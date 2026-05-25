@@ -30,7 +30,7 @@ mongoose.connect(mongoURI)
   .catch(err => console.error("❌ Database connection fail:", err));
 
 // ==========================================
-// 1C. MONGODB SCHEMAS & MODELS (Dhancha)
+// 1C. MONGODB SCHEMAS & MODELS (Dhancha) - FIXED!
 // ==========================================
 const userSchema = new mongoose.Schema({
     name: String,
@@ -47,7 +47,7 @@ const doubtSchema = new mongoose.Schema({
     userId: String,
     type: String,
     question: String,
-    solution: String,
+    solution: mongoose.Schema.Types.Mixed, // ✅ String hata kar MIXED kar diya hai!
     imagePath: String,
     createdAt: { type: Date, default: Date.now }
 });
@@ -55,6 +55,7 @@ const Doubt = mongoose.model('Doubt', doubtSchema);
 
 const Payment = mongoose.model('Payment', new mongoose.Schema({ data: Object }, { strict: false }));
 const Contact = mongoose.model('Contact', new mongoose.Schema({ data: Object }, { strict: false }));
+
 
 // ==========================================
 // 2. HELPERS
