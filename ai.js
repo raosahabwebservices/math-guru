@@ -108,12 +108,61 @@ async function solveImageDoubt(imagePath, mimeType, question = "", language = "H
         ]
       }
     ]);
+  
+    // ================================================
+// ✅ NEW FEATURE: APNA TEST BANAO (AI Test Generator)
+// ================================================
+async function generateCustomTest({ classLevel, chapter, topic, difficulty, questionType, numQuestions, language }) {
+  try {
+    const systemPrompt = `You are an elite mathematics professor. Your sole output must be a strict JSON object representing a test paper.
+    Do NOT write any extra conversational texts, intro, or wrap code inside markdown like \`\`\`json \`\`\`. Start directly with the raw JSON bracket.
     
-    return parseResponse(text);
-  } catch (e) {
-    console.error(e);
-    return { solution: "Image AI Error: " + e.message };
+    The layout must strictly match this structure:
+    {
+      "testQuestions": [
+        {
+          "questionNumber": 1,
+          "question": "Write the complete clear math question statement here. Do NOT use markdown bold symbols or LaTeX brackets like \\\\[ or \\\\]",
+          "options": ["Option A text", "Option B text", "Option C text", "Option D text"], 
+          "correctAnswer": "Write the exact correct option string or the direct final answer value here.",
+          "stepByStepSolution": "Detailed multi-step breakdown showing formulas and operations strictly in ${language} language."
+        }
+      ]
+    }
+    
+    Note: If the requested questionType is NOT MCQ (e.g., Short, Long, Written), keep the "options" array completely empty: [].`;
+
+    const userPrompt = `Generate a Math Test with these strict requirements:
+    - Class Level: ${classLevel}
+    - Chapter Name: ${chapter}
+    - Specific Topic Focus: ${topic || 'Complete Chapter'}
+    - Difficulty Grid: ${difficulty} (Easy/Medium/Hard)
+    - Format Layout: ${questionType} (MCQ, Very Short, Short, Long, or Mixed)
+    - Count of Questions: ${numQuestions}
+    - Targeted Language: ${language}`;
+
+    // Tumhara pehle se bana hua callAI use kar rahe hain
+    const rawContent = await callAI([
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ]);
+
+    // Simple JSON parse lagaya taaki direct backend database me array save ho sake
+    const parsedData = JSON.parse(rawContent.trim());
+    return parsedData.testQuestions || parsedData;
+
+  } catch (err) {
+    console.error("AI Test Generation Core Error:", err.message);
+    throw new Error("AI Engine failed to compile test array: " + err.message);
   }
 }
 
-module.exports = { solveTextDoubt, solveImageDoubt };
+// ================================================
+// 📦 MODULE EXPORTS (Updated with new function)
+// ================================================
+module.exports = { 
+  solveTextDoubt, 
+  solveImageDoubt, 
+  generateCustomTest // ✅ Naya function yahan add ho gaya!
+};
+    
