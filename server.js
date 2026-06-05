@@ -51,7 +51,20 @@ const doubtSchema = new mongoose.Schema({
     imagePath: String,
     createdAt: { type: Date, default: Date.now }
 });
-const Doubt = mongoose.model('Doubt', doubtSchema);
+const testSchema = new mongoose.Schema({
+    userId: { type: String, required: true },
+    classLevel: String,
+    chapter: String,
+    difficulty: String,
+    questionType: String,
+    language: String,
+    questions: mongoose.Schema.Types.Mixed, 
+    score: { type: Number, default: 0 },     
+    timeTaken: String,                       
+    createdAt: { type: Date, default: Date.now }
+});
+const Test = mongoose.model('Test', testSchema);
+
 
 const Payment = mongoose.model('Payment', new mongoose.Schema({ data: Object }, { strict: false }));
 const Contact = mongoose.model('Contact', new mongoose.Schema({ data: Object }, { strict: false }));
