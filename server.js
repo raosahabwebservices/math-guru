@@ -11,7 +11,7 @@ const multer = require('multer');
 const mongoose = require('mongoose'); // ✅ MONGOOSE CONNECTED
 
 // ✅ ASLI AI IMPORT (ai.js ko link kiya)
-const { solveTextDoubt, solveImageDoubt } = require('./ai');
+const { solveTextDoubt, solveImageDoubt, generateCustomTest } = require('./ai');
 
 const app = express();
 app.use(cors());
@@ -43,6 +43,18 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
+const doubtSchema = new mongoose.Schema({
+    userId: String,
+    type: String,
+    question: String,
+    solution: mongoose.Schema.Types.Mixed, 
+    imagePath: String,
+    createdAt: { type: Date, default: Date.now }
+});
+const Doubt = mongoose.model('Doubt', doubtSchema); // ✅ GONE ERROR: Sahi model add kar diya
+
+const testSchema = new mongoose.Schema({
+  
 const doubtSchema = new mongoose.Schema({
     userId: String,
     type: String,
@@ -178,7 +190,67 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
         }));
         res.json({ doubts: mappedDoubts });
     } catch (err) { res.status(500).json({ message: "History Error" }); }
+}); // 👈 IS CLOSING BRACKET KE THEEK NICHE YE 2 NEW ROUTES PASTE KAR DO
+
+// ==========================================
+// ⚡ NEW ROUTES: APNA TEST BANAO
+// ==========================================
+app.post("/api/test/generate", requireAuth, async (req, res) => {
+    try {
+        const { classLevel, chapter, topic, difficulty, questionType, numQuestions, language } = req.body;
+        
+        const generatedQuestions = await generateCustomTest({
+            classLevel, chapter, topic, difficulty, questionType, numQuestions, language
+        });
+
+        const newTest = new Test({
+            userId: req.user.id, classLevel, chapter, difficulty, questionType, language, questions: generatedQuestions
+        });
+        await newTest.save();
+
+        res.json({ message: "🚀 Test ban gaya.", testId: newTest._id.toString(), questions: generatedQuestions });
+    } catch (err) { res.status(500).json({ message: "Test Generation Failed: " + err.message }); }
 });
+
+app.get("/api/doubts/history", requireAuth, async (req, res) => {
+    try {
+        const doubts = await Doubt.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        const mappedDoubts = doubts.map(d => ({
+            id: d._id.toString(), userId: d.userId, type: d.type, question: d.question, solution: d.solution, imagePath: d.imagePath, createdAt: d.createdAt
+        }));
+        res.json({ doubts: mappedDoubts });
+    } catch (err) { res.status(500).json({ message: "History Error" }); }
+}); // 👈 IS CLOSING BRACKET KE THEEK NICHE YE 2 NEW ROUTES PASTE KAR DO
+
+// ==========================================
+// ⚡ NEW ROUTES: APNA TEST BANAO
+// ==========================================
+app.post("/api/test/generate", requireAuth, async (req, res) => {
+    try {
+        const { classLevel, chapter, topic, difficulty, questionType, numQuestions, language } = req.body;
+        
+        const generatedQuestions = await generateCustomTest({
+            classLevel, chapter, topic, difficulty, questionType, numQuestions, language
+        });
+
+        const newTest = new Test({
+            userId: req.user.id, classLevel, chapter, difficulty, questionType, language, questions: generatedQuestions
+        });
+        await newTest.save();
+
+        res.json({ message: "🚀 Test ban gaya.", testId: newTest._id.toString(), questions: generatedQuestions });
+    } catch (err) { res.status(500).json({ message: "Test Generation Failed: " + err.message }); }
+});
+
+app.post("/api/test/submit/:id", requireAuth, async (req, res) => {
+    try {
+        const { score, timeTaken } = req.body;
+        const updatedTest = await Test.findByIdAndUpdate(req.params.id, { score, timeTaken }, { new: true });
+        res.json({ message: "🎯 Score saved!", test: updatedTest });
+    } catch (err) { res.status(500).json({ message: "Submission failed: " + err.message }); }
+});
+
+
 
 // ==========================================
 // 5. ADMIN API ROUTES
