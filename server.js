@@ -111,6 +111,18 @@ const publicUser = (u) => ({
 // 3. AUTH ROUTES
 // ==========================================
 app.post("/api/signup", async (req, res) => {
+  // 🔍 Referral Code se Referrer ka Asli Naam dhoondne wali route
+app.get("/api/referrer/:code", async (req, res) => {
+    try {
+        const referrer = await User.findOne({ myReferralCode: req.params.code.toUpperCase().trim() });
+        if (referrer) {
+            res.json({ found: true, name: referrer.name });
+        } else {
+            res.json({ found: false, message: "Invalid Code" });
+        }
+    } catch (err) { res.status(500).json({ message: "Server Error" }); }
+});
+  
     try {
         // ❌ Is purani line ko hatao: const { name, email, password, referralCode } = req.body;
         // ✔️ Iski jagah ye naye parameters nikalne wali line dalo:
