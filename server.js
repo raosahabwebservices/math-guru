@@ -8,9 +8,9 @@ const cors = require('cors');
 const fsSync = require('fs'); 
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const mongoose = require('mongoose'); // ✅ MONGOOSE CONNECTED
+const mongoose = require('mongoose'); 
 
-// ✅ ASLI AI IMPORT (ai.js ko link kiya)
+// ✅ ASLI AI IMPORT
 const { solveTextDoubt, solveImageDoubt, generateCustomTest } = require('./ai');
 
 const app = express();
@@ -30,7 +30,7 @@ mongoose.connect(mongoURI)
   .catch(err => console.error("❌ Database connection fail:", err));
 
 // ==========================================
-// 1C. MONGODB SCHEMAS & MODELS (Dhancha) - 100% FIXED!
+// 1C. MONGODB SCHEMAS & MODELS
 // ==========================================
 const userSchema = new mongoose.Schema({
     name: String,
@@ -56,7 +56,7 @@ const doubtSchema = new mongoose.Schema({
     imagePath: String,
     createdAt: { type: Date, default: Date.now }
 });
-const Doubt = mongoose.model('Doubt', doubtSchema); // ✅ Yeh model line missing ya glt thi!
+const Doubt = mongoose.model('Doubt', doubtSchema); 
 
 const testSchema = new mongoose.Schema({
     userId: { type: String, required: true },
@@ -74,8 +74,6 @@ const Test = mongoose.model('Test', testSchema);
 
 const Payment = mongoose.model('Payment', new mongoose.Schema({ data: Object }, { strict: false }));
 const Contact = mongoose.model('Contact', new mongoose.Schema({ data: Object }, { strict: false }));
-
-
 
 // ==========================================
 // 2. HELPERS
@@ -97,15 +95,23 @@ const upload = multer({ dest: uploadDir });
 
 const publicUser = (u) => ({ 
     id: u._id.toString(), name: u.name, email: u.email, premiumActive: u.premiumActive,
-    remainingText: (u.premiumActive ? 100 : 10) - (u.textUsed || 0),
+    myReferralCode: u.myReferralCode, premiumReferralCount: u.premiumReferralCount,
+    remainingText: (u.premiumActive ? 100 : 10) + (u.textLimitBonus || 0) - (u.textUsed || 0),
     remainingImage: (u.premiumActive ? 100 : 3) - (u.imageUsed || 0)
 });
+
+// 👑 HELPER: Unique Referral Code Generator Generator
+function generateRandomCode(name) {
+    const prefix = name ? name.substring(0, 4).toUpperCase().replace(/\s+/g, '') : "MG";
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${rand}`;
+}
 
 // ==========================================
 // 3. AUTH ROUTES
 // ==========================================
-app.post("/api/signup", async (req, res) => {
-  // 🔍 Referral Code se Referrer ka Asli Naam dhoondne wali route
+
+// 🔍 Referral Code se Referrer ka Asli Naam dhoondne wali route
 app.get("/api/referrer/:code", async (req, res) => {
     try {
         const referrer = await User.findOne({ myReferralCode: req.params.code.toUpperCase().trim() });
@@ -117,9 +123,8 @@ app.get("/api/referrer/:code", async (req, res) => {
     } catch (err) { res.status(500).json({ message: "Server Error" }); }
 });
   
+app.post("/api/signup", async (req, res) => {
     try {
-        // ❌ Is purani line ko hatao: const { name, email, password, referralCode } = req.body;
-        // ✔️ Iski jagah ye naye parameters nikalne wali line dalo:
         const { name, email, mobile, password, referralCode } = req.body; 
         
         const existingUser = await User.findOne({ email });
@@ -132,17 +137,16 @@ app.get("/api/referrer/:code", async (req, res) => {
             const referrer = await User.findOne({ myReferralCode: referralCode.toUpperCase().trim() });
             if (referrer) {
                 referredByCode = referrer.myReferralCode;
-                selfBonus = 2;
-                referrer.textLimitBonus = (referrer.textLimitBonus || 0) + 5;
+                selfBonus = 2; // Dost ko +2 text limits reward
+                referrer.textLimitBonus = (referrer.textLimitBonus || 0) + 5; // Khudko +5 text limits reward
                 await referrer.save();
             }
         }
 
-        // ❌ Jahan newUser banta hai, wahan 'mobile' jod do:
         const newUser = new User({ 
             name, 
             email, 
-            mobile, // 📱 Mobile number database me save karne ke liye
+            mobile, 
             password, 
             premiumActive: false, 
             textUsed: 0, 
@@ -158,12 +162,10 @@ app.get("/api/referrer/:code", async (req, res) => {
     } catch (err) { res.status(500).json({ message: "Signup Failed: " + err.message }); }
 });
 
-
 app.post("/api/login", async (req, res) => {
     try {
-        const { identifier, password } = req.body; // 💡 Frontend se ab identifier (Email ya Mobile) aayega
+        const { identifier, password } = req.body; 
         
-        // MongoDB check karega ki input email se match ho raha hai YA mobile se
         const user = await User.findOne({
             $or: [
                 { email: identifier.trim() },
@@ -176,7 +178,6 @@ app.post("/api/login", async (req, res) => {
         res.json({ token: signToken({ id: user._id.toString() }), user: publicUser(user) });
     } catch (err) { res.status(500).json({ message: "Login Failed" }); }
 });
-
 
 app.get("/api/profile", requireAuth, async (req, res) => {
     try {
@@ -237,37 +238,7 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
         }));
         res.json({ doubts: mappedDoubts });
     } catch (err) { res.status(500).json({ message: "History Error" }); }
-}); // 👈 IS CLOSING BRACKET KE THEEK NICHE YE 2 NEW ROUTES PASTE KAR DO
-
-// ==========================================
-// ⚡ NEW ROUTES: APNA TEST BANAO
-// ==========================================
-app.post("/api/test/generate", requireAuth, async (req, res) => {
-    try {
-        const { classLevel, chapter, topic, difficulty, questionType, numQuestions, language } = req.body;
-        
-        const generatedQuestions = await generateCustomTest({
-            classLevel, chapter, topic, difficulty, questionType, numQuestions, language
-        });
-
-        const newTest = new Test({
-            userId: req.user.id, classLevel, chapter, difficulty, questionType, language, questions: generatedQuestions
-        });
-        await newTest.save();
-
-        res.json({ message: "🚀 Test ban gaya.", testId: newTest._id.toString(), questions: generatedQuestions });
-    } catch (err) { res.status(500).json({ message: "Test Generation Failed: " + err.message }); }
-});
-
-app.get("/api/doubts/history", requireAuth, async (req, res) => {
-    try {
-        const doubts = await Doubt.find({ userId: req.user.id }).sort({ createdAt: -1 });
-        const mappedDoubts = doubts.map(d => ({
-            id: d._id.toString(), userId: d.userId, type: d.type, question: d.question, solution: d.solution, imagePath: d.imagePath, createdAt: d.createdAt
-        }));
-        res.json({ doubts: mappedDoubts });
-    } catch (err) { res.status(500).json({ message: "History Error" }); }
-}); // 👈 IS CLOSING BRACKET KE THEEK NICHE YE 2 NEW ROUTES PASTE KAR DO
+}); 
 
 // ==========================================
 // ⚡ NEW ROUTES: APNA TEST BANAO
@@ -296,8 +267,6 @@ app.post("/api/test/submit/:id", requireAuth, async (req, res) => {
         res.json({ message: "🎯 Score saved!", test: updatedTest });
     } catch (err) { res.status(500).json({ message: "Submission failed: " + err.message }); }
 });
-
-
 
 // ==========================================
 // 5. ADMIN API ROUTES
@@ -374,4 +343,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is LIVE on port ${PORT}`);
 });
-               
+                  
