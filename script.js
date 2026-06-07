@@ -1,9 +1,12 @@
 // ==========================================
-// 🌐 SUPABASE & SERVERLESS CONFIGURATION SYNC
+// 🌐 SUPABASE & VERCEL BACKEND ROUTING SYNC
 // ==========================================
-// ✅ LIVE KEY INTEGRATION: Supabase direct link
+// ✅ LIVE KEY INTEGRATION: Auth aur Session direct Supabase cloud sambhalega
 const SUPABASE_URL = "https://twukpvtqwuhbubtcnwdt.supabase.co";
 const SUPABASE_ANON_KEY = "Sb_publishable_NXG8cBn1aQja3pdWJDGxXg_MnDyixL6"; 
+
+// 🔥 VERCEL PRODUCTION ENGINE URL
+const VERCEL_API_URL = "https://math-guru-raosahabwebservices-projects.vercel.app";
 
 let supabase;
 if (window.supabase) {
@@ -44,35 +47,33 @@ function msg(el, text, type = "notice") {
 }
 
 // =============================================
-// 🧠 SAFE FETCH WRAPPER: EDGE FUNCTIONS INTEG
+// 🧠 SAFE FETCH WRAPPER: VERCEL AI ENGINE HANDSHAKE
 // =============================================
-// ✅ FIXED: Ab purane request loop ko direct Supabase Functions pipeline par bhej rahe hain
+// ✅ FIXED: Ab Test Generator aur Doubt Solving direct Vercel backend par hit karenge cleanly!
 async function request(path, options = {}) {
   const headers = {
-    "Authorization": `Bearer ${SUPABASE_ANON_KEY}` // Secure Anon handshake
+    "Authorization": `Bearer ${token()}` // Supabase User Token send to Vercel for verification
   };
   
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
-  // Backwards routing sync: paths ko Edge functions format mein convert karo
+  // Ensure path mapping standard compliance
   let cleanPath = path;
-  if (path.startsWith("/api/")) {
-    cleanPath = path.replace("/api/", "/functions/v1/");
-  } else if (!path.startsWith("/functions/v1/")) {
-    cleanPath = `/functions/v1${path}`;
+  if (!path.startsWith("/api/")) {
+    cleanPath = `/api${path}`;
   }
 
   try {
-    const res = await fetch(`${SUPABASE_URL}${cleanPath}`, {
+    const res = await fetch(`${VERCEL_API_URL}${cleanPath}`, {
       ...options,
       headers: { ...headers, ...(options.headers || {}) }
     });
 
     const contentType = res.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-       throw new Error("AI Engine Response Error: Ensure your Supabase Edge Function is deployed.");
+       throw new Error("AI Engine Response Error: Make sure vercel.json is pushed and deployment is live.");
     }
 
     const data = await res.json();
@@ -96,11 +97,9 @@ async function requireStudent() {
   }
 
   try {
-    // 1. Session verify karo direct cloud engine se
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) throw new Error("Session expired");
 
-    // 2. Profile table read bits mapping
     const { data: profile, error: pErr } = await supabase
       .from('users')
       .select('*')
@@ -109,7 +108,6 @@ async function requireStudent() {
 
     if (pErr || !profile) throw new Error("Profile row missing");
 
-    // Limits counter engine synchronization
     const mappedUser = {
         id: profile.id,
         name: profile.name,
@@ -129,7 +127,6 @@ async function requireStudent() {
 }
 window.requireStudent = requireStudent;
 
-// Unique Code engine string generator
 function generateRandomCode(name) {
     const prefix = name ? name.substring(0, 4).toUpperCase().replace(/\s+/g, '') : "MG";
     const rand = Math.floor(1000 + Math.random() * 9000);
@@ -140,7 +137,6 @@ function generateRandomCode(name) {
 // DOM READY & ACTION INTERFACES
 // =====================================
 document.addEventListener("DOMContentLoaded", async () => {
-  // If CDN script isn't loaded by HTML inject it automatically
   if (!window.supabase) {
      const script = document.createElement('script');
      script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
@@ -179,7 +175,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         msg(box, "Logging in...", "notice");
         let targetEmail = identifier.trim();
 
-        // Check if phone number login trigger
         if (!identifier.includes("@")) {
             const { data: userRow, error: mobErr } = await supabase
                 .from('users')
@@ -237,7 +232,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             if (referrer) {
                 referredByCode = referrer.my_referral_code;
-                selfBonus = 2; // Extra bonus points
+                selfBonus = 2; 
                 await supabase.from('users').update({ text_limit_bonus: (referrer.text_limit_bonus || 0) + 5 }).eq('id', referrer.id);
             }
         }
@@ -277,4 +272,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) { console.error(err); }
   }
 });
-                                                     
+                                                                  
