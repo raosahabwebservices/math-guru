@@ -79,6 +79,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 12px;
             margin-top: 15px;
+            margin-bottom: 15px;
         }
         .option-btn {
             background: white;
@@ -115,6 +116,16 @@
             display: none;
             color: #856404;
         }
+        .q-type-badge {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -127,11 +138,19 @@
         <div class="form-group">
             <label>Select Class</label>
             <select id="classLevel">
-                <option value="10">Class 10</option>
-                <option value="12">Class 12</option>
+                <option value="1">Class 1</option>
+                <option value="2">Class 2</option>
+                <option value="3">Class 3</option>
+                <option value="4">Class 4</option>
+                <option value="5">Class 5</option>
+                <option value="6">Class 6</option>
+                <option value="7">Class 7</option>
+                <option value="8">Class 8</option>
                 <option value="9">Class 9</option>
+                <option value="10" selected>Class 10</option>
                 <option value="11">Class 11</option>
-                </select>
+                <option value="12">Class 12</option>
+            </select>
         </div>
         <div class="form-group">
             <label>Chapter Name</label>
@@ -149,6 +168,9 @@
             <label>Question Type</label>
             <select id="questionType">
                 <option value="MCQ">MCQ (Multiple Choice)</option>
+                <option value="Very Short">Very Short Question</option>
+                <option value="Short">Short Question</option>
+                <option value="Long">Long Question</option>
                 <option value="Mixed">Mixed Questions</option>
             </select>
         </div>
@@ -190,12 +212,12 @@
     let secondsElapsed = 0;
     const userSelections = {};
 
-    // API Backend url configurations (Render app se direct linked)
     const API_BASE = "https://math-guru.onrender.com/api"; 
 
     // 1. BACKEND SE TEST GENERATE KARWANA
     async function startTestGeneration() {
-        const token = localStorage.getItem("token"); // Auth verification check
+        // 👑 FIXED: mg_token ko target kiya taaki authentication fail na ho
+        const token = localStorage.getItem("mg_token"); 
         if (!token) { alert("Pehle login karo bhai!"); window.location.href = "login.html"; return; }
 
         document.getElementById("generate-btn").innerText = "🔄 AI Test Ban raha hai, please wait...";
@@ -226,7 +248,6 @@
             activeTestId = data.testId;
             testQuestions = data.questions;
 
-            // UI transitions swapping
             document.getElementById("setup-container").style.display = "none";
             document.getElementById("test-container").style.display = "block";
             document.getElementById("test-status-bar").style.display = "flex";
@@ -259,12 +280,17 @@
         area.innerHTML = "";
 
         testQuestions.forEach((q, idx) => {
-            userSelections[idx] = null; // Reset choices array
+            userSelections[idx] = null; 
             
             const card = document.createElement("div");
             card.className = "question-card";
             
+            // Question type badge support (MCQ, Short, Long, etc.)
+            const qType = q.type || document.getElementById("questionType").value;
+            const badgeHTML = `<span class="q-type-badge">${qType}</span>`;
+            
             let optionsHTML = "";
+            // Agar question MCQ hai ya options array exist karta hai
             if (q.options && q.options.length > 0) {
                 optionsHTML = `<div class="options-container">
                     ${q.options.map((opt, oIdx) => `
@@ -273,16 +299,20 @@
                         </button>
                     `).join('')}
                 </div>`;
+            } else {
+                // Non-MCQ questions ke liye self-practice info ya textbox text string pass de sakte hain
+                optionsHTML = `<p style="color:#718096; font-size:14px; margin-top:10px;">✍️ Is sawal ko apni notebook par solve karein, fir answer match karein.</p>`;
             }
 
             card.innerHTML = `
+                ${badgeHTML}<br>
                 <strong>Q${idx + 1}: ${q.question}</strong>
                 ${optionsHTML}
                 <div class="action-btns">
                     <button class="btn-secondary" onclick="toggleSolution(${idx})">💡 Step-by-Step Solution</button>
                 </div>
                 <div class="solution-box" id="sol-${idx}">
-                    <strong>Correct Answer:</strong> ${q.correctAnswer}<br><br>
+                    <strong>Correct Answer / Final Output:</strong> ${q.correctAnswer}<br><br>
                     <strong>Solution Steps:</strong> ${q.stepByStepSolution}
                 </div>
             `;
@@ -290,18 +320,14 @@
         });
     }
 
-    // Option selecting highlighter logic
     function selectOption(qIdx, oIdx, selectedValue) {
-        // Purane highlighted selectors ko remove karo list se
         const siblings = document.getElementById(`opt-${qIdx}-${oIdx}`).parentNode.children;
         for (let btn of siblings) btn.classList.remove("selected");
 
-        // Naye option ko highligher active karo
         document.getElementById(`opt-${qIdx}-${oIdx}`).classList.add("selected");
         userSelections[qIdx] = selectedValue;
     }
 
-    // Accordion expand/collapse hide toggle solution boxes
     function toggleSolution(idx) {
         const box = document.getElementById(`sol-${idx}`);
         box.style.display = box.style.display === "block" ? "none" : "block";
@@ -309,12 +335,18 @@
 
     // 4. SUBMIT AND TRANSMIT SCORES RECORD TO SERVER
     async function submitFinalTest() {
-        clearInterval(timerInterval); // Stop timer clock tracking
+        clearInterval(timerInterval); 
         
         let finalScore = 0;
+        let mcqCount = 0;
+
         testQuestions.forEach((q, idx) => {
-            if (userSelections[idx] && userSelections[idx].trim() === q.correctAnswer.trim()) {
-                finalScore++;
+            // Agar MCQ hai tabhi marks evaluate karega automation par, baki ke liye step solution bacha khud check karega
+            if (q.options && q.options.length > 0) {
+                mcqCount++;
+                if (userSelections[idx] && userSelections[idx].trim() === q.correctAnswer.trim()) {
+                    finalScore++;
+                }
             }
         });
 
@@ -322,7 +354,7 @@
         const secs = String(secondsElapsed % 60).padStart(2, '0');
         const finalTimeStr = `${mins}:${secs}`;
 
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("mg_token");
         try {
             await fetch(`${API_BASE}/test/submit/${activeTestId}`, {
                 method: "POST",
@@ -333,10 +365,14 @@
                 body: JSON.stringify({ score: finalScore, timeTaken: finalTimeStr })
             });
 
-            // Show final output screen popup box report
-            alert(`🎉 Test Completed!\nScore: ${finalScore} / ${testQuestions.length}\nTime Taken: ${finalTimeStr}\n\nAb aap niche 'Step-by-Step Solution' dabakar saare answers check kar sakte hain.`);
+            // Alert popup response handling condition targets
+            if (mcqCount > 0) {
+                alert(`🎉 Test Completed!\nMCQ Score: ${finalScore} / ${mcqCount}\nTime Taken: ${finalTimeStr}\n\nAb aap niche 'Step-by-Step Solution' dabakar saare types ke correct answers aur solutions match kar sakte hain.`);
+            } else {
+                alert(`🎉 Test Completed!\nTime Taken: ${finalTimeStr}\n\nSaare Questions ke 'Step-by-Step Solution' niche open kar diye gaye hain, apna solution match karein!`);
+            }
             
-            // Auto open up all solutions layout boxes for review process
+            // Auto open all review solution boxes
             testQuestions.forEach((_, idx) => {
                 document.getElementById(`sol-${idx}`).style.display = "block";
             });
@@ -347,5 +383,4 @@
     }
 </script>
 </body>
-  </html>
-  
+</html>
