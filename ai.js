@@ -32,7 +32,7 @@ function parseResponse(text) {
 // OPENROUTER API CALLER
 // ================================
 async function callAI(messages) {
-  if (!OPENROUTER_KEY) throw new Error("OPENROUTER_API_KEY missing in settings!");
+  if (!OPENROUTER_KEY) throw new Error("OPENROUTER_API_KEY missing in Vercel settings!");
 
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -88,7 +88,7 @@ async function solveTextDoubt(question, language = "Hinglish") {
 }
 
 // ================================
-// IMAGE DOUBT SOLVER (✅ FIXED: Brackets and Catch block enclosed cleanly)
+// IMAGE DOUBT SOLVER
 // ================================
 async function solveImageDoubt(imagePath, mimeType, question = "", language = "Hinglish") {
   try {
@@ -108,15 +108,16 @@ async function solveImageDoubt(imagePath, mimeType, question = "", language = "H
         ]
       }
     ]);
+    
     return parseResponse(text);
   } catch (e) {
-    console.error("Image Doubt AI Core Error:", e.message);
-    return { solution: "AI Image Error: " + e.message };
+    console.error(e);
+    return { solution: "Image AI Error: " + e.message };
   }
 }
 
 // ================================================
-// ✅ NEW FEATURE: APNA TEST BANAO (AI Test Generator)
+// ⚡ NEW FEATURE: APNA TEST BANAO (AI Test Generator)
 // ================================================
 async function generateCustomTest({ classLevel, chapter, topic, difficulty, questionType, numQuestions, language }) {
   try {
@@ -152,8 +153,13 @@ async function generateCustomTest({ classLevel, chapter, topic, difficulty, ques
       { role: "user", content: userPrompt }
     ]);
 
-    // Simple JSON parse lagaya taaki direct backend database me array save ho sake
-    const parsedData = JSON.parse(rawContent.trim());
+    // JSON code format cleanup wrapper filter
+    let cleanJson = rawContent.trim();
+    if (cleanJson.startsWith("```json")) cleanJson = cleanJson.replace(/^```json/, "");
+    if (cleanJson.endsWith("```")) cleanJson = cleanJson.replace(/```$/, "");
+    cleanJson = cleanJson.trim();
+
+    const parsedData = JSON.parse(cleanJson);
     return parsedData.testQuestions || parsedData;
 
   } catch (err) {
@@ -170,4 +176,4 @@ module.exports = {
   solveImageDoubt, 
   generateCustomTest 
 };
-  
+      
