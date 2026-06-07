@@ -1,27 +1,35 @@
-// ✅ URL Setup: Local aur Render dono ke liye perfect
-const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? "http://localhost:3000"
-  : "https://math-guru.onrender.com";
+// ==========================================
+// 🌐 SUPABASE & SERVERLESS CONFIGURATION SYNC
+// ==========================================
+// ✅ LIVE KEY INTEGRATION: Supabase direct link
+const SUPABASE_URL = "https://twukpvtqwuhbubtcnwdt.supabase.co";
+const SUPABASE_ANON_KEY = "Sb_publishable_NXG8cBn1aQja3pdWJDGxXg_MnDyixL6"; 
+
+let supabase;
+if (window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
 
 const upiId = "raos38908@okhdfcbank";
 const upiUri = `upi://pay?pa=${upiId}&pn=Rao%20Sahab&am=99&cu=INR&tn=MATHS%20GURU%20Premium`;
 
 // =============================
-// TOKEN HELPERS
+// TOKEN & SESSION HELPERS
 // =============================
 function token() { return localStorage.getItem("mg_token") || ""; }
 function adminToken() { return localStorage.getItem("mg_admin_token") || ""; }
 
-function setUser(data) {
-  if (data.token) {
-    localStorage.setItem("mg_token", data.token);
-    localStorage.setItem("token", data.token); // ✅ FIXED: Taaki baki pages ko bhi token mil jaye
+function setUser(session, profileData) {
+  if (session && session.access_token) {
+    localStorage.setItem("mg_token", session.access_token);
+    localStorage.setItem("token", session.access_token); 
   }
-  if (data.user) localStorage.setItem("mg_user", JSON.stringify(data.user));
+  if (profileData) localStorage.setItem("mg_user", JSON.stringify(profileData));
 }
 
 function logout() {
   localStorage.clear(); 
+  if (supabase) supabase.auth.signOut();
   location.href = "login.html";
 }
 
@@ -35,32 +43,36 @@ function msg(el, text, type = "notice") {
   el.style.display = "block";
 }
 
-// =============================
-// SAFE FETCH WRAPPER (ENHANCED)
-// =============================
+// =============================================
+// 🧠 SAFE FETCH WRAPPER: EDGE FUNCTIONS INTEG
+// =============================================
+// ✅ FIXED: Ab purane request loop ko direct Supabase Functions pipeline par bhej rahe hain
 async function request(path, options = {}) {
-  const headers = {};
+  const headers = {
+    "Authorization": `Bearer ${SUPABASE_ANON_KEY}` // Secure Anon handshake
+  };
+  
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
-  const auth = options.admin ? adminToken() : token();
-  if (auth) headers["Authorization"] = `Bearer ${auth}`;
+  // Backwards routing sync: paths ko Edge functions format mein convert karo
+  let cleanPath = path;
+  if (path.startsWith("/api/")) {
+    cleanPath = path.replace("/api/", "/functions/v1/");
+  } else if (!path.startsWith("/functions/v1/")) {
+    cleanPath = `/functions/v1${path}`;
+  }
 
   try {
-    const res = await fetch(API + path, {
+    const res = await fetch(`${SUPABASE_URL}${cleanPath}`, {
       ...options,
       headers: { ...headers, ...(options.headers || {}) }
     });
 
     const contentType = res.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-       throw new Error("Server Error: Path not found (404)");
-    }
-
-    if (res.status === 401 && !path.includes("/login")) {
-       logout();
-       return;
+       throw new Error("AI Engine Response Error: Ensure your Supabase Edge Function is deployed.");
     }
 
     const data = await res.json();
@@ -71,40 +83,73 @@ async function request(path, options = {}) {
     throw err;
   }
 }
+window.request = request;
 
-// =============================
-// ⚡ REQUIRE STUDENT (Loop Killer)
-// =============================
+// =====================================
+// ⚡ REQUIRE STUDENT (Serverless Authentication)
+// =====================================
 async function requireStudent() {
   const t = token();
-  if (!t) {
+  if (!t || !supabase) {
     logout();
     return;
   }
 
   try {
-    const data = await request("/api/profile");
-    if (data && data.user) {
-      localStorage.setItem("mg_user", JSON.stringify(data.user));
-      // Backwards compliance sync
-      localStorage.setItem("token", t);
-      return data.user;
-    } else {
-      throw new Error("Invalid User");
-    }
+    // 1. Session verify karo direct cloud engine se
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) throw new Error("Session expired");
+
+    // 2. Profile table read bits mapping
+    const { data: profile, error: pErr } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (pErr || !profile) throw new Error("Profile row missing");
+
+    // Limits counter engine synchronization
+    const mappedUser = {
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+        premiumActive: profile.premium_active,
+        remainingText: (profile.premium_active ? 100 : 10) + (profile.text_limit_bonus || 0) - (profile.text_used || 0),
+        remainingImage: (profile.premium_active ? 100 : 3) - (profile.image_used || 0)
+    };
+
+    localStorage.setItem("mg_user", JSON.stringify(mappedUser));
+    localStorage.setItem("token", t);
+    return mappedUser;
   } catch (err) {
-    console.error("Auth check failed:", err);
+    console.error("Auth flow check failed:", err);
     logout();
   }
 }
-
 window.requireStudent = requireStudent;
 
-// =============================
-// DOM READY & FORMS
-// =============================
+// Unique Code engine string generator
+function generateRandomCode(name) {
+    const prefix = name ? name.substring(0, 4).toUpperCase().replace(/\s+/g, '') : "MG";
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${rand}`;
+}
+
+// =====================================
+// DOM READY & ACTION INTERFACES
+// =====================================
 document.addEventListener("DOMContentLoaded", async () => {
-  // Footer & Username UI
+  // If CDN script isn't loaded by HTML inject it automatically
+  if (!window.supabase) {
+     const script = document.createElement('script');
+     script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+     script.onload = () => {
+         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+     };
+     document.head.appendChild(script);
+  }
+
   const year = document.querySelector("#year");
   if (year) year.textContent = new Date().getFullYear();
 
@@ -116,72 +161,120 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Logout Handling
   document.querySelectorAll("[data-logout]").forEach(b => b.addEventListener("click", (e) => {
       e.preventDefault();
       logout();
   }));
 
-  // Login Form (Upgraded for Identifier)
+  // =====================================
+  // 🔐 SUPABASE DYNAMIC LOGIN HANDLER
+  // =====================================
   const login = document.querySelector("#loginForm");
   if (login) {
     login.addEventListener("submit", async e => {
       e.preventDefault();
       const box = document.querySelector("#formMsg");
-      const body = Object.fromEntries(new FormData(login).entries());
+      const { identifier, password } = Object.fromEntries(new FormData(login).entries());
       try {
         msg(box, "Logging in...", "notice");
-        const data = await request("/api/login", {
-          method: "POST",
-          body: JSON.stringify(body)
-        });
-        if (data.token) {
-          setUser(data);
-          location.href = "dashboard.html";
-        }
-      } catch (err) { msg(box, err.message, "error"); }
-    });
-  }
+        let targetEmail = identifier.trim();
 
-  // Signup Form (Upgraded for Mobile and Referrals)
-  const signup = document.querySelector("#signupForm");
-  if (signup) {
-    signup.addEventListener("submit", async e => {
-      e.preventDefault();
-      const box = document.querySelector("#formMsg");
-      const body = Object.fromEntries(new FormData(signup).entries());
-      try {
-        msg(box, "Creating account...", "notice");
-        const data = await request("/api/signup", {
-          method: "POST",
-          body: JSON.stringify(body)
+        // Check if phone number login trigger
+        if (!identifier.includes("@")) {
+            const { data: userRow, error: mobErr } = await supabase
+                .from('users')
+                .select('email')
+                .eq('mobile', identifier.trim())
+                .single();
+                
+            if (mobErr || !userRow) throw new Error("Yeh mobile number registered nahi hai.");
+            targetEmail = userRow.email;
+        }
+
+        const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+            email: targetEmail,
+            password: password
         });
-        setUser(data);
+        if (authErr) throw authErr;
+
+        const { data: profile } = await supabase.from('users').select('*').eq('id', authData.user.id).single();
+        const mappedUser = {
+            id: profile.id, name: profile.name, email: profile.email, premiumActive: profile.premium_active,
+            remainingText: (profile.premium_active ? 100 : 10) + (profile.text_limit_bonus || 0) - (profile.text_used || 0),
+            remainingImage: (profile.premium_active ? 100 : 3) - (profile.image_used || 0)
+        };
+
+        setUser(authData.session, mappedUser);
         location.href = "dashboard.html";
       } catch (err) { msg(box, err.message, "error"); }
     });
   }
 
-  // 🎁 DYNAMIC REFERRER DETECTION ON SIGNUP PAGE ENTRY
+  // =====================================
+  // 🎁 SUPABASE DYNAMIC SIGNUP + REFERRAL
+  // =====================================
+  const signup = document.querySelector("#signupForm");
+  if (signup) {
+    signup.addEventListener("submit", async e => {
+      e.preventDefault();
+      const box = document.querySelector("#formMsg");
+      const { name, email, mobile, password, referralCode } = Object.fromEntries(new FormData(signup).entries());
+      try {
+        msg(box, "Creating account...", "notice");
+
+        const { data: authData, error: authErr } = await supabase.auth.signUp({ email, password });
+        if (authErr) throw authErr;
+
+        let referredByCode = null;
+        let selfBonus = 0;
+
+        if (referralCode) {
+            const { data: referrer } = await supabase
+                .from('users')
+                .select('*')
+                .eq('my_referral_code', referralCode.toUpperCase().trim())
+                .single();
+
+            if (referrer) {
+                referredByCode = referrer.my_referral_code;
+                selfBonus = 2; // Extra bonus points
+                await supabase.from('users').update({ text_limit_bonus: (referrer.text_limit_bonus || 0) + 5 }).eq('id', referrer.id);
+            }
+        }
+
+        const profileRow = {
+            id: authData.user.id, name, email, mobile,
+            text_limit_bonus: selfBonus,
+            my_referral_code: generateRandomCode(name),
+            referred_by: referredByCode
+        };
+
+        const { error: insErr } = await supabase.from('users').insert([profileRow]);
+        if (insErr) throw insErr;
+
+        const mappedUser = { id: profileRow.id, name, email, premiumActive: false, remainingText: 10 + selfBonus, remainingImage: 3 };
+        setUser(authData.session, mappedUser);
+        location.href = "dashboard.html";
+      } catch (err) { msg(box, err.message, "error"); }
+    });
+  }
+
+  // 🎁 REFERRER LINK CAPTURE ENGINE
   const urlParams = new URLSearchParams(window.location.search);
   const refCode = urlParams.get('ref');
-  
   const banner = document.getElementById("referrer-banner");
   const nameSpan = document.getElementById("referrer-name");
   const hiddenInput = document.getElementById("hidden-ref-code");
 
-  if (refCode && banner && nameSpan) {
+  if (refCode && banner && nameSpan && supabase) {
     try {
-      const data = await request(`/api/referrer/${refCode}`);
-      if (data.found) {
-        nameSpan.innerText = data.name; 
-        banner.classList.remove("hidden"); // Banner open karega
-        banner.style.display = "block";   // Block handle check
-        if (hiddenInput) hiddenInput.value = refCode; // Code pass inside input
+      const { data: referrer } = await supabase.from('users').select('name').eq('my_referral_code', refCode.toUpperCase().trim()).single();
+      if (referrer) {
+        nameSpan.innerText = referrer.name; 
+        banner.style.display = "block";
+        if (hiddenInput) hiddenInput.value = refCode;
       }
-    } catch (err) {
-      console.error("Referrer capture failed:", err);
-    }
+    } catch (err) { console.error(err); }
   }
 });
-  
+                                                     
