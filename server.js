@@ -35,6 +35,7 @@ mongoose.connect(mongoURI)
 const userSchema = new mongoose.Schema({
     name: String,
     email: { type: String, unique: true, required: true },
+      mobile: { type: String, unique: true, sparse: true }, // 📱 Mobile login support ke liye
     password: String, 
     premiumActive: { type: Boolean, default: false },
     textUsed: { type: Number, default: 0 },
@@ -111,25 +112,65 @@ const publicUser = (u) => ({
 // ==========================================
 app.post("/api/signup", async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        // ❌ Is purani line ko hatao: const { name, email, password, referralCode } = req.body;
+        // ✔️ Iski jagah ye naye parameters nikalne wali line dalo:
+        const { name, email, mobile, password, referralCode } = req.body; 
+        
         const existingUser = await User.findOne({ email });
         if (existingUser) return res.status(400).json({ message: "Email already exists" });
         
-        const newUser = new User({ name, email, password, premiumActive: false, textUsed: 0, imageUsed: 0 });
+        let referredByCode = null;
+        let selfBonus = 0;
+
+        if (referralCode) {
+            const referrer = await User.findOne({ myReferralCode: referralCode.toUpperCase().trim() });
+            if (referrer) {
+                referredByCode = referrer.myReferralCode;
+                selfBonus = 2;
+                referrer.textLimitBonus = (referrer.textLimitBonus || 0) + 5;
+                await referrer.save();
+            }
+        }
+
+        // ❌ Jahan newUser banta hai, wahan 'mobile' jod do:
+        const newUser = new User({ 
+            name, 
+            email, 
+            mobile, // 📱 Mobile number database me save karne ke liye
+            password, 
+            premiumActive: false, 
+            textUsed: 0, 
+            imageUsed: 0,
+            textLimitBonus: selfBonus,
+            myReferralCode: generateRandomCode(name),
+            referredBy: referredByCode,
+            premiumReferralCount: 0
+        });
         await newUser.save();
         
         res.json({ token: signToken({ id: newUser._id.toString() }), user: publicUser(newUser) });
-    } catch (err) { res.status(500).json({ message: "Signup Failed" }); }
+    } catch (err) { res.status(500).json({ message: "Signup Failed: " + err.message }); }
 });
+
 
 app.post("/api/login", async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email, password });
+        const { identifier, password } = req.body; // 💡 Frontend se ab identifier (Email ya Mobile) aayega
+        
+        // MongoDB check karega ki input email se match ho raha hai YA mobile se
+        const user = await User.findOne({
+            $or: [
+                { email: identifier.trim() },
+                { mobile: identifier.trim() }
+            ],
+            password: password
+        });
+
         if (!user) return res.status(401).json({ message: "Invalid Credentials" });
         res.json({ token: signToken({ id: user._id.toString() }), user: publicUser(user) });
     } catch (err) { res.status(500).json({ message: "Login Failed" }); }
 });
+
 
 app.get("/api/profile", requireAuth, async (req, res) => {
     try {
