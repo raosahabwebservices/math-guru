@@ -1,10 +1,10 @@
 const jwt = require("jsonwebtoken");
 
 // =============================================
-// 👑 TOKEN GENERATOR (Pure MongoDB JWT Strategy)
+// 👑 TOKEN GENERATOR (Tumhara Chalne Wala Logic)
 // =============================================
 function signToken(payload) {
-  // Payload mein user._id aur email secure pass hoga
+  // Payload mein hum id bhejenge (e.g., { id: user._id.toString() })
   return jwt.sign(payload, process.env.JWT_SECRET || "MathsGuruSuperSecretKey123", {
     expiresIn: "7d"
   });
@@ -22,36 +22,35 @@ function readToken(req) {
 }
 
 // =============================================
-// ⚡ USER AUTH (Direct Local MongoDB JWT Match)
+// ⚡ USER AUTH (FOR STUDENTS - NO CRASH)
 // =============================================
 function requireAuth(req, res, next) {
   try {
     const token = readToken(req);
 
     if (!token) {
-      return res.status(401).json({ message: "Login required bhai!" });
+      return res.status(401).json({ message: "Login required" });
     }
 
-    // Local Verification Engine using Vercel Config Secret
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "MathsGuruSuperSecretKey123");
 
     if (!decoded || !decoded.id) {
-      return res.status(401).json({ message: "Invalid session array data." });
+      return res.status(401).json({ message: "Invalid session" });
     }
 
-    // Backend compatibility structure mapping 
-    req.user = { id: decoded.id, email: decoded.email };
+    // Exact tumhara structure mapping fallback backends ke liye
+    req.user = decoded; 
     next();
 
   } catch (err) {
     console.error("Auth Error:", err.message);
-    return res.status(401).json({ message: "Session expired or invalid, login again." });
+    return res.status(401).json({ message: "Session expired, login again" });
   }
 }
 
-// =============================================
-// 👑 ADMIN AUTH (Email Validation Filter)
-// =============================================
+// =========================
+// ADMIN AUTH (Safe Fallback)
+// =========================
 function requireAdmin(req, res, next) {
   try {
     const token = readToken(req);
@@ -59,15 +58,15 @@ function requireAdmin(req, res, next) {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "MathsGuruSuperSecretKey123");
     
-    // Hardcoded safety fallback for admin console validation
-    if (decoded.email !== process.env.ADMIN_EMAIL && decoded.email !== "mathguru498@gmail.com") {
+    // Agar custom token payload me direct rule check pass karna ho
+    if (decoded.role !== "admin" && decoded.email !== "mathguru498@gmail.com") {
       return res.status(403).json({ message: "Admin access only" });
     }
 
-    req.admin = { id: decoded.id, email: decoded.email, role: "admin" };
+    req.admin = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid or unauthorized admin token" });
+    return res.status(401).json({ message: "Invalid admin token" });
   }
 }
 
