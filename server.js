@@ -9,7 +9,7 @@ const fsSync = require('fs');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 
-// ✅ ASLI AI IMPORT (Tumhari purani local ai.js file)
+// ✅ ASLI AI IMPORT
 const { solveTextDoubt, solveImageDoubt, generateCustomTest } = require('./ai');
 
 const app = express();
@@ -23,8 +23,6 @@ if (!fsSync.existsSync(uploadDir)) fsSync.mkdirSync(uploadDir, { recursive: true
 // 2. SUPABASE CLOUD CONNECTION
 // ==========================================
 const SUPABASE_URL = "https://twukpvtqwuhbubtcnwdt.supabase.co";
-// Pro-Tip: Env variable me dalo ya direct apni vahi anon public key use karo
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "Sb_publishable_NXG8cBn1aQja3pdWJDGxXg_MnDyixL6";
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "Sb_publishable_NXG8cBn1aQja3pdWJDGxXg_MnDyixL6";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -39,7 +37,6 @@ const requireAuth = async (req, res, next) => {
     
     const token = authHeader.split(' ')[1];
     try {
-        // Direct Supabase security layer se user session verify karo
         const { data: { user }, error } = await supabase.auth.getUser(token);
         if (error || !user) return res.status(403).json({ message: "Invalid or expired token" });
         
@@ -52,7 +49,6 @@ const requireAuth = async (req, res, next) => {
 
 const upload = multer({ dest: uploadDir });
 
-// User Profile Bits Mapping Helper (Backward Compatibility Layer)
 const mapPublicUser = (profile) => ({
     id: profile.id,
     name: profile.name,
@@ -63,25 +59,19 @@ const mapPublicUser = (profile) => ({
 });
 
 // ==========================================
-// 4. ASLI AI DOUBT ROUTES (Direct Database Sync)
+// 4. ASLI AI DOUBT ROUTES
 // ==========================================
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
     try {
         const { question, language } = req.body;
-        
-        // 1. Live profile read karo
         const { data: profile, error: pErr } = await supabase.from('users').select('*').eq('id', req.user.id).single();
         if (pErr || !profile) return res.status(404).json({ message: "User profile row missing" });
 
-        // 2. Call AI logic
         const solution = await solveTextDoubt(question, language || "Hinglish");
-
-        // 3. Increment counters on Supabase
         const updatedTextUsed = (profile.text_used || 0) + 1;
         await supabase.from('users').update({ text_used: updatedTextUsed }).eq('id', req.user.id);
         profile.text_used = updatedTextUsed;
 
-        // 4. Insert doubt item row into 'doubts' table
         const { data: doubtData, error: dErr } = await supabase.from('doubts').insert([{
             user_id: req.user.id,
             type: "text",
@@ -106,9 +96,7 @@ app.post("/api/doubt/image", requireAuth, upload.single('image'), async (req, re
         const { data: profile, error: pErr } = await supabase.from('users').select('*').eq('id', req.user.id).single();
         if (pErr || !profile) return res.status(404).json({ message: "User profile missing" });
 
-        // Call image AI handler
         const solution = await solveImageDoubt(req.file.path, req.file.mimetype, question, language);
-
         const updatedImageUsed = (profile.image_used || 0) + 1;
         await supabase.from('users').update({ image_used: updatedImageUsed }).eq('id', req.user.id);
         profile.image_used = updatedImageUsed;
@@ -132,19 +120,17 @@ app.post("/api/doubt/image", requireAuth, upload.single('image'), async (req, re
 });
 
 // ==========================================
-// ⚡ NEW ROUTES: APNA TEST BANAO (JSON FIX)
+// ⚡ NEW ROUTES: APNA TEST BANAO
 // ==========================================
 app.post("/api/test/generate", requireAuth, async (req, res) => {
     try {
         const { classLevel, chapter, topic, difficulty, questionType, numQuestions, language } = req.body;
         const finalTopic = topic || chapter || "General Questions";
 
-        // Call the core AI generator
         const generatedQuestions = await generateCustomTest({
             classLevel, chapter, topic: finalTopic, difficulty, questionType, numQuestions, language
         });
 
-        // Save generated metadata in Postgres 'tests' table
         const { data: testData, error: tErr } = await supabase.from('tests').insert([{
             user_id: req.user.id,
             class_level: classLevel,
@@ -157,7 +143,6 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
 
         if (tErr) throw tErr;
 
-        // Clean JSON formatting direct send check (Loop killer)
         res.setHeader('Content-Type', 'application/json');
         res.json({ 
             message: "🚀 Test ban gaya.", 
@@ -185,11 +170,16 @@ app.post("/api/test/submit/:id", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 5. STATIC FILES & FALLBACK CONTROL
+// 5. STATIC FILES & API FALLBACK
 // ==========================================
-app.use(express.static(__dirname)); 
 app.use('/uploads', express.static(uploadDir));
 
+// ✅ FIXED: API paths par HTML return nahi hoga ab!
+app.get('/api/*', (req, res) => {
+    res.status(404).json({ error: "Route not found" });
+});
+
+app.use(express.static(__dirname)); 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -199,4 +189,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`AI Engine Middleware Server is LIVE on port ${PORT}`);
 });
-                                                                     
+        
