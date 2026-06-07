@@ -1,10 +1,14 @@
-const { createClient } = require('@supabase/supabase-js');
+const jwt = require("jsonwebtoken");
 
-// Supabase Connection parameters setup
-const SUPABASE_URL = "https://twukpvtqwuhbubtcnwdt.supabase.co";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "Sb_publishable_NXG8cBn1aQja3pdWJDGxXg_MnDyixL6";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// =============================================
+// 👑 TOKEN GENERATOR (Pure MongoDB JWT Strategy)
+// =============================================
+function signToken(payload) {
+  // Payload mein user._id aur email secure pass hoga
+  return jwt.sign(payload, process.env.JWT_SECRET || "MathsGuruSuperSecretKey123", {
+    expiresIn: "7d"
+  });
+}
 
 // =========================
 // TOKEN READER (SAFE)
@@ -18,9 +22,9 @@ function readToken(req) {
 }
 
 // =============================================
-// ⚡ USER AUTH (✅ FIXED: Direct Supabase Verification)
+// ⚡ USER AUTH (Direct Local MongoDB JWT Match)
 // =============================================
-async function requireAuth(req, res, next) {
+function requireAuth(req, res, next) {
   try {
     const token = readToken(req);
 
@@ -28,49 +32,43 @@ async function requireAuth(req, res, next) {
       return res.status(401).json({ message: "Login required bhai!" });
     }
 
-    // 👑 CRITICAL FIX: Local jwt.verify mita kar direct Supabase Cloud Validation pipeline hit karo
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    // Local Verification Engine using Vercel Config Secret
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "MathsGuruSuperSecretKey123");
 
-    if (error || !user) {
-      return res.status(401).json({ message: "Invalid or expired session. Login again." });
+    if (!decoded || !decoded.id) {
+      return res.status(401).json({ message: "Invalid session array data." });
     }
 
-    // Server object me data assign karo backward routing compatibility ke liye
-    req.user = { id: user.id, email: user.email };
+    // Backend compatibility structure mapping 
+    req.user = { id: decoded.id, email: decoded.email };
     next();
 
   } catch (err) {
     console.error("Auth Error:", err.message);
-    return res.status(401).json({ message: "Session verification failed" });
+    return res.status(401).json({ message: "Session expired or invalid, login again." });
   }
 }
 
-// =========================
-// ADMIN AUTH (Safe Fallback)
-// =========================
-async function requireAdmin(req, res, next) {
+// =============================================
+// 👑 ADMIN AUTH (Email Validation Filter)
+// =============================================
+function requireAdmin(req, res, next) {
   try {
     const token = readToken(req);
     if (!token) return res.status(401).json({ message: "Admin login required" });
 
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (error || !user) return res.status(401).json({ message: "Invalid admin token" });
-
-    // Admin email validation guard logic
-    if (user.email !== process.env.ADMIN_EMAIL && user.email !== "mathguru498@gmail.com") {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "MathsGuruSuperSecretKey123");
+    
+    // Hardcoded safety fallback for admin console validation
+    if (decoded.email !== process.env.ADMIN_EMAIL && decoded.email !== "mathguru498@gmail.com") {
       return res.status(403).json({ message: "Admin access only" });
     }
 
-    req.admin = { id: user.id, email: user.email, role: "admin" };
+    req.admin = { id: decoded.id, email: decoded.email, role: "admin" };
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Admin validation crash" });
+    return res.status(401).json({ message: "Invalid or unauthorized admin token" });
   }
-}
-
-// Dummy backward placeholder compatibility filter ke liye
-function signToken(payload) {
-  return "supabase-managed-session";
 }
 
 module.exports = {
