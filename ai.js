@@ -32,7 +32,7 @@ function parseResponse(text) {
 // OPENROUTER API CALLER
 // ================================
 async function callAI(messages) {
-  if (!OPENROUTER_KEY) throw new Error("OPENROUTER_API_KEY missing in Render settings!");
+  if (!OPENROUTER_KEY) throw new Error("OPENROUTER_API_KEY missing in settings!");
 
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -88,7 +88,7 @@ async function solveTextDoubt(question, language = "Hinglish") {
 }
 
 // ================================
-// IMAGE DOUBT SOLVER
+// IMAGE DOUBT SOLVER (✅ FIXED: Brackets and Catch block enclosed cleanly)
 // ================================
 async function solveImageDoubt(imagePath, mimeType, question = "", language = "Hinglish") {
   try {
@@ -108,8 +108,14 @@ async function solveImageDoubt(imagePath, mimeType, question = "", language = "H
         ]
       }
     ]);
-  
-    // ================================================
+    return parseResponse(text);
+  } catch (e) {
+    console.error("Image Doubt AI Core Error:", e.message);
+    return { solution: "AI Image Error: " + e.message };
+  }
+}
+
+// ================================================
 // ✅ NEW FEATURE: APNA TEST BANAO (AI Test Generator)
 // ================================================
 async function generateCustomTest({ classLevel, chapter, topic, difficulty, questionType, numQuestions, language }) {
@@ -141,7 +147,6 @@ async function generateCustomTest({ classLevel, chapter, topic, difficulty, ques
     - Count of Questions: ${numQuestions}
     - Targeted Language: ${language}`;
 
-    // Tumhara pehle se bana hua callAI use kar rahe hain
     const rawContent = await callAI([
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt }
@@ -158,11 +163,11 @@ async function generateCustomTest({ classLevel, chapter, topic, difficulty, ques
 }
 
 // ================================================
-// 📦 MODULE EXPORTS (Updated with new function)
+// 📦 MODULE EXPORTS
 // ================================================
 module.exports = { 
   solveTextDoubt, 
   solveImageDoubt, 
-  generateCustomTest // ✅ Naya function yahan add ho gaya!
+  generateCustomTest 
 };
-    
+  
