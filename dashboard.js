@@ -1,3 +1,11 @@
+// =========================================
+// 🌐 CONFIGURATION SYNC
+// =========================================
+// 👑 FIXED: API Variable top par define kiya taaki image paths aur request wrapper crash na ho
+const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:3000"
+  : "https://math-guru.onrender.com";
+
 // =========================
 // HELPERS & CLEANERS
 // =========================
@@ -19,10 +27,9 @@ function cleanAIResponse(text) {
 // SOLUTION RENDER (Sync with AI response)
 // =========================
 function renderSolution(doubt) {
-  // ⚡ FIX: Agar AI response simple text hai toh use object ki tarah handle karo
   let s = doubt?.solution;
   if (typeof s === 'string') {
-    s = { solution: s, understanding: "Analyzed", formula: "Logic", finalAnswer: "Check steps", hindi: "Upar dekhein", english: "See above" };
+    s = { solution: s, understanding: "Anaylzed", formula: "Logic", finalAnswer: "Check steps", hindi: "Upar dekhein", english: "See above" };
   }
   if (!s) s = {};
 
@@ -80,7 +87,8 @@ function showSolution(doubt) {
 // =========================
 async function loadProfileBits() {
   try {
-    const data = await requireStudent(); // script.js se profile mang raha hai
+    // 👑 FIXED: script.js se profile data handle check safe structure lagaya
+    const data = await window.requireStudent(); 
     const user = data;
     
     const plan = document.querySelector("#planType");
@@ -98,7 +106,7 @@ async function loadProfileBits() {
 
     return user;
   } catch (e) {
-    console.error("Profile load failed");
+    console.error("Profile load failed", e);
   }
 }
 
@@ -160,16 +168,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     textForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const box = document.querySelector("#textMsg");
-      msg(box, "Solving your question...", "notice");
+      if (typeof msg === "function") msg(box, "Solving your question...", "notice");
       try {
         const data = await request("/api/doubt/text", {
           method: "POST",
           body: JSON.stringify(Object.fromEntries(new FormData(textForm)))
         });
-        msg(box, "Solved successfully", "success");
+        if (typeof msg === "function") msg(box, "Solved successfully", "success");
         showSolution(data.doubt);
         await loadProfileBits();
-      } catch (err) { msg(box, err.message, "error"); }
+      } catch (err) { if (typeof msg === "function") msg(box, err.message, "error"); }
     });
   }
 
@@ -179,16 +187,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     imageForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const box = document.querySelector("#imageMsg");
-      msg(box, "AI is analyzing the image...", "notice");
+      if (typeof msg === "function") msg(box, "AI is analyzing the image...", "notice");
       try {
         const data = await request("/api/doubt/image", {
           method: "POST",
           body: new FormData(imageForm)
         });
-        msg(box, "Solved successfully", "success");
+        if (typeof msg === "function") msg(box, "Solved successfully", "success");
         showSolution(data.doubt);
         await loadProfileBits();
-      } catch (err) { msg(box, err.message, "error"); }
+      } catch (err) { if (typeof msg === "function") msg(box, err.message, "error"); }
     });
   }
 });
+
