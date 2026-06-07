@@ -30,16 +30,20 @@ mongoose.connect(mongoURI)
   .catch(err => console.error("❌ Database connection fail:", err));
 
 // ==========================================
-// 1C. MONGODB SCHEMAS & MODELS (Dhancha) - FIXED!
+// 1C. MONGODB SCHEMAS & MODELS (Dhancha) - 100% FIXED!
 // ==========================================
 const userSchema = new mongoose.Schema({
     name: String,
     email: { type: String, unique: true, required: true },
-      mobile: { type: String, unique: true, sparse: true }, // 📱 Mobile login support ke liye
+    mobile: { type: String, unique: true, sparse: true }, 
     password: String, 
     premiumActive: { type: Boolean, default: false },
     textUsed: { type: Number, default: 0 },
     imageUsed: { type: Number, default: 0 },
+    textLimitBonus: { type: Number, default: 0 }, 
+    myReferralCode: { type: String, unique: true }, 
+    referredBy: { type: String, default: null },     
+    premiumReferralCount: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', userSchema);
@@ -52,18 +56,8 @@ const doubtSchema = new mongoose.Schema({
     imagePath: String,
     createdAt: { type: Date, default: Date.now }
 });
-const Doubt = mongoose.model('Doubt', doubtSchema); // ✅ GONE ERROR: Sahi model add kar diya
+const Doubt = mongoose.model('Doubt', doubtSchema); // ✅ Yeh model line missing ya glt thi!
 
-const testSchema = new mongoose.Schema({
-  
-const doubtSchema = new mongoose.Schema({
-    userId: String,
-    type: String,
-    question: String,
-    solution: mongoose.Schema.Types.Mixed, // ✅ String hata kar MIXED kar diya hai!
-    imagePath: String,
-    createdAt: { type: Date, default: Date.now }
-});
 const testSchema = new mongoose.Schema({
     userId: { type: String, required: true },
     classLevel: String,
@@ -78,9 +72,9 @@ const testSchema = new mongoose.Schema({
 });
 const Test = mongoose.model('Test', testSchema);
 
-
 const Payment = mongoose.model('Payment', new mongoose.Schema({ data: Object }, { strict: false }));
 const Contact = mongoose.model('Contact', new mongoose.Schema({ data: Object }, { strict: false }));
+
 
 
 // ==========================================
