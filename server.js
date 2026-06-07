@@ -25,6 +25,7 @@ if (!fsSync.existsSync(uploadDir)) fsSync.mkdirSync(uploadDir, { recursive: true
 const SUPABASE_URL = "https://twukpvtqwuhbubtcnwdt.supabase.co";
 // Pro-Tip: Env variable me dalo ya direct apni vahi anon public key use karo
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "Sb_publishable_NXG8cBn1aQja3pdWJDGxXg_MnDyixL6";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "Sb_publishable_NXG8cBn1aQja3pdWJDGxXg_MnDyixL6";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 console.log("🚀 Badhai ho! Maths Guru Backend successfully Supabase Cloud se connect ho gaya.");
