@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refer & Earn - Math Guru</title>
+    <style>
+        :root {
+            --primary: #0056b3;
+            --success: #28a745;
+            --bg-light: #f4f6f9;
+            --card-bg: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        h2 { color: var(--primary); margin-bottom: 10px; }
+        .gift-icon { font-size: 50px; margin-bottom: 15px; }
+        
+        /* 🎁 REFERRAL BOX CODE */
+        .referral-box {
+            background: #e3f2fd;
+            border: 2px dashed var(--primary);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+            position: relative;
+        }
+        .code-display {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .btn-copy {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-copy:hover { background-color: #004085; }
+
+        /* 🏆 MILESTONES TABLE/LIST */
+        .milestone-section {
+            text-align: left;
+            margin-top: 30px;
+        }
+        .milestone-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .reward-item {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--success);
+        }
+        .reward-icon { font-size: 20px; margin-right: 12px; }
+        .reward-text { font-size: 15px; font-weight: 500; }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: #f1f3f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .stat-num { color: var(--success); font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="gift-icon">🎁</div>
+    <h2>Refer & Earn</h2>
+    <p style="color:#666; margin-top: 0;">Doston ko invite karo aur pao Free Premium Access aur Extra Doubts!</p>
+
+    <div class="stats-bar">
+        <div>Your Code: <span id="text-code" style="color:var(--primary);">-</span></div>
+        <div>Premium Refers: <span id="premium-count" class="stat-num">0</span></div>
+    </div>
+
+    <div class="referral-box">
+        <div class="code-display" id="my-code">LOADING...</div>
+        <button class="btn-copy" onclick="copyReferralLink()">📋 Copy Invite Link</button>
+    </div>
+
+    <div class="milestone-section">
+        <div class="milestone-title">🏆 Referral Rewards & Milestones</div>
+        
+        <div class="reward-item">
+            <span class="reward-icon">🎁</span>
+            <div class="reward-text"><strong>Sign Up Reward:</strong> Dost ke register karte hi aapko milenge <strong>+5 Free Text Doubts</strong> aur dost ko <strong>+2 Doubts</strong>!</div>
+        </div>
+        <div class="reward-item" style="border-left-color: #ffc107;">
+            <span class="reward-icon">💎</span>
+            <div class="reward-text"><strong>1st Premium Friend:</strong> Pao ekdum free <strong>7 Days Premium Upgrade</strong>!</div>
+        </div>
+        <div class="reward-item" style="border-left-color: #ffc107;">
+            <span class="reward-icon">🥉</span>
+            <div class="reward-text"><strong>3 Premium Friends:</strong> Milestone reached = <strong>15 Days Premium</strong>!</div>
+        </div>
+        <div class="reward-item" style="border-left-color: #ffc107;">
+            <span class="reward-icon">🥈</span>
+            <div class="reward-text"><strong>5 Premium Friends:</strong> Milestone reached = <strong>1 Month Full Premium</strong>!</div>
+        </div>
+        <div class="reward-item" style="border-left-color: #ffc107;">
+            <span class="reward-icon">🥇</span>
+            <div class="reward-text"><strong>10 Premium Friends:</strong> Bano Super Referrer = <strong>3 Months Full Premium</strong>!</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let userCode = "";
+    const API_BASE = "https://math-guru.onrender.com/api";
+
+    // 1. PROFILE SE PROFILE DATA LOAD KARNA (Referral details nikalne ke liye)
+    async function loadReferralDetails() {
+        const token = localStorage.getItem("token");
+        if (!token) { alert("Pehle login karein!"); window.location.href = "login.html"; return; }
+
+        try {
+            const res = await fetch(`${API_BASE}/profile`, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            if(res.ok && data.user) {
+                userCode = data.user.myReferralCode || "MGURUUSER";
+                document.getElementById("my-code").innerText = userCode;
+                document.getElementById("text-code").innerText = userCode;
+                document.getElementById("premium-count").innerText = data.user.premiumReferralCount || 0;
+            }
+        } catch (err) {
+            console.error("Referral fetch error:", err);
+        }
+    }
+
+    // 2. WHATSAPP STYLE LINK COPY LOGIC
+    function copyReferralLink() {
+        if (!userCode) { alert("Data load ho raha hai, thoda ruko bhai!"); return; }
+        
+        // Tumhare Github pages ka URL jahan signup page hai
+        const signupLink = `https://raosahabwebservices.github.io/math-guru/signup.html?ref=${userCode}`;
+        
+        const messageText = `Hey! Mujhe Maths ke complex problems solve karne ke liye ek mast AI app mili hai - MATHS GURU. Isme photo kheeche hi step-by-step solution mil jata hai Hinglish mein! Mere link se register karo aur free doubts pao:\n\n👉 ${signupLink}`;
+
+        // Temporary input banakar auto-copy text engine trigger karna
+        const tempInput = document.createElement("textarea");
+        tempInput.value = messageText;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+
+        alert("🚀 WhatsApp Invite Link Copy ho gaya hai! Apne doston ke sath share karo.");
+    }
+
+    // Auto trigger on page entry
+    window.onload = loadReferralDetails;
+</script>
+</body>
+</html>
+
