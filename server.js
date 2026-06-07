@@ -100,7 +100,6 @@ const publicUser = (u) => ({
     remainingImage: (u.premiumActive ? 100 : 3) - (u.imageUsed || 0)
 });
 
-// 👑 HELPER: Unique Referral Code Generator Generator
 function generateRandomCode(name) {
     const prefix = name ? name.substring(0, 4).toUpperCase().replace(/\s+/g, '') : "MG";
     const rand = Math.floor(1000 + Math.random() * 9000);
@@ -137,20 +136,14 @@ app.post("/api/signup", async (req, res) => {
             const referrer = await User.findOne({ myReferralCode: referralCode.toUpperCase().trim() });
             if (referrer) {
                 referredByCode = referrer.myReferralCode;
-                selfBonus = 2; // Dost ko +2 text limits reward
-                referrer.textLimitBonus = (referrer.textLimitBonus || 0) + 5; // Khudko +5 text limits reward
+                selfBonus = 2;
+                referrer.textLimitBonus = (referrer.textLimitBonus || 0) + 5;
                 await referrer.save();
             }
         }
 
         const newUser = new User({ 
-            name, 
-            email, 
-            mobile, 
-            password, 
-            premiumActive: false, 
-            textUsed: 0, 
-            imageUsed: 0,
+            name, email, mobile, password, premiumActive: false, textUsed: 0, imageUsed: 0,
             textLimitBonus: selfBonus,
             myReferralCode: generateRandomCode(name),
             referredBy: referredByCode,
@@ -165,7 +158,6 @@ app.post("/api/signup", async (req, res) => {
 app.post("/api/login", async (req, res) => {
     try {
         const { identifier, password } = req.body; 
-        
         const user = await User.findOne({
             $or: [
                 { email: identifier.trim() },
@@ -241,50 +233,27 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
 }); 
 
 // ==========================================
-// ⚡ NEW ROUTES: APNA TEST BANAO
+// ⚡ NEW ROUTES: APNA TEST BANAO (PROPER SEPARATED)
 // ==========================================
 app.post("/api/test/generate", requireAuth, async (req, res) => {
     try {
-        // 👑 Safe checking: Agar frontend se topic na aaye toh use fallback do
         const { classLevel, chapter, topic, difficulty, questionType, numQuestions, language } = req.body;
         
+        // Topic crash check handling
         const finalTopic = topic || chapter || "General Questions";
 
-        // AI helper function call
         const generatedQuestions = await generateCustomTest({
-            classLevel, 
-            chapter, 
-            topic: finalTopic, // ✅ Fixed: Topic fail safe ho gaya
-            difficulty, 
-            questionType, 
-            numQuestions, 
-            language
+            classLevel, chapter, topic: finalTopic, difficulty, questionType, numQuestions, language
         });
 
-        // Database entry check
-        if (!generatedQuestions || generatedQuestions.length === 0) {
-            throw new Error("AI did not return any questions");
-        }
-
         const newTest = new Test({
-            userId: req.user.id, 
-            classLevel, 
-            chapter, 
-            difficulty, 
-            questionType, 
-            language, 
-            questions: generatedQuestions
+            userId: req.user.id, classLevel, chapter, difficulty, questionType, language, questions: generatedQuestions
         });
         await newTest.save();
 
         res.json({ message: "🚀 Test ban gaya.", testId: newTest._id.toString(), questions: generatedQuestions });
-    } catch (err) { 
-        console.error("Generation Error Details:", err.message);
-        // 🚨 HTML fallback rokne ke liye hamesha proper JSON return karo:
-        res.status(500).json({ message: "Test Generation Failed: " + err.message }); 
-    }
+    } catch (err) { res.status(500).json({ message: "Test Generation Failed: " + err.message }); }
 });
-
 
 app.post("/api/test/submit/:id", requireAuth, async (req, res) => {
     try {
@@ -369,4 +338,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is LIVE on port ${PORT}`);
 });
-                  
+      
