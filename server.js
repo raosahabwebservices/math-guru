@@ -245,20 +245,46 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
 // ==========================================
 app.post("/api/test/generate", requireAuth, async (req, res) => {
     try {
+        // 👑 Safe checking: Agar frontend se topic na aaye toh use fallback do
         const { classLevel, chapter, topic, difficulty, questionType, numQuestions, language } = req.body;
         
+        const finalTopic = topic || chapter || "General Questions";
+
+        // AI helper function call
         const generatedQuestions = await generateCustomTest({
-            classLevel, chapter, topic, difficulty, questionType, numQuestions, language
+            classLevel, 
+            chapter, 
+            topic: finalTopic, // ✅ Fixed: Topic fail safe ho gaya
+            difficulty, 
+            questionType, 
+            numQuestions, 
+            language
         });
 
+        // Database entry check
+        if (!generatedQuestions || generatedQuestions.length === 0) {
+            throw new Error("AI did not return any questions");
+        }
+
         const newTest = new Test({
-            userId: req.user.id, classLevel, chapter, difficulty, questionType, language, questions: generatedQuestions
+            userId: req.user.id, 
+            classLevel, 
+            chapter, 
+            difficulty, 
+            questionType, 
+            language, 
+            questions: generatedQuestions
         });
         await newTest.save();
 
         res.json({ message: "🚀 Test ban gaya.", testId: newTest._id.toString(), questions: generatedQuestions });
-    } catch (err) { res.status(500).json({ message: "Test Generation Failed: " + err.message }); }
+    } catch (err) { 
+        console.error("Generation Error Details:", err.message);
+        // 🚨 HTML fallback rokne ke liye hamesha proper JSON return karo:
+        res.status(500).json({ message: "Test Generation Failed: " + err.message }); 
+    }
 });
+
 
 app.post("/api/test/submit/:id", requireAuth, async (req, res) => {
     try {
