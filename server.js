@@ -7,9 +7,11 @@ const path = require('path');
 const cors = require('cors');
 const fsSync = require('fs'); 
 const multer = require('multer');
-const { createClient } = require('@supabase/supabase-js');
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
-// ✅ ASLI AI IMPORT
+// Internal Hooks (Tumhara chalne wala exact auth middleware aur AI files)
+const { requireAuth, signToken } = require('./auth');
 const { solveTextDoubt, solveImageDoubt, generateCustomTest } = require('./ai');
 
 const app = express();
@@ -20,173 +22,239 @@ const uploadDir = path.join(__dirname, 'uploads');
 if (!fsSync.existsSync(uploadDir)) fsSync.mkdirSync(uploadDir, { recursive: true });
 
 // ==========================================
-// 2. SUPABASE CLOUD CONNECTION
+// 🔌 MONGOOSE CLOUD DATABASE CONNECTION
 // ==========================================
-const SUPABASE_URL = "https://twukpvtqwuhbubtcnwdt.supabase.co";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "Sb_publishable_NXG8cBn1aQja3pdWJDGxXg_MnDyixL6";
+// Live strict Atlas connection URL
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://mathguru498_db_user:Harshit7880@cluster0.c9q0v1g.mongodb.net/mathsguru?retryWrites=true&w=majority&appName=Cluster0";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-console.log("🚀 Badhai ho! Maths Guru Backend successfully Supabase Cloud se connect ho gaya.");
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("🚀 Badhai ho! Maths Guru Backend MongoDB Cloud se connect ho gaya."))
+  .catch(err => console.error("❌ MongoDB connection error:", err));
 
 // ==========================================
-// 3. AUTH MIDDLEWARE (Supabase Token JWT Validator)
+// 📝 SCHEMAS & MONGOOSE MODELS
 // ==========================================
-const requireAuth = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ message: "No token provided" });
-    
-    const token = authHeader.split(' ')[1];
-    try {
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (error || !user) return res.status(403).json({ message: "Invalid or expired token" });
-        
-        req.user = user;
-        next();
-    } catch (err) {
-        return res.status(500).json({ message: "Auth validation crash" });
-    }
-};
+const userSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    mobile: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    premiumActive: { type: Boolean, default: false },
+    textUsed: { type: Number, default: 0 },
+    imageUsed: { type: Number, default: 0 },
+    textLimitBonus: { type: Number, default: 0 },
+    myReferralCode: { type: String, unique: true },
+    referredBy: { type: String, default: null }
+}, { timestamps: true });
+const User = mongoose.model('User', userSchema);
+
+const doubtSchema = new mongoose.Schema({
+    userId: { type: String, required: true },
+    type: { type: String, enum: ['text', 'image'], required: true },
+    question: { type: String, required: true },
+    solution: { type: mongoose.Schema.Types.Mixed, required: true }, 
+    imagePath: { type: String, default: null }
+}, { timestamps: true });
+const Doubt = mongoose.model('Doubt', doubtSchema);
+
+const testSchema = new mongoose.Schema({
+    userId: { type: String, required: true },
+    classLevel: String,
+    chapter: String,
+    difficulty: String,
+    questionType: String,
+    language: String,
+    questions: { type: mongoose.Schema.Types.Mixed, required: true }, 
+    score: { type: Number, default: 0 },
+    timeTaken: { type: String, default: null }
+}, { timestamps: true });
+const Test = mongoose.model('Test', testSchema);
 
 const upload = multer({ dest: uploadDir });
 
-const mapPublicUser = (profile) => ({
-    id: profile.id,
-    name: profile.name,
-    email: profile.email,
-    premiumActive: profile.premium_active,
-    remainingText: (profile.premium_active ? 100 : 10) + (profile.text_limit_bonus || 0) - (profile.text_used || 0),
-    remainingImage: (profile.premium_active ? 100 : 3) - (profile.image_used || 0)
+// Backend mapping compliance data syncing helper
+const publicUser = (u) => ({ 
+    id: u._id.toString(), 
+    name: u.name, 
+    email: u.email, 
+    premiumActive: u.premiumActive,
+    remainingText: (u.premiumActive ? 100 : 10) + (u.textLimitBonus || 0) - (u.textUsed || 0),
+    remainingImage: (u.premiumActive ? 100 : 3) - (u.imageUsed || 0)
+});
+
+function generateRandomCode(name) {
+    const prefix = name ? name.substring(0, 4).toUpperCase().replace(/\s+/g, '') : "MG";
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${rand}`;
+}
+
+// ==========================================
+// 🔐 REVOLUTIONARY LOGIN & SIGNUP (BCRYPT FIXED)
+// ==========================================
+app.post("/api/auth/signup", async (req, res) => {
+    try {
+        const { name, email, mobile, password, referralCode } = req.body;
+        
+        let existingUser = await User.findOne({ $or: [{ email }, { mobile }] });
+        if (existingUser) return res.status(400).json({ message: "Email ya Mobile number pehle se hai bhai!" });
+
+        // Password strict hashing taaki login check bypass na ho
+        const hashedPassword = await bcrypt.hash(password, 10);
+        let referredByCode = null;
+        let selfBonus = 0;
+
+        if (referralCode) {
+            const referrer = await User.findOne({ myReferralCode: referralCode.toUpperCase().trim() });
+            if (referrer) {
+                referredByCode = referrer.myReferralCode;
+                selfBonus = 2; // Extra bonus token points
+                referrer.textLimitBonus = (referrer.textLimitBonus || 0) + 5;
+                await referrer.save();
+            }
+        }
+
+        const newUser = new User({
+            name, email, mobile, password: hashedPassword,
+            textLimitBonus: selfBonus,
+            myReferralCode: generateRandomCode(name),
+            referredBy: referredByCode
+        });
+        await newUser.save();
+
+        // Exact tumhare purane token structure integration se matching
+        const token = signToken({ id: newUser._id.toString() });
+        res.json({ token, user: publicUser(newUser) });
+    } catch (err) { res.status(500).json({ message: "Signup Crash: " + err.message }); }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+    try {
+        const { identifier, password } = req.body;
+        
+        // Find user by either email or mobile phone
+        const user = await User.findOne({ 
+            $or: [{ email: identifier.trim() }, { mobile: identifier.trim() }] 
+        });
+        if (!user) return res.status(401).json({ message: "Invalid Credentials (User not found)" });
+
+        // Compare current plain input with hashed database password string
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(401).json({ message: "Invalid Credentials (Password mismatch)" });
+
+        const token = signToken({ id: user._id.toString() });
+        res.json({ token, user: publicUser(user) });
+    } catch (err) { res.status(500).json({ message: "Login Crash: " + err.message }); }
+});
+
+app.get("/api/profile", requireAuth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.json({ user: publicUser(user) });
+    } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
 // ==========================================
-// 4. ASLI AI DOUBT ROUTES
+// 🧠 ASLI AI DOUBT ROUTES (Direct MongoDB Atlas Sync)
 // ==========================================
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
     try {
         const { question, language } = req.body;
-        const { data: profile, error: pErr } = await supabase.from('users').select('*').eq('id', req.user.id).single();
-        if (pErr || !profile) return res.status(404).json({ message: "User profile row missing" });
-
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User missing" });
+        
+        // Execute real OpenRouter/Gemini function hook from ai.js
         const solution = await solveTextDoubt(question, language || "Hinglish");
-        const updatedTextUsed = (profile.text_used || 0) + 1;
-        await supabase.from('users').update({ text_used: updatedTextUsed }).eq('id', req.user.id);
-        profile.text_used = updatedTextUsed;
 
-        const { data: doubtData, error: dErr } = await supabase.from('doubts').insert([{
-            user_id: req.user.id,
-            type: "text",
-            question: question,
-            solution: solution
-        }]).select().single();
+        user.textUsed = (user.textUsed || 0) + 1;
+        await user.save();
 
-        if (dErr) throw dErr;
+        const doubt = new Doubt({ userId: user._id.toString(), type: "text", question, solution });
+        await doubt.save();
 
-        res.json({ 
-            doubt: { id: doubtData.id, userId: doubtData.user_id, type: doubtData.type, question, solution, createdAt: doubtData.created_at }, 
-            user: mapPublicUser(profile) 
-        });
-    } catch (err) { res.status(500).json({ message: "AI Error: " + err.message }); }
+        res.json({ doubt, user: publicUser(user) });
+    } catch (err) { res.status(500).json({ message: "AI process failed: " + err.message }); }
 });
 
 app.post("/api/doubt/image", requireAuth, upload.single('image'), async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ message: "No image uploaded" });
+        if (!req.file) return res.status(400).json({ message: "No image file provided" });
         const { question, language } = req.body;
-
-        const { data: profile, error: pErr } = await supabase.from('users').select('*').eq('id', req.user.id).single();
-        if (pErr || !profile) return res.status(404).json({ message: "User profile missing" });
+        
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "User not found" });
 
         const solution = await solveImageDoubt(req.file.path, req.file.mimetype, question, language);
-        const updatedImageUsed = (profile.image_used || 0) + 1;
-        await supabase.from('users').update({ image_used: updatedImageUsed }).eq('id', req.user.id);
-        profile.image_used = updatedImageUsed;
+        
+        user.imageUsed = (user.imageUsed || 0) + 1;
+        await user.save();
 
         const imageRelativePath = `/uploads/${req.file.filename}`;
-        const { data: doubtData, error: dErr } = await supabase.from('doubts').insert([{
-            user_id: req.user.id,
-            type: "image",
-            question: question || "Image doubt",
-            solution: solution,
-            image_path: imageRelativePath
-        }]).select().single();
+        const doubt = new Doubt({ userId: user._id.toString(), type: "image", question: question || "Image query", solution, imagePath: imageRelativePath });
+        await doubt.save();
 
-        if (dErr) throw dErr;
+        res.json({ doubt, user: publicUser(user) });
+    } catch (err) { res.status(500).json({ message: "Image AI crash: " + err.message }); }
+});
 
-        res.json({ 
-            doubt: { id: doubtData.id, userId: doubtData.user_id, type: doubtData.type, imagePath: imageRelativePath, solution, createdAt: doubtData.created_at }, 
-            user: mapPublicUser(profile) 
-        });
-    } catch (err) { res.status(500).json({ message: "Image AI Error: " + err.message }); }
+app.get("/api/doubts/history", requireAuth, async (req, res) => {
+    try {
+        const doubts = await Doubt.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        res.json({ doubts });
+    } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
 // ==========================================
-// ⚡ NEW ROUTES: APNA TEST BANAO
+// ⚡ ASLI AI TEST GENERATOR ROUTES (Makkhan Sync)
 // ==========================================
 app.post("/api/test/generate", requireAuth, async (req, res) => {
     try {
         const { classLevel, chapter, topic, difficulty, questionType, numQuestions, language } = req.body;
         const finalTopic = topic || chapter || "General Questions";
 
+        // Call AI engine function direct from ai.js
         const generatedQuestions = await generateCustomTest({
             classLevel, chapter, topic: finalTopic, difficulty, questionType, numQuestions, language
         });
 
-        const { data: testData, error: tErr } = await supabase.from('tests').insert([{
-            user_id: req.user.id,
-            class_level: classLevel,
-            chapter: chapter,
-            difficulty: difficulty,
-            question_type: questionType,
-            language: language,
-            questions: generatedQuestions
-        }]).select().single();
-
-        if (tErr) throw tErr;
+        const newTest = new Test({
+            userId: req.user.id, classLevel, chapter, difficulty, questionType, language, questions: generatedQuestions
+        });
+        await newTest.save();
 
         res.setHeader('Content-Type', 'application/json');
-        res.json({ 
-            message: "🚀 Test ban gaya.", 
-            testId: testData.id.toString(), 
-            questions: generatedQuestions 
-        });
-    } catch (err) { 
-        res.status(500).json({ message: "Test Generation Failed: " + err.message }); 
-    }
+        res.json({ message: "🚀 Test ban gaya.", testId: newTest._id.toString(), questions: generatedQuestions });
+    } catch (err) { res.status(500).json({ message: "Test Gen Engine failed: " + err.message }); }
 });
 
 app.post("/api/test/submit/:id", requireAuth, async (req, res) => {
     try {
         const { score, timeTaken } = req.body;
-        const { data: updatedTest, error } = await supabase
-            .from('tests')
-            .update({ score: score, time_taken: timeTaken })
-            .eq('id', req.params.id)
-            .select()
-            .single();
-
-        if (error) throw error;
+        const updatedTest = await Test.findByIdAndUpdate(req.params.id, { score, timeTaken }, { new: true });
         res.json({ message: "🎯 Score saved successfully!", test: updatedTest });
-    } catch (err) { res.status(500).json({ message: "Submission failed: " + err.message }); }
+    } catch (err) { res.status(500).json({ message: "Submission crash: " + err.message }); }
 });
 
 // ==========================================
-// 5. STATIC FILES & API FALLBACK
+// 5. VERCEL SERVERLESS STATIC BYPASS (FIXED)
 // ==========================================
 app.use('/uploads', express.static(uploadDir));
 
-// ✅ FIXED: API paths par HTML return nahi hoga ab!
+// ✅ RUNTIME CRASH FIX: Base target fallback string pass check
+app.get('/', (req, res) => {
+    res.json({ message: "🚀 Maths Guru pure MongoDB Engine is running live on Vercel!" });
+});
+
 app.get('/api/*', (req, res) => {
-    res.status(404).json({ error: "Route not found" });
+    res.status(404).json({ error: "API Endpoint path not found" });
 });
 
-app.use(express.static(__dirname)); 
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.status(404).json({ error: "Static asset directory path missing" });
 });
 
-// Server Listen
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
-    console.log(`AI Engine Middleware Server is LIVE on port ${PORT}`);
+    console.log(`Server is LIVE on port ${PORT}`);
 });
-        
+    
