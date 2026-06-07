@@ -1,1 +1,66 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Signup | MATHS GURU</title><script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script><link rel="stylesheet" href="style.css"></head><body><nav class="nav"><div class="nav-inner"><a class="brand" href="index.html">MATHS GURU</a><div class="links"><a href="login.html">Login</a><a href="pricing.html">Pricing</a></div></div></nav><main class="container"><div class="grid two"><section><h1 class="section-title">Start free</h1><p class="muted">Get 10 text doubts and 3 image doubts on the free plan.</p></section><section class="card"><form id="signupForm" class="form"><div><label class="label">Name</label><input name="name" required minlength="2"></div><div><label class="label">Email</label><input name="email" type="email" required></div><div><label class="label">Password</label><input name="password" type="password" minlength="6" required></div><button class="btn" type="submit">Create Account</button><p>Already registered? <a class="brand" href="login.html">Login</a></p><div id="formMsg" class="hidden"></div></form></section></div></main><script src="script.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup | MATHS GURU</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a class="brand" href="index.html">MATHS GURU</a>
+            <div class="links">
+                <a href="login.html">Login</a>
+                <a href="pricing.html">Pricing</a>
+            </div>
+        </div>
+    </nav>
+    <main class="container">
+        <div class="grid two">
+            <section>
+                <h1 class="section-title">Start free</h1>
+                <p class="muted">Get 10 text doubts and 3 image doubts on the free plan.</p>
+            </section>
+            <section class="card">
+                <form id="signupForm" class="form">
+                    
+                    <!-- 🎁 ✅ NEW: Dynamic Referrer Banner (Dost ka naam yahan dikhega) -->
+                    <div id="referrer-banner" class="hidden" style="background: #d4edda; color: #155724; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; text-align: center; border: 1px solid #c3e6cb; display: none;">
+                        🎁 You are invited by: <span id="referrer-name">...</span>
+                    </div>
+
+                    <div>
+                        <label class="label">Name</label>
+                        <input name="name" required minlength="2">
+                    </div>
+                    <div>
+                        <label class="label">Email</label>
+                        <input name="email" type="email" required>
+                    </div>
+                    
+                    <!-- 📱 ✅ NEW: Mobile Number Input Field -->
+                    <div>
+                        <label class="label">Mobile Number</label>
+                        <input name="mobile" type="tel" placeholder="Enter 10 digit mobile number" required pattern="[0-9]{10}">
+                    </div>
+
+                    <div>
+                        <label class="label">Password</label>
+                        <input name="password" type="password" minlength="6" required>
+                    </div>
+
+                    <!-- 🎁 ✅ NEW: Hidden Input Box to capture Referral Code -->
+                    <input type="hidden" name="referralCode" id="hidden-ref-code">
+
+                    <button class="btn" type="submit">Create Account</button>
+                    <p>Already registered? <a class="brand" href="login.html">Login</a></p>
+                    <div id="formMsg" class="hidden"></div>
+                </form>
+            </section>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
