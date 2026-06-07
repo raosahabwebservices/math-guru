@@ -1,11 +1,8 @@
 // ==========================================
 // 🌐 SUPABASE & VERCEL BACKEND ROUTING SYNC
 // ==========================================
-// ✅ LIVE KEY INTEGRATION: Auth aur Session direct Supabase cloud sambhalega
 const SUPABASE_URL = "https://twukpvtqwuhbubtcnwdt.supabase.co";
 const SUPABASE_ANON_KEY = "Sb_publishable_NXG8cBn1aQja3pdWJDGxXg_MnDyixL6"; 
-
-// 🔥 VERCEL PRODUCTION ENGINE URL
 const VERCEL_API_URL = "https://math-guru-raosahabwebservices-projects.vercel.app";
 
 let supabase;
@@ -16,9 +13,6 @@ if (window.supabase) {
 const upiId = "raos38908@okhdfcbank";
 const upiUri = `upi://pay?pa=${upiId}&pn=Rao%20Sahab&am=99&cu=INR&tn=MATHS%20GURU%20Premium`;
 
-// =============================
-// TOKEN & SESSION HELPERS
-// =============================
 function token() { return localStorage.getItem("mg_token") || ""; }
 function adminToken() { return localStorage.getItem("mg_admin_token") || ""; }
 
@@ -36,9 +30,6 @@ function logout() {
   location.href = "login.html";
 }
 
-// =============================
-// UI MESSAGE
-// =============================
 function msg(el, text, type = "notice") {
   if (!el) return;
   el.className = `notice ${type}`;
@@ -47,22 +38,21 @@ function msg(el, text, type = "notice") {
 }
 
 // =============================================
-// 🧠 SAFE FETCH WRAPPER: VERCEL AI ENGINE HANDSHAKE
+// 🧠 SAFE FETCH WRAPPER: EXACT VERCEL HOOK
 // =============================================
-// ✅ FIXED: Ab Test Generator aur Doubt Solving direct Vercel backend par hit karenge cleanly!
 async function request(path, options = {}) {
   const headers = {
-    "Authorization": `Bearer ${token()}` // Supabase User Token send to Vercel for verification
+    "Authorization": `Bearer ${token()}`
   };
   
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
-  // Ensure path mapping standard compliance
+  // ✅ FIXED: Extra double /api text lagne se roko
   let cleanPath = path;
   if (!path.startsWith("/api/")) {
-    cleanPath = `/api${path}`;
+    cleanPath = `/api${path.startsWith('/') ? '' : '/'}${path}`;
   }
 
   try {
@@ -73,7 +63,7 @@ async function request(path, options = {}) {
 
     const contentType = res.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-       throw new Error("AI Engine Response Error: Make sure vercel.json is pushed and deployment is live.");
+       throw new Error("Unexpected HTML received from server. Check deployment logs.");
     }
 
     const data = await res.json();
@@ -121,7 +111,7 @@ async function requireStudent() {
     localStorage.setItem("token", t);
     return mappedUser;
   } catch (err) {
-    console.error("Auth flow check failed:", err);
+    console.error("Auth check failed:", err);
     logout();
   }
 }
@@ -134,7 +124,7 @@ function generateRandomCode(name) {
 }
 
 // =====================================
-// DOM READY & ACTION INTERFACES
+// DOM READY & HANDLERS
 // =====================================
 document.addEventListener("DOMContentLoaded", async () => {
   if (!window.supabase) {
@@ -162,9 +152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       logout();
   }));
 
-  // =====================================
-  // 🔐 SUPABASE DYNAMIC LOGIN HANDLER
-  // =====================================
+  // LOGIN FORM
   const login = document.querySelector("#loginForm");
   if (login) {
     login.addEventListener("submit", async e => {
@@ -205,9 +193,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // =====================================
-  // 🎁 SUPABASE DYNAMIC SIGNUP + REFERRAL
-  // =====================================
+  // SIGNUP FORM
   const signup = document.querySelector("#signupForm");
   if (signup) {
     signup.addEventListener("submit", async e => {
@@ -216,7 +202,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { name, email, mobile, password, referralCode } = Object.fromEntries(new FormData(signup).entries());
       try {
         msg(box, "Creating account...", "notice");
-
         const { data: authData, error: authErr } = await supabase.auth.signUp({ email, password });
         if (authErr) throw authErr;
 
@@ -224,12 +209,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         let selfBonus = 0;
 
         if (referralCode) {
-            const { data: referrer } = await supabase
-                .from('users')
-                .select('*')
-                .eq('my_referral_code', referralCode.toUpperCase().trim())
-                .single();
-
+            const { data: referrer } = await supabase.from('users').select('*').eq('my_referral_code', referralCode.toUpperCase().trim()).single();
             if (referrer) {
                 referredByCode = referrer.my_referral_code;
                 selfBonus = 2; 
@@ -254,7 +234,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // 🎁 REFERRER LINK CAPTURE ENGINE
+  // REFERRER LINK DETECT
   const urlParams = new URLSearchParams(window.location.search);
   const refCode = urlParams.get('ref');
   const banner = document.getElementById("referrer-banner");
@@ -272,4 +252,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) { console.error(err); }
   }
 });
-                                                                  
+    
