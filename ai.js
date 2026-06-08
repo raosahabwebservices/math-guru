@@ -1,179 +1,257 @@
-const fs = require("fs");
-const path = require("path");
+require("dotenv").config();
 
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
+const fs = require("fs").promises;
 
-// ================================
-// ⚡ PARSER (Safaai ke saath)
-// ================================
-function parseResponse(text) {
-  // Faltu symbols aur extra gaps hatane ke liye clean-up
-  const clean = (str) => {
-    if (!str) return "";
-    return str
-      .replace(/\\\[|\\\]|\\\(|\\\)/g, "") // Remove LaTeX brackets
-      .replace(/\*\*/g, "")               // Remove Bold symbols
-      .replace(/\n{3,}/g, "\n\n")         // Max 2 newlines only
-      .trim();
-  };
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
 
-  const sections = {
-    understanding: clean(text.match(/Question Understanding:\s*([\s\S]*?)(?=Formula Used:|$)/i)?.[1]),
-    formula: clean(text.match(/Formula Used:\s*([\s\S]*?)(?=Step-by-step Solution:|$)/i)?.[1]),
-    solution: clean(text.match(/Step-by-step Solution:\s*([\s\S]*?)(?=Final Answer:|$)/i)?.[1] || text),
-    finalAnswer: clean(text.match(/Final Answer:\s*([\s\S]*?)(?=Hindi Explanation:|$)/i)?.[1]),
-    hindi: clean(text.match(/Hindi Explanation:\s*([\s\S]*?)(?=English Explanation:|$)/i)?.[1]),
-    english: clean(text.match(/English Explanation:\s*([\s\S]*?)$/i)?.[1])
-  };
-  return sections;
+if (!OPENROUTER_API_KEY) {
+  console.warn("Warning: OPENROUTER_API_KEY missing in .env");
 }
 
-// ================================
-// OPENROUTER API CALLER
-// ================================
-async function callAI(messages) {
-  if (!OPENROUTER_KEY) throw new Error("OPENROUTER_API_KEY missing in Vercel settings!");
+// ==========================================
+// 1. REUSABLE AI FUNCTION
+// Same function for doubt solver + test generator
+// ==========================================
+async function callAI(prompt, imageDataOptional = null) {
+  if (!OPENROUTER_API_KEY) {
+    throw new Error("OPENROUTER_API_KEY missing in .env");
+  }
 
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const content = [];
+
+  content.push({
+    type: "text",
+    text: prompt
+  });
+
+  if (imageDataOptional) {
+    content.push({
+      type: "image_url",
+      image_url: {
+        url: imageDataOptional
+      }
+    });
+  }
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
+      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENROUTER_KEY}`
+      "HTTP-Referer": process.env.APP_URL || "https://math-guru.onrender.com",
+      "X-Title": "Math Guru"
     },
     body: JSON.stringify({
-      model: "openai/gpt-4o-mini",
-      messages: messages,
-      temperature: 0.5 // Thoda serious answer ke liye
+      model: OPENROUTER_MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are Math Guru, an expert maths teacher for Class 1 to 12 students. Give accurate step-by-step solutions in simple language."
+        },
+        {
+          role: "user",
+          content
+        }
+      ],
+      temperature: 0.3
     })
   });
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || "AI Error");
-  
-  return data.choices[0].message.content;
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "AI API request failed");
+  }
+
+  return data?.choices?.[0]?.message?.content || "";
 }
 
-// Prompt Engine
-const getSystemPrompt = (lang) => `
-You are Maths Guru AI. Solve the problem step-by-step.
-STRICT RULES:
-1. Do NOT use markdown symbols like **, #, or LaTeX brackets like \\[ \\].
-2. Use plain text only.
-3. Language Preference: Explanations must be in ${lang}.
-4. Keep the spacing clean.
+// ==========================================
+// 2. IMAGE TO BASE64 DATA URL
+// ==========================================
+async function imageFileToDataUrl(imagePath, mimeType) {
+  const imageBuffer = await fs.readFile(imagePath);
+  const base64 = imageBuffer.toString("base64");
 
-YOU MUST USE THESE HEADINGS:
-Question Understanding:
-Formula Used:
-Step-by-step Solution:
-Final Answer:
-Hindi Explanation:
-English Explanation:
+  return `data:${mimeType};base64,${base64}`;
+}
+
+// ==========================================
+// 3. DOUBT SOLVER
+// ==========================================
+async function solveDoubt({ question, language = "Hinglish", imagePath = null, mimeType = null }) {
+  let imageData = null;
+
+  if (imagePath && mimeType) {
+    imageData = await imageFileToDataUrl(imagePath, mimeType);
+  }
+
+  const prompt = `
+Solve this maths doubt for a Class 1 to 12 student.
+
+Student question:
+${question}
+
+Language:
+${language}
+
+Give answer in this exact format:
+
+1. Problem Understanding
+Explain what the question is asking.
+
+2. Formula Used
+Write formula used. If no formula, write "No special formula needed".
+
+3. Step-by-Step Solution
+Solve slowly and clearly.
+
+4. Simple Explanation
+Explain in simple Hindi + English / Hinglish.
+
+5. Final Answer
+Write final answer separately.
+
+Rules:
+- Do not skip steps.
+- Do not give only final answer.
+- Keep language simple.
+- If image is provided, read the maths question from image and solve it.
 `;
 
-// ================================
-// TEXT DOUBT SOLVER
-// ================================
-async function solveTextDoubt(question, language = "Hinglish") {
-  try {
-    const text = await callAI([
-      { role: "system", content: getSystemPrompt(language) },
-      { role: "user", content: `Question: ${question}` }
-    ]);
-    return parseResponse(text);
-  } catch (e) {
-    console.error(e);
-    return { solution: "AI Error: " + e.message };
-  }
+  return await callAI(prompt, imageData);
 }
 
-// ================================
-// IMAGE DOUBT SOLVER
-// ================================
-async function solveImageDoubt(imagePath, mimeType, question = "", language = "Hinglish") {
-  try {
-    const absolutePath = path.resolve(imagePath);
-    const base64Image = fs.readFileSync(absolutePath, "base64");
-    
-    const text = await callAI([
-      { role: "system", content: getSystemPrompt(language) },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: `Extra context: ${question}` },
-          {
-            type: "image_url",
-            image_url: { url: `data:${mimeType};base64,${base64Image}` }
-          }
-        ]
-      }
-    ]);
-    
-    return parseResponse(text);
-  } catch (e) {
-    console.error(e);
-    return { solution: "Image AI Error: " + e.message };
-  }
-}
+// ==========================================
+// 4. TEST GENERATOR
+// ==========================================
+async function generateTest({
+  classLevel,
+  subject = "Mathematics",
+  topic,
+  difficulty = "Medium",
+  numQuestions = 5,
+  questionType = "Mixed",
+  language = "Hinglish"
+}) {
+  const prompt = `
+Create a maths test for Math Guru.
 
-// ================================================
-// ⚡ NEW FEATURE: APNA TEST BANAO (AI Test Generator)
-// ================================================
-async function generateCustomTest({ classLevel, chapter, topic, difficulty, questionType, numQuestions, language }) {
-  try {
-    const systemPrompt = `You are an elite mathematics professor. Your sole output must be a strict JSON object representing a test paper.
-    Do NOT write any extra conversational texts, intro, or wrap code inside markdown like \`\`\`json \`\`\`. Start directly with the raw JSON bracket.
-    
-    The layout must strictly match this structure:
+Requirements:
+- Class: ${classLevel}
+- Subject: ${subject}
+- Chapter/Topic: ${topic}
+- Difficulty: ${difficulty}
+- Question Type: ${questionType}
+- Number of Questions: ${numQuestions}
+- Language: ${language}
+
+Return ONLY valid JSON.
+Do not use markdown.
+Do not write explanation outside JSON.
+
+JSON format must be exactly:
+
+{
+  "title": "Test title here",
+  "classLevel": ${classLevel},
+  "subject": "${subject}",
+  "topic": "${topic}",
+  "difficulty": "${difficulty}",
+  "marksPerQuestion": 1,
+  "totalMarks": ${numQuestions},
+  "questions": [
     {
-      "testQuestions": [
-        {
-          "questionNumber": 1,
-          "question": "Write the complete clear math question statement here. Do NOT use markdown bold symbols or LaTeX brackets like \\\\[ or \\\\]",
-          "options": ["Option A text", "Option B text", "Option C text", "Option D text"], 
-          "correctAnswer": "Write the exact correct option string or the direct final answer value here.",
-          "stepByStepSolution": "Detailed multi-step breakdown showing formulas and operations strictly in ${language} language."
-        }
-      ]
+      "type": "MCQ or Very Short or Short or Long",
+      "question": "Question text",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "Correct answer",
+      "stepByStepSolution": "Full step by step solution"
     }
-    
-    Note: If the requested questionType is NOT MCQ (e.g., Short, Long, Written), keep the "options" array completely empty: [].`;
+  ],
+  "answerKey": [
+    {
+      "questionNumber": 1,
+      "answer": "Correct answer"
+    }
+  ]
+}
 
-    const userPrompt = `Generate a Math Test with these strict requirements:
-    - Class Level: ${classLevel}
-    - Chapter Name: ${chapter}
-    - Specific Topic Focus: ${topic || 'Complete Chapter'}
-    - Difficulty Grid: ${difficulty} (Easy/Medium/Hard)
-    - Format Layout: ${questionType} (MCQ, Very Short, Short, Long, or Mixed)
-    - Count of Questions: ${numQuestions}
-    - Targeted Language: ${language}`;
+Rules:
+- Generate exactly ${numQuestions} questions.
+- For MCQ questions, options array must have 4 options.
+- For non-MCQ questions, options must be [].
+- correctAnswer must match exactly one option for MCQ.
+- Questions must be suitable for Class ${classLevel}.
+- Use simple ${language}.
+- Keep answers accurate.
+`;
 
-    const rawContent = await callAI([
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ]);
+  const aiText = await callAI(prompt);
 
-    // JSON code format cleanup wrapper filter
-    let cleanJson = rawContent.trim();
-    if (cleanJson.startsWith("```json")) cleanJson = cleanJson.replace(/^```json/, "");
-    if (cleanJson.endsWith("```")) cleanJson = cleanJson.replace(/```$/, "");
-    cleanJson = cleanJson.trim();
+  const parsed = safeJsonParse(aiText);
 
-    const parsedData = JSON.parse(cleanJson);
-    return parsedData.testQuestions || parsedData;
+  // Backend safety normalization
+  const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
 
+  if (questions.length === 0) {
+    throw new Error("AI did not return valid questions");
+  }
+
+  const finalQuestions = questions.slice(0, Number(numQuestions)).map((q, index) => {
+    return {
+      type: q.type || questionType || "Mixed",
+      question: q.question || `Question ${index + 1}`,
+      options: Array.isArray(q.options) ? q.options : [],
+      correctAnswer: q.correctAnswer || "",
+      stepByStepSolution: q.stepByStepSolution || ""
+    };
+  });
+
+  const marksPerQuestion = Number(parsed.marksPerQuestion || 1);
+  const totalMarks = marksPerQuestion * finalQuestions.length;
+
+  return {
+    title: parsed.title || `Class ${classLevel} ${topic} Test`,
+    classLevel,
+    subject,
+    topic,
+    difficulty,
+    marksPerQuestion,
+    totalMarks,
+    questions: finalQuestions,
+    answerKey: finalQuestions.map((q, index) => ({
+      questionNumber: index + 1,
+      answer: q.correctAnswer
+    }))
+  };
+}
+
+// ==========================================
+// 5. SAFE JSON PARSER
+// ==========================================
+function safeJsonParse(text) {
+  try {
+    return JSON.parse(text);
   } catch (err) {
-    console.error("AI Test Generation Core Error:", err.message);
-    throw new Error("AI Engine failed to compile test array: " + err.message);
+    const match = text.match(/\{[\s\S]*\}/);
+
+    if (!match) {
+      throw new Error("AI response was not valid JSON");
+    }
+
+    try {
+      return JSON.parse(match[0]);
+    } catch (err2) {
+      throw new Error("AI JSON parse failed");
+    }
   }
 }
 
-// ================================================
-// 📦 MODULE EXPORTS
-// ================================================
-module.exports = { 
-  solveTextDoubt, 
-  solveImageDoubt, 
-  generateCustomTest 
+module.exports = {
+  callAI,
+  solveDoubt,
+  generateTest
 };
-      
