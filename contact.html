@@ -1,1 +1,125 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Contact | MATHS GURU</title><script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script><link rel="stylesheet" href="style.css"></head><body><nav class="nav"><div class="nav-inner"><a class="brand" href="index.html">MATHS GURU</a><div class="links"><a href="index.html">Home</a><a href="pricing.html">Pricing</a><a href="login.html">Login</a></div></div></nav><main class="container"><h1 class="section-title">Contact MATHS GURU</h1><p class="muted">For support, payment approval questions or feedback.</p><section class="grid two" style="margin-top:24px"><div class="card"><h2>Direct contact</h2><p><strong>Email:</strong> hy399035@gmail.com</p><p><strong>Mobile:</strong> 9034675743</p></div><form id="contactForm" class="card form full"><div><label class="label">Name</label><input name="name" required></div><div><label class="label">Email</label><input name="email" type="email" required></div><div><label class="label">Message</label><textarea name="message" required></textarea></div><button class="btn" type="submit">Send Message</button><div id="contactMsg" class="hidden"></div></form></section></main><script src="script.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact | MATHS GURU</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .contact-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+
+    .contact-item {
+      margin-bottom: 14px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .whatsapp-btn {
+      background: #25d366;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      display: inline-block;
+      text-decoration: none;
+      font-weight: 800;
+      margin-top: 10px;
+    }
+
+    .whatsapp-btn:hover {
+      background: #1ebe5d;
+    }
+
+    .notice-box {
+      background: #fff8e1;
+      border-left: 5px solid #ff9800;
+      padding: 12px;
+      border-radius: 8px;
+      color: #6b4e00;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">MATHS GURU</a>
+
+      <div class="links">
+        <a href="index.html">Home</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="login.html">Login</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h1 class="section-title">Contact MATHS GURU</h1>
+    <p class="muted">For support, payment approval questions or feedback.</p>
+
+    <section class="grid two" style="margin-top:24px">
+
+      <div class="contact-card">
+        <h2>Direct Contact</h2>
+
+        <div class="contact-item">
+          <strong>Email:</strong><br>
+          <a href="mailto:mathguru498@gmail.com">mathguru498@gmail.com</a>
+        </div>
+
+        <div class="contact-item">
+          <strong>Only WhatsApp:</strong><br>
+          <a href="https://wa.me/917080622829" target="_blank">7080622829</a>
+        </div>
+
+        <a
+          class="whatsapp-btn"
+          href="https://wa.me/917080622829?text=Hello%20Math%20Guru%2C%20I%20need%20support."
+          target="_blank"
+        >
+          💬 Chat on WhatsApp
+        </a>
+
+        <div class="notice-box">
+          ⚠️ Payment approval ke liye UTR number aur payment screenshot WhatsApp par bhi bhej sakte ho.
+        </div>
+      </div>
+
+      <form id="contactForm" class="card form full">
+        <h2>Send Message</h2>
+
+        <div>
+          <label class="label">Name</label>
+          <input name="name" required placeholder="Enter your name">
+        </div>
+
+        <div>
+          <label class="label">Email</label>
+          <input name="email" type="email" required placeholder="Enter your email">
+        </div>
+
+        <div>
+          <label class="label">Message</label>
+          <textarea name="message" required placeholder="Write your message"></textarea>
+        </div>
+
+        <button class="btn" type="submit">Send Message</button>
+
+        <div id="contactMsg" class="hidden"></div>
+      </form>
+
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
