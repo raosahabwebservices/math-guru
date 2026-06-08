@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test History | Math Guru</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .top-links {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .top-links a {
+      color: #0056b3;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+    }
+
+    .muted {
+      color: #666;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #e3f2fd;
+      color: #0056b3;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .score-item {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .score-item strong {
+      display: block;
+      font-size: 20px;
+      color: #0056b3;
+    }
+
+    .btn {
+      background: #0056b3;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    .btn.secondary {
+      background: #6c757d;
+    }
+
+    .details {
+      display: none;
+      margin-top: 15px;
+      background: #fff8e1;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .question-review {
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+    }
+
+    .question-review:last-child {
+      border-bottom: none;
+    }
+
+    @media (max-width: 700px) {
+      .score-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="top-links">
+      <a href="dashboard.html">← Dashboard</a>
+      <a href="test-generator.html">Apna Test Banao</a>
+      <a href="ask-doubt.html">Ask Doubt</a>
+    </div>
+
+    <h1>📊 Test History</h1>
+    <p class="muted">Yahan tumhare generated tests, score, attempted questions aur answers dikhenge.</p>
+
+    <div id="historyBox" class="card">
+      Loading test history...
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+
+  <script>
+    function safeText(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+
+      try {
+        return new Date(value).toLocaleString();
+      } catch {
+        return "-";
+      }
+    }
+
+    async function loadTestHistory() {
+      const box = document.querySelector("#historyBox");
+
+      try {
+        if (typeof requireStudent === "function") {
+          await requireStudent();
+        }
+
+        const data = await request("/api/test/history");
+        const tests = Array.isArray(data.tests) ? data.tests : [];
+
+        if (tests.length === 0) {
+          box.innerHTML = `
+            <p class="muted">Abhi koi test history nahi hai.</p>
+            <a class="btn" href="test-generator.html">Pehla Test Banao</a>
+          `;
+          return;
+        }
+
+        box.innerHTML = tests.map((test, index) => {
+          const totalQuestions = test.totalQuestions || test.questions?.length || 0;
+          const attempted = test.attempted ?? 0;
+          const score = test.score ?? 0;
+          const mcqCount = test.mcqCount ?? 0;
+          const mcqAttempted = test.mcqAttempted ?? 0;
+          const writtenCount = test.writtenCount ?? 0;
+          const writtenAttempted = test.writtenAttempted ?? 0;
+          const timeTaken = test.timeTaken || "Not submitted";
+
+          const submittedText = test.submittedAt
+            ? formatDate(test.submittedAt)
+            : "Not submitted";
+
+          return `
+            <div class="card">
+              <span class="badge">${safeText(test.difficulty || "Test")}</span>
+
+              <h2 style="margin-bottom:5px;">
+                ${safeText(test.title || "Math Test")}
+              </h2>
+
+              <p class="muted">
+                Class ${safeText(test.classLevel)} · ${safeText(test.topic)} · ${safeText(test.createdAt ? formatDate(test.createdAt) : "")}
+              </p>
+
+              <div class="score-grid">
+                <div class="score-item">
+                  <strong>${attempted}/${totalQuestions}</strong>
+                  Attempted
+                </div>
+
+                <div class="score-item">
+                  <strong>${score}/${mcqCount}</strong>
+                  MCQ Correct
+                </div>
+
+                <div class="score-item">
+                  <strong>${mcqAttempted}/${mcqCount}</strong>
+                  MCQ Attempted
+                </div>
+
+                <div class="score-item">
+                  <strong>${writtenAttempted}/${writtenCount}</strong>
+                  Written Attempted
+                </div>
+              </div>
+
+              <p class="muted" style="margin-top:12px;">
+                Time Taken: <strong>${safeText(timeTaken)}</strong><br>
+                Submitted: <strong>${safeText(submittedText)}</strong>
+              </p>
+
+              <button class="btn secondary" type="button" onclick="toggleDetails(${index})">
+                View Answers
+              </button>
+
+              <div class="details" id="details-${index}">
+                ${renderQuestionReview(test)}
+              </div>
+            </div>
+          `;
+        }).join("");
+
+      } catch (err) {
+        box.innerHTML = `
+          <p style="color:red;">Failed to load test history: ${safeText(err.message)}</p>
+        `;
+      }
+    }
+
+    function renderQuestionReview(test) {
+      const questions = Array.isArray(test.questions) ? test.questions : [];
+      const answers = test.answers || {};
+
+      if (questions.length === 0) {
+        return `<p class="muted">Questions not found.</p>`;
+      }
+
+      return questions.map((q, idx) => {
+        const userAnswer = answers[idx] || "";
+        const correctAnswer = q.correctAnswer || "Answer not available";
+
+        return `
+          <div class="question-review">
+            <p>
+              <strong>Q${idx + 1}:</strong>
+              ${safeText(q.question)}
+            </p>
+
+            <p>
+              <strong>Your Answer:</strong>
+              ${safeText(userAnswer || "Not attempted")}
+            </p>
+
+            <p>
+              <strong>Correct Final Answer:</strong>
+              ${safeText(correctAnswer)}
+            </p>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function toggleDetails(index) {
+      const el = document.querySelector("#details-" + index);
+
+      if (!el) return;
+
+      el.style.display = el.style.display === "block" ? "none" : "block";
+    }
+
+    document.addEventListener("DOMContentLoaded", loadTestHistory);
+  </script>
+</body>
+</html>
