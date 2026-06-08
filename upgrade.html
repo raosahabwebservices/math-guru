@@ -486,9 +486,9 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      if (typeof requireStudent === "function") {
-        requireStudent();
-      }
+      // Important:
+      // Yahan requireStudent() nahi call karna.
+      // Warna upgrade page open hote hi login.html par redirect ho jayega.
 
       document.querySelectorAll(".plan-card").forEach((card) => {
         card.addEventListener("click", () => {
@@ -515,6 +515,18 @@
 
       paymentForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+
+        const token = localStorage.getItem("mg_token");
+
+        if (!token) {
+          showPaymentMsg("Payment request submit karne ke liye pehle login karo.", "error");
+
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 1200);
+
+          return;
+        }
 
         const utrInput = document.querySelector("#utrInput");
         const screenshotInput = document.querySelector("#screenshotInput");
@@ -573,4 +585,4 @@
     });
   </script>
 </body>
-                                              </html>
+</html>
