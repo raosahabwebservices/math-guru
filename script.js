@@ -1,22 +1,18 @@
-// ==========================================
-// 🌐 MATH GURU FRONTEND API ENGINE
-// Vercel Backend + Local Backend Support
-// ==========================================
-
+// ✅ URL Setup: Local aur Render dono ke liye
 const API =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
     ? "http://localhost:3000"
-    : "https://math-guru-raosahabwebservices-projects.vercel.app";
+    : "https://math-guru.onrender.com";
 
 const upiId = "raos38908@okhdfcbank";
-const upiUri = `upi://pay?pa=${upiId}&pn=Rao%20Sahab&am=99&cu=INR&tn=MATH%20GURU%20Premium`;
+const upiUri = `upi://pay?pa=${upiId}&pn=Rao%20Sahab&am=99&cu=INR&tn=MATHS%20GURU%20Premium`;
 
 // =============================
 // TOKEN HELPERS
 // =============================
 function token() {
-  return localStorage.getItem("mg_token") || localStorage.getItem("token") || "";
+  return localStorage.getItem("mg_token") || "";
 }
 
 function adminToken() {
@@ -24,32 +20,12 @@ function adminToken() {
 }
 
 function setUser(data) {
-  if (!data) return;
-
-  if (data.token) {
-    localStorage.setItem("mg_token", data.token);
-    localStorage.setItem("token", data.token); // backward compatibility
-  }
-
-  if (data.user) {
-    localStorage.setItem("mg_user", JSON.stringify(data.user));
-  }
-}
-
-function getUser() {
-  try {
-    return JSON.parse(localStorage.getItem("mg_user") || "{}");
-  } catch {
-    return {};
-  }
+  if (data.token) localStorage.setItem("mg_token", data.token);
+  if (data.user) localStorage.setItem("mg_user", JSON.stringify(data.user));
 }
 
 function logout() {
-  localStorage.removeItem("mg_token");
-  localStorage.removeItem("token");
-  localStorage.removeItem("mg_user");
-  localStorage.removeItem("mg_admin_token");
-
+  localStorage.clear();
   location.href = "login.html";
 }
 
@@ -58,25 +34,17 @@ function logout() {
 // =============================
 function msg(el, text, type = "notice") {
   if (!el) return;
-
   el.className = `notice ${type}`;
   el.textContent = text;
   el.style.display = "block";
 }
 
 // =============================
-// API PATH NORMALIZER
+// PATH NORMALIZER
 // =============================
-function normalizePath(path) {
-  if (!path) return "/api";
-
-  // Already correct
+function apiPath(path) {
   if (path.startsWith("/api/")) return path;
-
-  // Example: "/auth/login" => "/api/auth/login"
   if (path.startsWith("/")) return `/api${path}`;
-
-  // Example: "auth/login" => "/api/auth/login"
   return `/api/${path}`;
 }
 
@@ -84,13 +52,11 @@ function normalizePath(path) {
 // SAFE FETCH WRAPPER
 // =============================
 async function request(path, options = {}) {
-  const cleanPath = normalizePath(path);
+  const cleanPath = apiPath(path);
 
   const headers = {};
 
-  const isFormData = options.body instanceof FormData;
-
-  if (!isFormData) {
+  if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -112,14 +78,12 @@ async function request(path, options = {}) {
     const contentType = res.headers.get("content-type") || "";
 
     if (!contentType.includes("application/json")) {
-      throw new Error(
-        "Server response JSON nahi hai. Vercel deployment ya API route check karo."
-      );
+      throw new Error("Server Error: API route not found or Render server issue");
     }
 
     const data = await res.json();
 
-    if (res.status === 401 && !cleanPath.includes("/auth/login")) {
+    if (res.status === 401 && !cleanPath.includes("/login")) {
       logout();
       return;
     }
@@ -130,12 +94,7 @@ async function request(path, options = {}) {
 
     return data;
   } catch (err) {
-    console.error("Fetch Error:", {
-      api: API,
-      path: cleanPath,
-      error: err.message
-    });
-
+    console.error("Fetch Error:", err);
     throw err;
   }
 }
@@ -143,86 +102,68 @@ async function request(path, options = {}) {
 window.request = request;
 
 // =============================
-// REQUIRE STUDENT AUTH
+// REQUIRE STUDENT
 // =============================
 async function requireStudent() {
   const t = token();
 
   if (!t) {
     logout();
-    return null;
+    return;
   }
 
   try {
     const data = await request("/api/profile");
 
-    if (!data || !data.user) {
-      throw new Error("Invalid user session");
+    if (data && data.user) {
+      localStorage.setItem("mg_user", JSON.stringify(data.user));
+      return data.user;
     }
 
-    localStorage.setItem("mg_user", JSON.stringify(data.user));
-    updateUserUI(data.user);
-
-    return data.user;
+    throw new Error("Invalid User");
   } catch (err) {
-    console.error("Auth check failed:", err.message);
+    console.error("Auth check failed:", err);
     logout();
-    return null;
   }
 }
 
 window.requireStudent = requireStudent;
 
 // =============================
-// USER UI UPDATE
-// =============================
-function updateUserUI(user) {
-  if (!user) return;
-
-  document.querySelectorAll("[data-auth-name]").forEach((el) => {
-    el.textContent = user.name || "Student";
-  });
-
-  document.querySelectorAll("[data-auth-email]").forEach((el) => {
-    el.textContent = user.email || "";
-  });
-
-  document.querySelectorAll("[data-auth-mobile]").forEach((el) => {
-    el.textContent = user.mobile || "";
-  });
-
-  document.querySelectorAll("[data-remaining-text]").forEach((el) => {
-    el.textContent = user.remainingText ?? 0;
-  });
-
-  document.querySelectorAll("[data-remaining-image]").forEach((el) => {
-    el.textContent = user.remainingImage ?? 0;
-  });
-
-  document.querySelectorAll("[data-remaining-test]").forEach((el) => {
-    el.textContent = user.remainingTest ?? 0;
-  });
-}
-
-// =============================
-// DOM READY
+// DOM READY & FORMS
 // =============================
 document.addEventListener("DOMContentLoaded", () => {
   const year = document.querySelector("#year");
   if (year) year.textContent = new Date().getFullYear();
 
-  const savedUser = getUser();
-  updateUserUI(savedUser);
+  const userData = localStorage.getItem("mg_user");
 
-  document.querySelectorAll("[data-logout]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+
+      document.querySelectorAll("[data-auth-name]").forEach((el) => {
+        el.textContent = user.name || "Student";
+      });
+
+      document.querySelectorAll("[data-auth-mobile]").forEach((el) => {
+        el.textContent = user.mobile || "";
+      });
+    } catch (err) {
+      localStorage.removeItem("mg_user");
+    }
+  }
+
+  document.querySelectorAll("[data-logout]").forEach((b) =>
+    b.addEventListener("click", (e) => {
       e.preventDefault();
       logout();
-    });
-  });
+    })
+  );
 
   // =============================
   // LOGIN FORM
+  // Email OR Mobile Login
   // =============================
   const login = document.querySelector("#loginForm");
 
@@ -231,19 +172,16 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
 
       const box = document.querySelector("#formMsg");
-      const formData = Object.fromEntries(new FormData(login).entries());
+      const form = Object.fromEntries(new FormData(login).entries());
 
-      const identifier =
-        formData.identifier ||
-        formData.email ||
-        formData.mobile ||
-        formData.login ||
-        "";
+      const identifier = String(
+        form.identifier || form.email || form.mobile || ""
+      ).trim();
 
-      const password = formData.password || "";
+      const password = String(form.password || "");
 
       if (!identifier || !password) {
-        msg(box, "Email/mobile aur password dono required hain.", "error");
+        msg(box, "Email/mobile aur password required hai.", "error");
         return;
       }
 
@@ -255,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         msg(box, "Logging in...", "notice");
 
-        const data = await request("/api/auth/login", {
+        const data = await request("/api/login", {
           method: "POST",
           body: JSON.stringify(body)
         });
@@ -272,6 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // =============================
   // SIGNUP FORM
+  // Name + Email + Mobile + Password
   // =============================
   const signup = document.querySelector("#signupForm");
 
@@ -280,15 +219,21 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
 
       const box = document.querySelector("#formMsg");
-      const formData = Object.fromEntries(new FormData(signup).entries());
+      const form = Object.fromEntries(new FormData(signup).entries());
 
-      const name = String(formData.name || "").trim();
-      const email = String(formData.email || "").trim();
-      const mobile = String(formData.mobile || "").trim();
-      const password = String(formData.password || "");
+      const name = String(form.name || "").trim();
+      const email = String(form.email || "").trim().toLowerCase();
+      const mobileRaw = String(form.mobile || "").trim();
+      const password = String(form.password || "");
+
+      let mobile = mobileRaw.replace(/\D/g, "");
+
+      if (mobile.length === 12 && mobile.startsWith("91")) {
+        mobile = mobile.slice(2);
+      }
 
       if (!name || !email || !mobile || !password) {
-        msg(box, "Name, email, mobile aur password required hain.", "error");
+        msg(box, "Name, email, mobile aur password required hai.", "error");
         return;
       }
 
@@ -297,13 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const mobileDigits = mobile.replace(/\D/g, "");
-      const cleanMobile =
-        mobileDigits.length === 12 && mobileDigits.startsWith("91")
-          ? mobileDigits.slice(2)
-          : mobileDigits;
-
-      if (!/^[6-9]\d{9}$/.test(cleanMobile)) {
+      if (!/^[6-9]\d{9}$/.test(mobile)) {
         msg(box, "Valid 10 digit Indian mobile number enter karo.", "error");
         return;
       }
@@ -316,14 +255,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const body = {
         name,
         email,
-        mobile: cleanMobile,
+        mobile,
         password
       };
 
       try {
         msg(box, "Creating account...", "notice");
 
-        const data = await request("/api/auth/signup", {
+        const data = await request("/api/signup", {
           method: "POST",
           body: JSON.stringify(body)
         });
