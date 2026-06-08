@@ -1,1 +1,344 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Pricing | MATHS GURU</title><script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script><link rel="stylesheet" href="style.css"></head><body><nav class="nav"><div class="nav-inner"><a class="brand" href="index.html">MATHS GURU</a><div class="links"><a href="signup.html">Signup</a><a href="login.html">Login</a><a href="contact.html">Contact</a></div></div></nav><main class="container"><h1 class="section-title">Pricing</h1><p class="muted">Launch-ready MVP plans for students.</p><section class="grid two" style="margin-top:24px"><div class="card"><h2>Free</h2><div class="price">₹0</div><p>10 text doubts</p><p>3 image doubts</p><p>Hindi + English solution</p><a class="btn" href="signup.html">Start Free</a></div><div class="card"><h2>Premium</h2><div class="price">₹99</div><p>100 text doubts</p><p>100 image doubts</p><p>Manual UPI approval</p><a class="btn" href="upgrade.html">Upgrade</a></div></section></main><script src="script.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing | MATHS GURU</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .pricing-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .pricing-hero h1 {
+      font-size: 38px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .pricing-hero p {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 28px;
+    }
+
+    .price-card {
+      background: #ffffff;
+      border: 2px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 24px;
+      position: relative;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      transition: 0.25s;
+    }
+
+    .price-card:hover {
+      transform: translateY(-4px);
+      border-color: #0056b3;
+      box-shadow: 0 8px 24px rgba(0,86,179,0.14);
+    }
+
+    .price-card.popular {
+      border: 3px solid #0056b3;
+      background: #eef6ff;
+    }
+
+    .price-card.best {
+      border: 3px solid #16a34a;
+      background: #f0fdf4;
+    }
+
+    .price-card.unlimited {
+      border: 3px solid #7c3aed;
+      background: linear-gradient(135deg, #f5f3ff, #ffffff);
+    }
+
+    .tag {
+      position: absolute;
+      top: -12px;
+      right: 16px;
+      background: #ff5722;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .tag.green {
+      background: #16a34a;
+    }
+
+    .tag.purple {
+      background: #7c3aed;
+    }
+
+    .plan-name {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .price-line {
+      margin-bottom: 8px;
+    }
+
+    .old-price {
+      color: #777;
+      text-decoration: line-through;
+      font-weight: 700;
+      margin-right: 8px;
+      font-size: 17px;
+    }
+
+    .new-price {
+      color: #0056b3;
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .duration {
+      color: #555;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .save-text {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #1b5e20;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 14px;
+    }
+
+    .features {
+      margin: 16px 0;
+      color: #333;
+      line-height: 1.8;
+      font-size: 15px;
+    }
+
+    .features p {
+      margin: 5px 0;
+    }
+
+    .pricing-actions {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .note-box {
+      margin-top: 24px;
+      background: #fff8e1;
+      border-left: 5px solid #ff9800;
+      padding: 14px;
+      border-radius: 10px;
+      color: #6b4e00;
+      font-size: 14px;
+    }
+
+    @media (max-width: 850px) {
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pricing-hero h1 {
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">MATHS GURU</a>
+
+      <div class="links">
+        <a href="index.html">Home</a>
+        <a href="signup.html">Signup</a>
+        <a href="login.html">Login</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="pricing-hero">
+      <h1 class="section-title">Math Guru Pricing</h1>
+      <p>Choose the best plan for text doubts, image doubts and AI test generation.</p>
+    </section>
+
+    <section class="pricing-grid">
+
+      <!-- FREE -->
+      <div class="price-card">
+        <div class="plan-name">🆓 Free</div>
+
+        <div class="price-line">
+          <span class="new-price">₹0</span>
+        </div>
+
+        <div class="duration">Free Forever</div>
+
+        <div class="features">
+          <p>✅ 10 Text Doubts</p>
+          <p>✅ 3 Image Doubts</p>
+          <p>✅ 3 AI Tests</p>
+          <p>✅ Hindi + English / Hinglish</p>
+        </div>
+
+        <a class="btn" href="signup.html">Start Free</a>
+      </div>
+
+      <!-- STARTER -->
+      <div class="price-card">
+        <div class="plan-name">⭐ Starter</div>
+
+        <div class="price-line">
+          <span class="old-price">₹111</span>
+          <span class="new-price">₹79</span>
+        </div>
+
+        <div class="duration">Valid for 1 Month</div>
+        <span class="save-text">Save ₹32</span>
+
+        <div class="features">
+          <p>✅ 100 Text Doubts</p>
+          <p>✅ 20 Image Doubts</p>
+          <p>✅ 15 AI Tests</p>
+          <p>✅ Best for trial users</p>
+        </div>
+
+        <a class="btn" href="upgrade.html?plan=starter">Get Starter Plan</a>
+      </div>
+
+      <!-- MOST POPULAR -->
+      <div class="price-card popular">
+        <span class="tag">Most Popular</span>
+
+        <div class="plan-name">🔥 3 Months Plan</div>
+
+        <div class="price-line">
+          <span class="old-price">₹299</span>
+          <span class="new-price">₹199</span>
+        </div>
+
+        <div class="duration">Valid for 3 Months</div>
+        <span class="save-text">Save ₹100</span>
+
+        <div class="features">
+          <p>✅ 300 Text Doubts</p>
+          <p>✅ 75 Image Doubts</p>
+          <p>✅ 40 AI Tests</p>
+          <p>✅ Best for regular students</p>
+        </div>
+
+        <a class="btn" href="upgrade.html?plan=popular_3m">Get ₹199 Plan</a>
+      </div>
+
+      <!-- HALF YEAR -->
+      <div class="price-card best">
+        <span class="tag green">Recommended</span>
+
+        <div class="plan-name">💎 Half Year Plan</div>
+
+        <div class="price-line">
+          <span class="old-price">₹499</span>
+          <span class="new-price">₹349</span>
+        </div>
+
+        <div class="duration">Valid for 6 Months</div>
+        <span class="save-text">Save ₹150</span>
+
+        <div class="features">
+          <p>✅ 700 Text Doubts</p>
+          <p>✅ 150 Image Doubts</p>
+          <p>✅ 100 AI Tests</p>
+          <p>✅ Best for exam preparation</p>
+        </div>
+
+        <a class="btn" href="upgrade.html?plan=half_year">Get Half Year Plan</a>
+      </div>
+
+      <!-- YEARLY -->
+      <div class="price-card">
+        <span class="tag green">Best Value</span>
+
+        <div class="plan-name">🏆 Yearly Plan</div>
+
+        <div class="price-line">
+          <span class="old-price">₹999</span>
+          <span class="new-price">₹699</span>
+        </div>
+
+        <div class="duration">Valid for 1 Year</div>
+        <span class="save-text">Save ₹300</span>
+
+        <div class="features">
+          <p>✅ 1500 Text Doubts</p>
+          <p>✅ 400 Image Doubts</p>
+          <p>✅ 250 AI Tests</p>
+          <p>✅ Best for full-year study</p>
+        </div>
+
+        <a class="btn" href="upgrade.html?plan=yearly">Get Yearly Plan</a>
+      </div>
+
+      <!-- UNLIMITED -->
+      <div class="price-card unlimited">
+        <span class="tag purple">Unlimited</span>
+
+        <div class="plan-name">🚀 Unlimited*</div>
+
+        <div class="price-line">
+          <span class="old-price">₹499</span>
+          <span class="new-price">₹299</span>
+        </div>
+
+        <div class="duration">Valid for 1 Month</div>
+        <span class="save-text">Save ₹200</span>
+
+        <div class="features">
+          <p>✅ Fair Use Unlimited Text Doubts</p>
+          <p>✅ Fair Use Unlimited Image Doubts</p>
+          <p>✅ Fair Use Unlimited AI Tests</p>
+          <p>✅ Best for heavy users</p>
+        </div>
+
+        <a class="btn" href="upgrade.html?plan=unlimited">Get Unlimited Plan</a>
+      </div>
+
+    </section>
+
+    <div class="pricing-actions">
+      <a class="btn ghost" href="index.html">Back to Home</a>
+      <a class="btn ghost" href="login.html">Already have account?</a>
+    </div>
+
+    <div class="note-box">
+      ⚠️ Payment UPI se hoga. UTR number aur payment screenshot submit karna zaroori hai. Admin verify karke plan approve karega.
+      Unlimited plan fair-use policy ke under hai.
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
