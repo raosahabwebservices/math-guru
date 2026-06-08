@@ -37,7 +37,7 @@ async function callAI(prompt, imageDataOptional = null) {
         {
           role: "system",
           content:
-            "You are Math Guru, an expert maths teacher for Class 1 to 12 students. Follow the requested format strictly. If JSON is requested, return only valid JSON."
+            "You are Math Guru, a simple maths teacher for Class 1 to 12 students. For doubt solving, never use LaTeX. Use plain readable text only. For test generation, return only valid JSON when asked."
         },
         {
           role: "user",
@@ -69,6 +69,9 @@ async function imageFileToDataUrl(imagePath, mimeType) {
   return `data:${mimeType};base64,${base64}`;
 }
 
+// ==========================================
+// DOUBT SOLVER — PLAIN TEXT OUTPUT
+// ==========================================
 async function solveDoubt({
   question,
   language = "Hinglish",
@@ -82,7 +85,9 @@ async function solveDoubt({
   }
 
   const prompt = `
-Solve this maths doubt for a Class 1 to 12 student.
+You are Math Guru, a simple maths teacher for Class 1 to 12 students.
+
+Solve this maths doubt.
 
 Student question:
 ${question}
@@ -90,27 +95,59 @@ ${question}
 Language:
 ${language}
 
+VERY IMPORTANT FORMATTING RULES:
+- Do NOT use LaTeX.
+- Do NOT use \\frac, \\sqrt, \\theta, \\cos^{-1}, \\left, \\right.
+- Do NOT use confusing mathematical code.
+- Write fractions like this: 2/3
+- Write square root like this: sqrt(22)
+- Write theta like this: theta
+- Write inverse cosine like this: cos inverse
+- Write power like this: x^2
+- Use simple plain text only.
+- Give numerical final value if possible.
+- Explain like a weak student can understand.
+- Keep answer clean and readable on mobile screen.
+
 Give answer in this exact format:
 
 1. Problem Understanding
-Explain what the question is asking.
+Write in very simple words what the question is asking.
 
 2. Formula Used
-Write formula used. If no formula, write "No special formula needed".
+Write formula in plain text only.
 
-3. Step-by-Step Solution
-Solve slowly and clearly.
+Example:
+cos theta = (l1*l2 + m1*m2 + n1*n2) / (sqrt(l1^2 + m1^2 + n1^2) * sqrt(l2^2 + m2^2 + n2^2))
 
-4. Simple Explanation
-Explain in simple Hindi + English / Hinglish.
+3. Values Given
+Write all values clearly.
+
+Example:
+First line direction ratios = 1, 2/3, -1
+Second line direction ratios = 1, -6, -4
+
+4. Step-by-Step Solution
+Solve in clean steps.
+Use normal text.
+No LaTeX.
 
 5. Final Answer
-Write final answer separately.
+Write exact answer and approximate answer if possible.
+
+Example:
+theta = cos inverse(3 / sqrt(1166))
+theta ≈ 84.96 degrees
+
+6. Simple Explanation
+Explain in easy Hindi + English / Hinglish.
 
 Rules:
-- Do not skip steps.
-- Do not give only final answer.
-- Keep language simple.
+- Do not skip values.
+- Do not give confusing symbols.
+- Do not use markdown table.
+- Keep spacing clean.
+- Final answer must be separate.
 - If image is provided, read the maths question from image and solve it.
 `;
 
@@ -135,6 +172,9 @@ async function solveImageDoubt(
   });
 }
 
+// ==========================================
+// TEST GENERATOR
+// ==========================================
 async function generateMathTest({
   classLevel,
   subject = "Mathematics",
