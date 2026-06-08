@@ -592,7 +592,18 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
 app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
   try {
     const { testId } = req.params;
-    const { score, timeTaken } = req.body;
+
+    const {
+      score,
+      attempted,
+      totalQuestions,
+      mcqCount,
+      mcqAttempted,
+      writtenCount,
+      writtenAttempted,
+      answers,
+      timeTaken
+    } = req.body;
 
     const tests = await readJson("tests");
 
@@ -604,8 +615,18 @@ app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
       });
     }
 
-    test.score = score;
-    test.timeTaken = timeTaken;
+    test.score = Number(score || 0);
+    test.attempted = Number(attempted || 0);
+    test.totalQuestions = Number(totalQuestions || test.questions?.length || 0);
+
+    test.mcqCount = Number(mcqCount || 0);
+    test.mcqAttempted = Number(mcqAttempted || 0);
+
+    test.writtenCount = Number(writtenCount || 0);
+    test.writtenAttempted = Number(writtenAttempted || 0);
+
+    test.answers = answers || {};
+    test.timeTaken = timeTaken || "00:00";
     test.submittedAt = new Date().toISOString();
 
     await writeJson("tests", tests);
@@ -615,6 +636,8 @@ app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
       test
     });
   } catch (err) {
+    console.error("Test submit error:", err);
+
     res.status(500).json({
       message: "Test submit failed"
     });
