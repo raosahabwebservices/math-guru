@@ -18,12 +18,12 @@ async function callAI(prompt, imageDataOptional = null) {
     throw new Error("OPENROUTER_API_KEY missing in .env");
   }
 
-  const content = [];
-
-  content.push({
-    type: "text",
-    text: prompt
-  });
+  const content = [
+    {
+      type: "text",
+      text: prompt
+    }
+  ];
 
   if (imageDataOptional) {
     content.push({
@@ -48,7 +48,7 @@ async function callAI(prompt, imageDataOptional = null) {
         {
           role: "system",
           content:
-            "You are Math Guru, an expert maths teacher for Class 1 to 12 students. Give accurate step-by-step solutions in simple language."
+            "You are Math Guru, an expert maths teacher for Class 1 to 12 students. Give accurate step-by-step solutions in simple Hindi, English or Hinglish."
         },
         {
           role: "user",
@@ -79,9 +79,14 @@ async function imageFileToDataUrl(imagePath, mimeType) {
 }
 
 // ==========================================
-// 3. DOUBT SOLVER
+// 3. COMMON DOUBT SOLVER
 // ==========================================
-async function solveDoubt({ question, language = "Hinglish", imagePath = null, mimeType = null }) {
+async function solveDoubt({
+  question,
+  language = "Hinglish",
+  imagePath = null,
+  mimeType = null
+}) {
   let imageData = null;
 
   if (imagePath && mimeType) {
@@ -125,9 +130,38 @@ Rules:
 }
 
 // ==========================================
-// 4. TEST GENERATOR
+// 4. TEXT DOUBT WRAPPER
+// server.js ko ye function chahiye
 // ==========================================
-async function generateTest({
+async function solveTextDoubt(question, language = "Hinglish") {
+  return await solveDoubt({
+    question,
+    language
+  });
+}
+
+// ==========================================
+// 5. IMAGE DOUBT WRAPPER
+// server.js ko ye function chahiye
+// ==========================================
+async function solveImageDoubt(
+  imagePath,
+  mimeType,
+  question = "Solve this maths question from image.",
+  language = "Hinglish"
+) {
+  return await solveDoubt({
+    question,
+    language,
+    imagePath,
+    mimeType
+  });
+}
+
+// ==========================================
+// 6. TEST GENERATOR
+// ==========================================
+async function generateMathTest({
   classLevel,
   subject = "Mathematics",
   topic,
@@ -164,36 +198,36 @@ JSON format must be exactly:
   "totalMarks": ${numQuestions},
   "questions": [
     {
-      "type": "MCQ or Very Short or Short or Long",
+      "type": "MCQ",
       "question": "Question text",
-      "options": ["A", "B", "C", "D"],
-      "correctAnswer": "Correct answer",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswer": "Option A",
       "stepByStepSolution": "Full step by step solution"
     }
   ],
   "answerKey": [
     {
       "questionNumber": 1,
-      "answer": "Correct answer"
+      "answer": "Option A"
     }
   ]
 }
 
 Rules:
 - Generate exactly ${numQuestions} questions.
-- For MCQ questions, options array must have 4 options.
-- For non-MCQ questions, options must be [].
-- correctAnswer must match exactly one option for MCQ.
+- If question type is MCQ, every question must have 4 options.
+- If question type is Very Short, Short or Long, options must be [].
+- If question type is Mixed, mix MCQ and written questions.
+- correctAnswer must be clear.
+- For MCQ, correctAnswer must exactly match one option.
 - Questions must be suitable for Class ${classLevel}.
 - Use simple ${language}.
 - Keep answers accurate.
 `;
 
   const aiText = await callAI(prompt);
-
   const parsed = safeJsonParse(aiText);
 
-  // Backend safety normalization
   const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
 
   if (questions.length === 0) {
@@ -201,10 +235,12 @@ Rules:
   }
 
   const finalQuestions = questions.slice(0, Number(numQuestions)).map((q, index) => {
+    const options = Array.isArray(q.options) ? q.options : [];
+
     return {
       type: q.type || questionType || "Mixed",
       question: q.question || `Question ${index + 1}`,
-      options: Array.isArray(q.options) ? q.options : [],
+      options,
       correctAnswer: q.correctAnswer || "",
       stepByStepSolution: q.stepByStepSolution || ""
     };
@@ -230,7 +266,7 @@ Rules:
 }
 
 // ==========================================
-// 5. SAFE JSON PARSER
+// 7. SAFE JSON PARSER
 // ==========================================
 function safeJsonParse(text) {
   try {
@@ -250,8 +286,14 @@ function safeJsonParse(text) {
   }
 }
 
+// ==========================================
+// 8. EXPORTS
+// server.js ke import ke according
+// ==========================================
 module.exports = {
   callAI,
   solveDoubt,
-  generateTest
+  solveTextDoubt,
+  solveImageDoubt,
+  generateMathTest
 };
