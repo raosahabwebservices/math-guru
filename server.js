@@ -5,29 +5,25 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const fsSync = require('fs'); 
 const multer = require('multer');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// Internal Hooks
-const { requireAuth, signToken } = require('./auth');
+// Internal Hooks (Tumhara chalne wala exact auth middleware aur AI files)
+const { requireAuth, signToken } = require('./auth'); // ✅ SIGNTOKEN IMPORTED CLEANLY HERE
 const { solveTextDoubt, solveImageDoubt, generateCustomTest } = require('./ai');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ CRITICAL VERCEL FIXED: Ab serverless function kabhi crash nahi hoga folder ki wajah se
-const uploadDir = path.join('/tmp', 'uploads');
-if (!fsSync.existsSync(uploadDir)) {
-    fsSync.mkdirSync(uploadDir, { recursive: true });
-}
+// ✅ ZERO-CRASH DIRECTORY SETUP FOR VERCEL
+// Na koi mkdirSync chalega, na permission crash hoga. Direct serverless static bypass.
+const upload = multer({ dest: '/tmp/' });
 
 // ==========================================
 // 🔌 MONGOOSE CLOUD DATABASE CONNECTION
 // ==========================================
-// Live strict Atlas connection URL
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://mathguru498_db_user:Harshit7880@cluster0.c9q0v1g.mongodb.net/mathsguru?retryWrites=true&w=majority&appName=Cluster0";
 
 mongoose.connect(MONGO_URI)
@@ -73,8 +69,6 @@ const testSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Test = mongoose.model('Test', testSchema);
 
-const upload = multer({ dest: uploadDir });
-
 // Backend mapping compliance data syncing helper
 const publicUser = (u) => ({ 
     id: u._id.toString(), 
@@ -101,7 +95,6 @@ app.post("/api/auth/signup", async (req, res) => {
         let existingUser = await User.findOne({ $or: [{ email }, { mobile }] });
         if (existingUser) return res.status(400).json({ message: "Email ya Mobile number pehle se hai bhai!" });
 
-        // Password strict hashing taaki login check bypass na ho
         const hashedPassword = await bcrypt.hash(password, 10);
         let referredByCode = null;
         let selfBonus = 0;
@@ -110,7 +103,7 @@ app.post("/api/auth/signup", async (req, res) => {
             const referrer = await User.findOne({ myReferralCode: referralCode.toUpperCase().trim() });
             if (referrer) {
                 referredByCode = referrer.myReferralCode;
-                selfBonus = 2; // Extra bonus token points
+                selfBonus = 2; 
                 referrer.textLimitBonus = (referrer.textLimitBonus || 0) + 5;
                 await referrer.save();
             }
@@ -124,7 +117,6 @@ app.post("/api/auth/signup", async (req, res) => {
         });
         await newUser.save();
 
-        // Exact tumhare purane token structure integration se matching
         const token = signToken({ id: newUser._id.toString() });
         res.json({ token, user: publicUser(newUser) });
     } catch (err) { res.status(500).json({ message: "Signup Crash: " + err.message }); }
@@ -134,13 +126,11 @@ app.post("/api/auth/login", async (req, res) => {
     try {
         const { identifier, password } = req.body;
         
-        // Find user by either email or mobile phone
         const user = await User.findOne({ 
             $or: [{ email: identifier.trim() }, { mobile: identifier.trim() }] 
         });
         if (!user) return res.status(401).json({ message: "Invalid Credentials (User not found)" });
 
-        // Compare current plain input with hashed database password string
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(401).json({ message: "Invalid Credentials (Password mismatch)" });
 
@@ -158,7 +148,7 @@ app.get("/api/profile", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 🧠 ASLI AI DOUBT ROUTES (Direct MongoDB Atlas Sync)
+// 🧠 ASLI AI DOUBT ROUTES
 // ==========================================
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
     try {
@@ -166,7 +156,6 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: "User missing" });
         
-        // Execute real OpenRouter/Gemini function hook from ai.js
         const solution = await solveTextDoubt(question, language || "Hinglish");
 
         user.textUsed = (user.textUsed || 0) + 1;
@@ -192,8 +181,7 @@ app.post("/api/doubt/image", requireAuth, upload.single('image'), async (req, re
         user.imageUsed = (user.imageUsed || 0) + 1;
         await user.save();
 
-        const imageRelativePath = `/uploads/${req.file.filename}`;
-        const doubt = new Doubt({ userId: user._id.toString(), type: "image", question: question || "Image query", solution, imagePath: imageRelativePath });
+        const doubt = new Doubt({ userId: user._id.toString(), type: "image", question: question || "Image query", solution, imagePath: req.file.path });
         await doubt.save();
 
         res.json({ doubt, user: publicUser(user) });
@@ -208,14 +196,13 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// ⚡ ASLI AI TEST GENERATOR ROUTES (Makkhan Sync)
+// ⚡ ASLI AI TEST GENERATOR ROUTES
 // ==========================================
 app.post("/api/test/generate", requireAuth, async (req, res) => {
     try {
         const { classLevel, chapter, topic, difficulty, questionType, numQuestions, language } = req.body;
         const finalTopic = topic || chapter || "General Questions";
 
-        // Call AI engine function direct from ai.js
         const generatedQuestions = await generateCustomTest({
             classLevel, chapter, topic: finalTopic, difficulty, questionType, numQuestions, language
         });
@@ -241,23 +228,16 @@ app.post("/api/test/submit/:id", requireAuth, async (req, res) => {
 // ==========================================
 // 5. VERCEL SERVERLESS STATIC BYPASS (FIXED)
 // ==========================================
-app.use('/uploads', express.static(uploadDir));
-
-// ✅ RUNTIME CRASH FIX: Base target fallback string pass check
 app.get('/', (req, res) => {
     res.json({ message: "🚀 Maths Guru pure MongoDB Engine is running live on Vercel!" });
 });
 
-app.get('/api/*', (req, res) => {
-    res.status(404).json({ error: "API Endpoint path not found" });
-});
-
 app.get('*', (req, res) => {
-    res.status(404).json({ error: "Static asset directory path missing" });
+    res.status(404).json({ error: "Endpoint not found" });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is LIVE on port ${PORT}`);
 });
-    
+                                        
