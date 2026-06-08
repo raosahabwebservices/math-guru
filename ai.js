@@ -9,28 +9,17 @@ if (!OPENROUTER_API_KEY) {
   console.warn("Warning: OPENROUTER_API_KEY missing in .env");
 }
 
-// ==========================================
-// 1. REUSABLE AI FUNCTION
-// Same function for doubt solver + test generator
-// ==========================================
 async function callAI(prompt, imageDataOptional = null) {
   if (!OPENROUTER_API_KEY) {
     throw new Error("OPENROUTER_API_KEY missing in .env");
   }
 
-  const content = [
-    {
-      type: "text",
-      text: prompt
-    }
-  ];
+  const content = [{ type: "text", text: prompt }];
 
   if (imageDataOptional) {
     content.push({
       type: "image_url",
-      image_url: {
-        url: imageDataOptional
-      }
+      image_url: { url: imageDataOptional }
     });
   }
 
@@ -48,18 +37,24 @@ async function callAI(prompt, imageDataOptional = null) {
         {
           role: "system",
           content:
-            "You are Math Guru, an expert maths teacher for Class 1 to 12 students. Give accurate step-by-step solutions in simple Hindi, English or Hinglish."
+            "You are Math Guru, an expert maths teacher for Class 1 to 12 students. Follow the requested format strictly. If JSON is requested, return only valid JSON."
         },
         {
           role: "user",
           content
         }
       ],
-      temperature: 0.3
+      temperature: 0.2
     })
   });
 
-  const data = await response.json();
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("AI API returned invalid response");
+  }
 
   if (!response.ok) {
     throw new Error(data?.error?.message || "AI API request failed");
@@ -68,19 +63,12 @@ async function callAI(prompt, imageDataOptional = null) {
   return data?.choices?.[0]?.message?.content || "";
 }
 
-// ==========================================
-// 2. IMAGE TO BASE64 DATA URL
-// ==========================================
 async function imageFileToDataUrl(imagePath, mimeType) {
   const imageBuffer = await fs.readFile(imagePath);
   const base64 = imageBuffer.toString("base64");
-
   return `data:${mimeType};base64,${base64}`;
 }
 
-// ==========================================
-// 3. COMMON DOUBT SOLVER
-// ==========================================
 async function solveDoubt({
   question,
   language = "Hinglish",
@@ -129,21 +117,10 @@ Rules:
   return await callAI(prompt, imageData);
 }
 
-// ==========================================
-// 4. TEXT DOUBT WRAPPER
-// server.js ko ye function chahiye
-// ==========================================
 async function solveTextDoubt(question, language = "Hinglish") {
-  return await solveDoubt({
-    question,
-    language
-  });
+  return await solveDoubt({ question, language });
 }
 
-// ==========================================
-// 5. IMAGE DOUBT WRAPPER
-// server.js ko ye function chahiye
-// ==========================================
 async function solveImageDoubt(
   imagePath,
   mimeType,
@@ -158,9 +135,6 @@ async function solveImageDoubt(
   });
 }
 
-// ==========================================
-// 6. TEST GENERATOR
-// ==========================================
 async function generateMathTest({
   classLevel,
   subject = "Mathematics",
@@ -170,84 +144,196 @@ async function generateMathTest({
   questionType = "Mixed",
   language = "Hinglish"
 }) {
+  const finalNumQuestions = Number(numQuestions) || 5;
+
+  let typeInstruction = "";
+
+  if (questionType === "MCQ") {
+    typeInstruction = `
+STRICT QUESTION TYPE RULE:
+- Generate ONLY MCQ questions.
+- Every question must have exactly 4 options.
+- options must be an array of exactly 4 strings.
+- correctAnswer must exactly match one option.
+`;
+  } else if (questionType === "Very Short") {
+    typeInstruction = `
+STRICT QUESTION TYPE RULE:
+- Generate ONLY Very Short answer questions.
+- Do NOT generate MCQ.
+- options must be [] for every question.
+- correctAnswer must be only final answer in 1 line.
+`;
+  } else if (questionType === "Short") {
+    typeInstruction = `
+STRICT QUESTION TYPE RULE:
+- Generate ONLY Short answer questions.
+- Do NOT generate MCQ.
+- options must be [] for every question.
+- correctAnswer must be only final answer in 1 to 3 lines.
+`;
+  } else if (questionType === "Long") {
+    typeInstruction = `
+STRICT QUESTION TYPE RULE:
+- Generate ONLY Long answer questions.
+- Do NOT generate MCQ.
+- options must be [] for every question.
+- correctAnswer must be only final result / final answer.
+`;
+  } else {
+    typeInstruction = `
+STRICT QUESTION TYPE RULE:
+- Generate Mixed questions.
+- Include both MCQ and written answer questions.
+- MCQ questions must have exactly 4 options.
+- Written questions must have options as [].
+`;
+  }
+
   const prompt = `
 Create a maths test for Math Guru.
 
-Requirements:
-- Class: ${classLevel}
-- Subject: ${subject}
-- Chapter/Topic: ${topic}
-- Difficulty: ${difficulty}
-- Question Type: ${questionType}
-- Number of Questions: ${numQuestions}
-- Language: ${language}
+Class: ${classLevel}
+Subject: ${subject}
+Chapter/Topic: ${topic}
+Difficulty: ${difficulty}
+Question Type Selected By User: ${questionType}
+Number of Questions: ${finalNumQuestions}
+Language: ${language}
+
+${typeInstruction}
 
 Return ONLY valid JSON.
 Do not use markdown.
-Do not write explanation outside JSON.
+Do not write anything outside JSON.
 
 JSON format must be exactly:
 
 {
-  "title": "Test title here",
+  "title": "Test title",
   "classLevel": ${classLevel},
   "subject": "${subject}",
   "topic": "${topic}",
   "difficulty": "${difficulty}",
   "marksPerQuestion": 1,
-  "totalMarks": ${numQuestions},
+  "totalMarks": ${finalNumQuestions},
   "questions": [
     {
-      "type": "MCQ",
+      "type": "${questionType}",
       "question": "Question text",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctAnswer": "Option A",
-      "stepByStepSolution": "Full step by step solution"
+      "options": [],
+      "correctAnswer": "Only final answer here",
+      "stepByStepSolution": ""
     }
   ],
   "answerKey": [
     {
       "questionNumber": 1,
-      "answer": "Option A"
+      "answer": "Only final answer here"
     }
   ]
 }
 
-Rules:
-- Generate exactly ${numQuestions} questions.
-- If question type is MCQ, every question must have 4 options.
-- If question type is Very Short, Short or Long, options must be [].
-- If question type is Mixed, mix MCQ and written questions.
-- correctAnswer must be clear.
-- For MCQ, correctAnswer must exactly match one option.
-- Questions must be suitable for Class ${classLevel}.
+VERY STRICT RULES:
+- Generate exactly ${finalNumQuestions} questions.
+- Follow selected question type strictly: ${questionType}.
+- If selected type is MCQ, options must have exactly 4 options.
+- If selected type is Very Short, Short or Long, options must be [].
+- Do not put step-by-step solution.
+- stepByStepSolution must always be "".
+- correctAnswer must contain ONLY the final answer.
+- Questions must match Class ${classLevel}.
+- Difficulty must be ${difficulty}.
 - Use simple ${language}.
-- Keep answers accurate.
 `;
 
   const aiText = await callAI(prompt);
   const parsed = safeJsonParse(aiText);
 
-  const questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+  let questions = Array.isArray(parsed.questions) ? parsed.questions : [];
 
   if (questions.length === 0) {
     throw new Error("AI did not return valid questions");
   }
 
-  const finalQuestions = questions.slice(0, Number(numQuestions)).map((q, index) => {
-    const options = Array.isArray(q.options) ? q.options : [];
+  questions = questions.slice(0, finalNumQuestions).map((q, index) => {
+    let finalType = questionType === "Mixed" ? String(q.type || "Short").trim() : questionType;
+    let options = Array.isArray(q.options) ? q.options.map(String) : [];
+    let correctAnswer = String(q.correctAnswer || "").trim();
+
+    if (
+      questionType === "Very Short" ||
+      questionType === "Short" ||
+      questionType === "Long"
+    ) {
+      finalType = questionType;
+      options = [];
+    }
+
+    if (questionType === "MCQ") {
+      finalType = "MCQ";
+      options = normalizeMcqOptions(options, correctAnswer);
+
+      if (!options.includes(correctAnswer)) {
+        correctAnswer = options[0];
+      }
+    }
+
+    if (questionType === "Mixed") {
+      const isActuallyMCQ =
+        finalType === "MCQ" &&
+        Array.isArray(options) &&
+        options.length > 0;
+
+      if (isActuallyMCQ) {
+        finalType = "MCQ";
+        options = normalizeMcqOptions(options, correctAnswer);
+
+        if (!options.includes(correctAnswer)) {
+          correctAnswer = options[0];
+        }
+      } else {
+        if (!["Very Short", "Short", "Long"].includes(finalType)) {
+          finalType = "Short";
+        }
+
+        options = [];
+      }
+    }
 
     return {
-      type: q.type || questionType || "Mixed",
-      question: q.question || `Question ${index + 1}`,
+      type: finalType,
+      question: String(q.question || `Question ${index + 1}`).trim(),
       options,
-      correctAnswer: q.correctAnswer || "",
-      stepByStepSolution: q.stepByStepSolution || ""
+      correctAnswer,
+      stepByStepSolution: ""
     };
   });
 
+  while (questions.length < finalNumQuestions) {
+    const n = questions.length + 1;
+
+    if (questionType === "MCQ") {
+      questions.push({
+        type: "MCQ",
+        question: `Question ${n}: ${topic} se related ek simple question solve karein.`,
+        options: ["Option A", "Option B", "Option C", "Option D"],
+        correctAnswer: "Option A",
+        stepByStepSolution: ""
+      });
+    } else {
+      questions.push({
+        type: questionType === "Mixed" ? "Short" : questionType,
+        question: `Question ${n}: ${topic} se related ek answer likhein.`,
+        options: [],
+        correctAnswer: "Answer may vary. Match with concept.",
+        stepByStepSolution: ""
+      });
+    }
+  }
+
   const marksPerQuestion = Number(parsed.marksPerQuestion || 1);
-  const totalMarks = marksPerQuestion * finalQuestions.length;
+  const totalMarks = marksPerQuestion * questions.length;
 
   return {
     title: parsed.title || `Class ${classLevel} ${topic} Test`,
@@ -257,22 +343,39 @@ Rules:
     difficulty,
     marksPerQuestion,
     totalMarks,
-    questions: finalQuestions,
-    answerKey: finalQuestions.map((q, index) => ({
+    questions,
+    answerKey: questions.map((q, index) => ({
       questionNumber: index + 1,
       answer: q.correctAnswer
     }))
   };
 }
 
-// ==========================================
-// 7. SAFE JSON PARSER
-// ==========================================
+function normalizeMcqOptions(options, correctAnswer) {
+  let cleanOptions = Array.isArray(options)
+    ? options.map((o) => String(o || "").trim()).filter(Boolean)
+    : [];
+
+  const cleanCorrect = String(correctAnswer || "").trim();
+
+  if (cleanCorrect && !cleanOptions.includes(cleanCorrect)) {
+    cleanOptions.unshift(cleanCorrect);
+  }
+
+  cleanOptions = [...new Set(cleanOptions)].slice(0, 4);
+
+  while (cleanOptions.length < 4) {
+    cleanOptions.push(`Option ${String.fromCharCode(65 + cleanOptions.length)}`);
+  }
+
+  return cleanOptions.slice(0, 4);
+}
+
 function safeJsonParse(text) {
   try {
     return JSON.parse(text);
-  } catch (err) {
-    const match = text.match(/\{[\s\S]*\}/);
+  } catch {
+    const match = String(text || "").match(/\{[\s\S]*\}/);
 
     if (!match) {
       throw new Error("AI response was not valid JSON");
@@ -280,16 +383,12 @@ function safeJsonParse(text) {
 
     try {
       return JSON.parse(match[0]);
-    } catch (err2) {
+    } catch {
       throw new Error("AI JSON parse failed");
     }
   }
 }
 
-// ==========================================
-// 8. EXPORTS
-// server.js ke import ke according
-// ==========================================
 module.exports = {
   callAI,
   solveDoubt,
