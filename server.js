@@ -10,7 +10,7 @@ const multer = require('multer');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// Internal Hooks (Tumhara chalne wala exact auth middleware aur AI files)
+// Internal Hooks
 const { requireAuth, signToken } = require('./auth');
 const { solveTextDoubt, solveImageDoubt, generateCustomTest } = require('./ai');
 
@@ -18,8 +18,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fsSync.existsSync(uploadDir)) fsSync.mkdirSync(uploadDir, { recursive: true });
+// ✅ CRITICAL VERCEL FIXED: Ab serverless function kabhi crash nahi hoga folder ki wajah se
+const uploadDir = path.join('/tmp', 'uploads');
+if (!fsSync.existsSync(uploadDir)) {
+    fsSync.mkdirSync(uploadDir, { recursive: true });
+}
 
 // ==========================================
 // 🔌 MONGOOSE CLOUD DATABASE CONNECTION
