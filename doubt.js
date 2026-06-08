@@ -4,10 +4,40 @@ const DOUBT_API =
     ? "http://localhost:3000"
     : "https://math-guru.onrender.com";
 
+// =========================
+// CLEANERS
+// =========================
 function cleanText(value) {
   return String(value || "")
-    .replace(/[<>&]/g, "")
+    // Common LaTeX cleanup
+    .replace(/\\frac\s*\{([^}]*)\}\s*\{([^}]*)\}/g, "($1)/($2)")
+    .replace(/\\sqrt\s*\{([^}]*)\}/g, "sqrt($1)")
+    .replace(/\\theta/g, "theta")
+    .replace(/\\cos\^\{-1\}/g, "cos inverse")
+    .replace(/\\sin\^\{-1\}/g, "sin inverse")
+    .replace(/\\tan\^\{-1\}/g, "tan inverse")
+    .replace(/\\left/g, "")
+    .replace(/\\right/g, "")
+    .replace(/\\cdot/g, "*")
+    .replace(/\\times/g, "×")
+    .replace(/\\div/g, "÷")
+    .replace(/\\\[/g, "")
+    .replace(/\\\]/g, "")
+    .replace(/\\\(/g, "")
+    .replace(/\\\)/g, "")
+    .replace(/\$/g, "")
+
+    // Markdown cleanup
     .replace(/\*\*/g, "")
+    .replace(/#{1,6}\s?/g, "")
+
+    // Basic HTML safety
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+
+    // Clean spacing
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -20,15 +50,26 @@ function showLocalMsg(el, text, type = "notice") {
   el.classList.remove("hidden");
 }
 
+// =========================
+// SOLUTION RENDER
+// =========================
 function renderSolution(doubt) {
   const solution = cleanText(doubt?.solution || "No solution found.");
 
   return `
     <div class="sol-card">
       <h3>Step-by-step Solution</h3>
-      <div style="white-space:pre-wrap; background:#f9f9f9; padding:15px; border-radius:8px;">
-        ${solution}
-      </div>
+
+      <div
+        style="
+          white-space:pre-wrap;
+          background:#f9f9f9;
+          padding:15px;
+          border-radius:8px;
+          line-height:1.6;
+          font-size:15px;
+        "
+      >${solution}</div>
     </div>
   `;
 }
@@ -44,6 +85,9 @@ function showSolution(doubt) {
   panel.scrollIntoView({ behavior: "smooth" });
 }
 
+// =========================
+// PROFILE
+// =========================
 async function loadDoubtProfile() {
   try {
     if (typeof window.requireStudent !== "function") {
@@ -63,6 +107,9 @@ async function loadDoubtProfile() {
   }
 }
 
+// =========================
+// HISTORY
+// =========================
 async function loadDoubtHistory() {
   const list = document.querySelector("#historyList");
   if (!list) return;
@@ -75,26 +122,28 @@ async function loadDoubtHistory() {
       return;
     }
 
-    list.innerHTML = data.doubts.map((d) => {
-      return `
-        <div class="history-item card" style="margin-bottom:10px; padding:15px;">
-          <strong>${cleanText(d.type).toUpperCase()}</strong>
-          <p>${cleanText(d.question || "Image doubt")}</p>
+    list.innerHTML = data.doubts
+      .map((d) => {
+        return `
+          <div class="history-item card" style="margin-bottom:10px; padding:15px;">
+            <strong>${cleanText(d.type).toUpperCase()}</strong>
+            <p>${cleanText(d.question || "Image doubt")}</p>
 
-          ${
-            d.imagePath
-              ? `<img src="${DOUBT_API}${d.imagePath}" style="max-width:140px; border-radius:8px;">`
-              : ""
-          }
+            ${
+              d.imagePath
+                ? `<img src="${DOUBT_API}${d.imagePath}" style="max-width:140px; border-radius:8px;">`
+                : ""
+            }
 
-          <br><br>
+            <br><br>
 
-          <button type="button" class="btn small ghost" data-view="${d.id}">
-            View Solution
-          </button>
-        </div>
-      `;
-    }).join("");
+            <button type="button" class="btn small ghost" data-view="${d.id}">
+              View Solution
+            </button>
+          </div>
+        `;
+      })
+      .join("");
 
     list.querySelectorAll("[data-view]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -107,6 +156,9 @@ async function loadDoubtHistory() {
   }
 }
 
+// =========================
+// TEXT DOUBT
+// =========================
 async function handleTextDoubt(e) {
   e.preventDefault();
 
@@ -142,7 +194,6 @@ async function handleTextDoubt(e) {
 
     await loadDoubtProfile();
     await loadDoubtHistory();
-
   } catch (err) {
     showLocalMsg(box, err.message, "error");
   } finally {
@@ -151,6 +202,9 @@ async function handleTextDoubt(e) {
   }
 }
 
+// =========================
+// IMAGE DOUBT
+// =========================
 async function handleImageDoubt(e) {
   e.preventDefault();
 
@@ -179,7 +233,6 @@ async function handleImageDoubt(e) {
 
     await loadDoubtProfile();
     await loadDoubtHistory();
-
   } catch (err) {
     showLocalMsg(box, err.message, "error");
   } finally {
@@ -188,6 +241,9 @@ async function handleImageDoubt(e) {
   }
 }
 
+// =========================
+// INIT
+// =========================
 document.addEventListener("DOMContentLoaded", async () => {
   await loadDoubtProfile();
   await loadDoubtHistory();
