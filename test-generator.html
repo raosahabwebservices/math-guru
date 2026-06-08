@@ -1,386 +1,618 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apna Test Banao - Math Guru</title>
-    <style>
-        :root {
-            --primary: #0056b3;
-            --bg-dark: #0a192f;
-            --text-main: #333;
-            --card-bg: #ffffff;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 20px;
-            color: var(--text-main);
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        h2 { color: var(--primary); text-align: center; margin-bottom: 25px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; }
-        select, input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        select:focus, input:focus { border-color: var(--primary); outline: none; }
-        .btn {
-            background-color: var(--primary);
-            color: white;
-            padding: 14px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            transition: 0.3s;
-        }
-        .btn:hover { background-color: #004085; }
-        
-        /* ⏰ TIMER & SCORE BANNER */
-        #test-status-bar {
-            display: flex;
-            justify-content: space-between;
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-weight: bold;
-            font-size: 18px;
-            color: var(--primary);
-            display: none;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apna Test Banao - Math Guru</title>
 
-        /* 📝 QUESTION CARD LAYOUT */
-        .question-card {
-            background: #f8f9fa;
-            border-left: 5px solid var(--primary);
-            padding: 20px;
-            margin-bottom: 25px;
-            border-radius: 0 8px 8px 0;
-        }
-        .options-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 15px;
-            margin-bottom: 15px;
-        }
-        .option-btn {
-            background: white;
-            border: 2px solid #dee2e6;
-            padding: 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: left;
-            font-size: 15px;
-            transition: 0.2s;
-        }
-        .option-btn:hover { border-color: var(--primary); background: #f0f4f8; }
-        .option-btn.selected { background: #d1ecf1; border-color: #0c5460; }
-        
-        .action-btns {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .solution-box {
-            background: #fff3cd;
-            border: 1px solid #ffeeba;
-            padding: 15px;
-            margin-top: 10px;
-            border-radius: 6px;
-            display: none;
-            color: #856404;
-        }
-        .q-type-badge {
-            display: inline-block;
-            background: #e2e8f0;
-            color: #4a5568;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-    </style>
+  <style>
+    :root {
+      --primary: #0056b3;
+      --text-main: #333;
+      --card-bg: #ffffff;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+      color: var(--text-main);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    .btn {
+      background-color: var(--primary);
+      color: white;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      transition: 0.3s;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .btn:hover {
+      background-color: #004085;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .notice {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+      font-weight: 600;
+    }
+
+    .notice.notice {
+      background: #e3f2fd;
+      color: #0d47a1;
+    }
+
+    .notice.success {
+      background: #e8f5e9;
+      color: #1b5e20;
+    }
+
+    .notice.error {
+      background: #ffebee;
+      color: #b71c1c;
+    }
+
+    #test-status-bar {
+      display: none;
+      justify-content: space-between;
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      color: var(--primary);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .question-card {
+      background: #f8f9fa;
+      border-left: 5px solid var(--primary);
+      padding: 20px;
+      margin-bottom: 25px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .options-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 15px;
+      margin-bottom: 15px;
+    }
+
+    .option-btn {
+      background: white;
+      border: 2px solid #dee2e6;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 15px;
+      transition: 0.2s;
+    }
+
+    .option-btn:hover {
+      border-color: var(--primary);
+      background: #f0f4f8;
+    }
+
+    .option-btn.selected {
+      background: #d1ecf1;
+      border-color: #0c5460;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .solution-box {
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 15px;
+      margin-top: 10px;
+      border-radius: 6px;
+      display: none;
+      color: #856404;
+      white-space: pre-wrap;
+    }
+
+    .q-type-badge {
+      display: inline-block;
+      background: #e2e8f0;
+      color: #4a5568;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .top-links {
+      max-width: 800px;
+      margin: 0 auto 15px auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    .top-links a {
+      color: #0056b3;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    @media (max-width: 600px) {
+      .options-container {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding: 18px;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="container">
+  <div class="top-links">
+    <a href="dashboard.html">← Dashboard</a>
+    <a href="ask-doubt.html">Ask Doubt</a>
+  </div>
+
+  <div class="container">
     <h2>📝 Apna Test Banao</h2>
-    <p style="text-align:center; color:#666; margin-top:-15px;">Class, Chapter aur Difficulty chuno — apna Maths Test turant banao.</p>
+    <p style="text-align:center; color:#666; margin-top:-15px;">
+      Class, Chapter aur Difficulty chuno — apna Maths Test turant banao.
+    </p>
 
     <div id="setup-container">
-        <div class="form-group">
-            <label>Select Class</label>
-            <select id="classLevel">
-                <option value="1">Class 1</option>
-                <option value="2">Class 2</option>
-                <option value="3">Class 3</option>
-                <option value="4">Class 4</option>
-                <option value="5">Class 5</option>
-                <option value="6">Class 6</option>
-                <option value="7">Class 7</option>
-                <option value="8">Class 8</option>
-                <option value="9">Class 9</option>
-                <option value="10" selected>Class 10</option>
-                <option value="11">Class 11</option>
-                <option value="12">Class 12</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Chapter Name</label>
-            <input type="text" id="chapter" placeholder="e.g., Polynomials, Trigonometry" required>
-        </div>
-        <div class="form-group">
-            <label>Difficulty</label>
-            <select id="difficulty">
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Question Type</label>
-            <select id="questionType">
-                <option value="MCQ">MCQ (Multiple Choice)</option>
-                <option value="Very Short">Very Short Question</option>
-                <option value="Short">Short Question</option>
-                <option value="Long">Long Question</option>
-                <option value="Mixed">Mixed Questions</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Number of Questions</label>
-            <select id="numQuestions">
-                <option value="5">5 Questions</option>
-                <option value="10">10 Questions</option>
-                <option value="20">20 Questions</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Language</label>
-            <select id="language">
-                <option value="Hinglish">Hinglish (Hindi + English)</option>
-                <option value="English">English</option>
-                <option value="Hindi">Hindi</option>
-            </select>
-        </div>
-        <button class="btn" id="generate-btn" onclick="startTestGeneration()">⚡ Test Generate Karo</button>
+      <div class="form-group">
+        <label>Select Class</label>
+        <select id="classLevel">
+          <option value="1">Class 1</option>
+          <option value="2">Class 2</option>
+          <option value="3">Class 3</option>
+          <option value="4">Class 4</option>
+          <option value="5">Class 5</option>
+          <option value="6">Class 6</option>
+          <option value="7">Class 7</option>
+          <option value="8">Class 8</option>
+          <option value="9">Class 9</option>
+          <option value="10" selected>Class 10</option>
+          <option value="11">Class 11</option>
+          <option value="12">Class 12</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Chapter Name</label>
+        <input type="text" id="chapter" placeholder="e.g., Polynomials, Trigonometry" required>
+      </div>
+
+      <div class="form-group">
+        <label>Difficulty</label>
+        <select id="difficulty">
+          <option value="Easy">Easy</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="Hard">Hard</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Question Type</label>
+        <select id="questionType">
+          <option value="MCQ">MCQ</option>
+          <option value="Very Short">Very Short Question</option>
+          <option value="Short">Short Question</option>
+          <option value="Long">Long Question</option>
+          <option value="Mixed" selected>Mixed Questions</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Number of Questions</label>
+        <select id="numQuestions">
+          <option value="5" selected>5 Questions</option>
+          <option value="10">10 Questions</option>
+          <option value="20">20 Questions</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Language</label>
+        <select id="language">
+          <option value="Hinglish" selected>Hinglish</option>
+          <option value="English">English</option>
+          <option value="Hindi">Hindi</option>
+        </select>
+      </div>
+
+      <button class="btn" id="generate-btn" type="button">⚡ Test Generate Karo</button>
+
+      <div id="testMsg" class="notice"></div>
     </div>
 
-    <div id="test-container" style="display: none;">
-        <div id="test-status-bar">
-            <div id="running-chapter">Chapter: </div>
-            <div id="timer">⏰ Time: 00:00</div>
-        </div>
-        
-        <div id="questions-area"></div>
-        
-        <button class="btn" style="background:#28a745; margin-top:20px;" onclick="submitFinalTest()">🎯 Test Submit Karo</button>
-    </div>
-</div>
+    <div id="test-container" style="display:none;">
+      <div id="test-status-bar">
+        <div id="running-chapter">Chapter:</div>
+        <div id="timer">⏰ Time: 00:00</div>
+      </div>
 
-<script>
+      <div id="questions-area"></div>
+
+      <button class="btn" id="submit-test-btn" type="button" style="background:#28a745; margin-top:20px;">
+        🎯 Test Submit Karo
+      </button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+  <script>
     let activeTestId = "";
     let testQuestions = [];
-    let timerInterval;
+    let timerInterval = null;
     let secondsElapsed = 0;
     const userSelections = {};
 
-    const API_BASE = "https://math-guru.onrender.com/api"; 
+    function showTestMsg(text, type = "notice") {
+      const box = document.querySelector("#testMsg");
+      if (!box) return;
 
-    // 1. BACKEND SE TEST GENERATE KARWANA
+      box.className = `notice ${type}`;
+      box.textContent = text;
+      box.style.display = "block";
+    }
+
+    function safeText(value) {
+      return String(value || "").replace(/[<>&]/g, "");
+    }
+
     async function startTestGeneration() {
-        // 👑 FIXED: mg_token ko target kiya taaki authentication fail na ho
-        const token = localStorage.getItem("mg_token"); 
-        if (!token) { alert("Pehle login karo bhai!"); window.location.href = "login.html"; return; }
+      const token = localStorage.getItem("mg_token");
 
-        document.getElementById("generate-btn").innerText = "🔄 AI Test Ban raha hai, please wait...";
-        document.getElementById("generate-btn").disabled = true;
+      if (!token) {
+        alert("Pehle login karo.");
+        window.location.href = "login.html";
+        return;
+      }
 
-        const payload = {
-            classLevel: document.getElementById("classLevel").value,
-            chapter: document.getElementById("chapter").value,
-            difficulty: document.getElementById("difficulty").value,
-            questionType: document.getElementById("questionType").value,
-            numQuestions: document.getElementById("numQuestions").value,
-            language: document.getElementById("language").value
-        };
+      const btn = document.querySelector("#generate-btn");
 
-        try {
-            const res = await fetch(`${API_BASE}/test/generate`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            
-            if (!res.ok) throw new Error(data.message || "Failed to compile");
+      const classLevel = document.querySelector("#classLevel").value;
+      const chapter = document.querySelector("#chapter").value.trim();
+      const difficulty = document.querySelector("#difficulty").value;
+      const questionType = document.querySelector("#questionType").value;
+      const numQuestions = document.querySelector("#numQuestions").value;
+      const language = document.querySelector("#language").value;
 
-            activeTestId = data.testId;
-            testQuestions = data.questions;
+      if (!chapter) {
+        showTestMsg("Chapter/topic enter karo.", "error");
+        return;
+      }
 
-            document.getElementById("setup-container").style.display = "none";
-            document.getElementById("test-container").style.display = "block";
-            document.getElementById("test-status-bar").style.display = "flex";
-            document.getElementById("running-chapter").innerText = `Chapter: ${payload.chapter}`;
+      const payload = {
+        classLevel,
+        subject: "Mathematics",
+        chapter,
+        difficulty,
+        questionType,
+        numQuestions,
+        language
+      };
 
-            renderQuestions();
-            startTimer();
+      try {
+        btn.disabled = true;
+        btn.textContent = "🔄 AI Test ban raha hai...";
+        showTestMsg("AI test generate kar raha hai. Please wait...", "notice");
 
-        } catch (err) {
-            alert("Error: " + err.message);
-            document.getElementById("generate-btn").innerText = "⚡ Test Generate Karo";
-            document.getElementById("generate-btn").disabled = false;
+        let data;
+
+        if (typeof request === "function") {
+          data = await request("/api/test/generate", {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+        } else {
+          const API_BASE =
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1"
+              ? "http://localhost:3000/api"
+              : "https://math-guru.onrender.com/api";
+
+          const res = await fetch(`${API_BASE}/test/generate`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          data = await res.json();
+          if (!res.ok) throw new Error(data.message || "Test generation failed");
         }
+
+        activeTestId = data.testId;
+        testQuestions = Array.isArray(data.questions) ? data.questions : [];
+
+        if (testQuestions.length === 0) {
+          throw new Error("AI ne questions return nahi kiye.");
+        }
+
+        document.querySelector("#setup-container").style.display = "none";
+        document.querySelector("#test-container").style.display = "block";
+        document.querySelector("#test-status-bar").style.display = "flex";
+        document.querySelector("#running-chapter").textContent = `Chapter: ${chapter}`;
+
+        renderQuestions();
+        startTimer();
+
+      } catch (err) {
+        showTestMsg(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "⚡ Test Generate Karo";
+      }
     }
 
-    // 2. LIVE TIMER REFRESHER LOGIC
     function startTimer() {
-        secondsElapsed = 0;
-        timerInterval = setInterval(() => {
-            secondsElapsed++;
-            const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-            const secs = String(secondsElapsed % 60).padStart(2, '0');
-            document.getElementById("timer").innerText = `⏰ Time: ${mins}:${secs}`;
-        }, 1000);
+      secondsElapsed = 0;
+
+      if (timerInterval) clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        secondsElapsed++;
+
+        const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
+        const secs = String(secondsElapsed % 60).padStart(2, "0");
+
+        document.querySelector("#timer").textContent = `⏰ Time: ${mins}:${secs}`;
+      }, 1000);
     }
 
-    // 3. RENDER QUESTIONS DYNAMICALLY ON PAGE
     function renderQuestions() {
-        const area = document.getElementById("questions-area");
-        area.innerHTML = "";
+      const area = document.querySelector("#questions-area");
+      area.innerHTML = "";
 
-        testQuestions.forEach((q, idx) => {
-            userSelections[idx] = null; 
-            
-            const card = document.createElement("div");
-            card.className = "question-card";
-            
-            // Question type badge support (MCQ, Short, Long, etc.)
-            const qType = q.type || document.getElementById("questionType").value;
-            const badgeHTML = `<span class="q-type-badge">${qType}</span>`;
-            
-            let optionsHTML = "";
-            // Agar question MCQ hai ya options array exist karta hai
-            if (q.options && q.options.length > 0) {
-                optionsHTML = `<div class="options-container">
-                    ${q.options.map((opt, oIdx) => `
-                        <button class="option-btn" id="opt-${idx}-${oIdx}" onclick="selectOption(${idx}, ${oIdx}, '${opt}')">
-                            ${opt}
-                        </button>
-                    `).join('')}
-                </div>`;
-            } else {
-                // Non-MCQ questions ke liye self-practice info ya textbox text string pass de sakte hain
-                optionsHTML = `<p style="color:#718096; font-size:14px; margin-top:10px;">✍️ Is sawal ko apni notebook par solve karein, fir answer match karein.</p>`;
-            }
+      testQuestions.forEach((q, idx) => {
+        userSelections[idx] = null;
 
-            card.innerHTML = `
-                ${badgeHTML}<br>
-                <strong>Q${idx + 1}: ${q.question}</strong>
-                ${optionsHTML}
-                <div class="action-btns">
-                    <button class="btn-secondary" onclick="toggleSolution(${idx})">💡 Step-by-Step Solution</button>
-                </div>
-                <div class="solution-box" id="sol-${idx}">
-                    <strong>Correct Answer / Final Output:</strong> ${q.correctAnswer}<br><br>
-                    <strong>Solution Steps:</strong> ${q.stepByStepSolution}
-                </div>
-            `;
-            area.appendChild(card);
-        });
+        const card = document.createElement("div");
+        card.className = "question-card";
+
+        const qType = q.type || document.querySelector("#questionType").value;
+
+        let optionsHTML = "";
+
+        if (Array.isArray(q.options) && q.options.length > 0) {
+          optionsHTML = `
+            <div class="options-container">
+              ${q.options.map((opt, oIdx) => `
+                <button
+                  type="button"
+                  class="option-btn"
+                  id="opt-${idx}-${oIdx}"
+                  onclick="selectOption(${idx}, ${oIdx}, ${JSON.stringify(opt)})"
+                >
+                  ${safeText(opt)}
+                </button>
+              `).join("")}
+            </div>
+          `;
+        } else {
+          optionsHTML = `
+            <p style="color:#718096; font-size:14px; margin-top:10px;">
+              ✍️ Is sawal ko notebook par solve karein, fir answer match karein.
+            </p>
+          `;
+        }
+
+        card.innerHTML = `
+          <span class="q-type-badge">${safeText(qType)}</span><br>
+
+          <strong>Q${idx + 1}: ${safeText(q.question)}</strong>
+
+          ${optionsHTML}
+
+          <div class="action-btns">
+            <button type="button" class="btn-secondary" onclick="toggleSolution(${idx})">
+              💡 Step-by-Step Solution
+            </button>
+          </div>
+
+          <div class="solution-box" id="sol-${idx}">
+            <strong>Correct Answer / Final Output:</strong>
+            ${safeText(q.correctAnswer)}<br><br>
+
+            <strong>Solution Steps:</strong>
+            <div style="white-space:pre-wrap;">
+              ${safeText(q.stepByStepSolution)}
+            </div>
+          </div>
+        `;
+
+        area.appendChild(card);
+      });
     }
 
     function selectOption(qIdx, oIdx, selectedValue) {
-        const siblings = document.getElementById(`opt-${qIdx}-${oIdx}`).parentNode.children;
-        for (let btn of siblings) btn.classList.remove("selected");
+      const selectedBtn = document.querySelector(`#opt-${qIdx}-${oIdx}`);
+      if (!selectedBtn) return;
 
-        document.getElementById(`opt-${qIdx}-${oIdx}`).classList.add("selected");
-        userSelections[qIdx] = selectedValue;
+      const siblings = selectedBtn.parentNode.children;
+
+      for (let btn of siblings) {
+        btn.classList.remove("selected");
+      }
+
+      selectedBtn.classList.add("selected");
+      userSelections[qIdx] = selectedValue;
     }
 
     function toggleSolution(idx) {
-        const box = document.getElementById(`sol-${idx}`);
-        box.style.display = box.style.display === "block" ? "none" : "block";
+      const box = document.querySelector(`#sol-${idx}`);
+      if (!box) return;
+
+      box.style.display = box.style.display === "block" ? "none" : "block";
     }
 
-    // 4. SUBMIT AND TRANSMIT SCORES RECORD TO SERVER
     async function submitFinalTest() {
-        clearInterval(timerInterval); 
-        
-        let finalScore = 0;
-        let mcqCount = 0;
+      if (timerInterval) clearInterval(timerInterval);
 
-        testQuestions.forEach((q, idx) => {
-            // Agar MCQ hai tabhi marks evaluate karega automation par, baki ke liye step solution bacha khud check karega
-            if (q.options && q.options.length > 0) {
-                mcqCount++;
-                if (userSelections[idx] && userSelections[idx].trim() === q.correctAnswer.trim()) {
-                    finalScore++;
-                }
-            }
+      let finalScore = 0;
+      let mcqCount = 0;
+
+      testQuestions.forEach((q, idx) => {
+        if (Array.isArray(q.options) && q.options.length > 0) {
+          mcqCount++;
+
+          const selected = String(userSelections[idx] || "").trim();
+          const correct = String(q.correctAnswer || "").trim();
+
+          if (selected && selected === correct) {
+            finalScore++;
+          }
+        }
+      });
+
+      const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
+      const secs = String(secondsElapsed % 60).padStart(2, "0");
+      const finalTimeStr = `${mins}:${secs}`;
+
+      try {
+        if (activeTestId) {
+          if (typeof request === "function") {
+            await request(`/api/test/submit/${activeTestId}`, {
+              method: "POST",
+              body: JSON.stringify({
+                score: finalScore,
+                timeTaken: finalTimeStr
+              })
+            });
+          } else {
+            const token = localStorage.getItem("mg_token");
+
+            const API_BASE =
+              window.location.hostname === "localhost" ||
+              window.location.hostname === "127.0.0.1"
+                ? "http://localhost:3000/api"
+                : "https://math-guru.onrender.com/api";
+
+            await fetch(`${API_BASE}/test/submit/${activeTestId}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                score: finalScore,
+                timeTaken: finalTimeStr
+              })
+            });
+          }
+        }
+
+        if (mcqCount > 0) {
+          alert(`🎉 Test Completed!\nMCQ Score: ${finalScore} / ${mcqCount}\nTime Taken: ${finalTimeStr}`);
+        } else {
+          alert(`🎉 Test Completed!\nTime Taken: ${finalTimeStr}\nSolutions check karo.`);
+        }
+
+        testQuestions.forEach((_, idx) => {
+          const sol = document.querySelector(`#sol-${idx}`);
+          if (sol) sol.style.display = "block";
         });
 
-        const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-        const secs = String(secondsElapsed % 60).padStart(2, '0');
-        const finalTimeStr = `${mins}:${secs}`;
-
-        const token = localStorage.getItem("mg_token");
-        try {
-            await fetch(`${API_BASE}/test/submit/${activeTestId}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({ score: finalScore, timeTaken: finalTimeStr })
-            });
-
-            // Alert popup response handling condition targets
-            if (mcqCount > 0) {
-                alert(`🎉 Test Completed!\nMCQ Score: ${finalScore} / ${mcqCount}\nTime Taken: ${finalTimeStr}\n\nAb aap niche 'Step-by-Step Solution' dabakar saare types ke correct answers aur solutions match kar sakte hain.`);
-            } else {
-                alert(`🎉 Test Completed!\nTime Taken: ${finalTimeStr}\n\nSaare Questions ke 'Step-by-Step Solution' niche open kar diye gaye hain, apna solution match karein!`);
-            }
-            
-            // Auto open all review solution boxes
-            testQuestions.forEach((_, idx) => {
-                document.getElementById(`sol-${idx}`).style.display = "block";
-            });
-
-        } catch (err) {
-            alert("Score saving network error: " + err.message);
-        }
+      } catch (err) {
+        alert("Score saving error: " + err.message);
+      }
     }
-</script>
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const generateBtn = document.querySelector("#generate-btn");
+      const submitBtn = document.querySelector("#submit-test-btn");
+
+      if (generateBtn) {
+        generateBtn.addEventListener("click", startTestGeneration);
+      }
+
+      if (submitBtn) {
+        submitBtn.addEventListener("click", submitFinalTest);
+      }
+    });
+  </script>
+
 </body>
 </html>
