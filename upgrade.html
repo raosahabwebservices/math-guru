@@ -1,61 +1,576 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upgrade | MATHS GURU</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upgrade | MATHS GURU</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+      margin-bottom: 28px;
+    }
+
+    .plan-card {
+      background: #ffffff;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 18px;
+      cursor: pointer;
+      transition: 0.25s;
+      position: relative;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    }
+
+    .plan-card:hover {
+      transform: translateY(-3px);
+      border-color: #0056b3;
+    }
+
+    .plan-card.selected {
+      border-color: #0056b3;
+      background: #eef6ff;
+      box-shadow: 0 6px 20px rgba(0,86,179,0.18);
+    }
+
+    .plan-card.highlight-unlimited {
+      border-color: #7c3aed;
+      background: linear-gradient(135deg, #f5f3ff, #ffffff);
+    }
+
+    .plan-card.highlight-unlimited.selected {
+      border-color: #7c3aed;
+      box-shadow: 0 8px 24px rgba(124,58,237,0.22);
+    }
+
+    .plan-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .price-line {
+      margin-bottom: 8px;
+    }
+
+    .old-price {
+      font-size: 16px;
+      color: #888;
+      text-decoration: line-through;
+      margin-right: 8px;
+      font-weight: 700;
+    }
+
+    .plan-price {
+      font-size: 27px;
+      font-weight: 900;
+      color: #0056b3;
+    }
+
+    .save-text {
+      display: inline-block;
+      margin-top: 6px;
+      background: #e8f5e9;
+      color: #1b5e20;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .plan-features {
+      color: #444;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+
+    .tag {
+      position: absolute;
+      top: -10px;
+      right: 12px;
+      background: #ff5722;
+      color: white;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .tag-purple {
+      background: #7c3aed;
+    }
+
+    .payment-summary {
+      background: #f8fafc;
+      border-left: 5px solid #0056b3;
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      line-height: 1.6;
+    }
+
+    .qr {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+
+    .fake-warning {
+      background: #fff3cd;
+      border-left: 5px solid #ff9800;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #6b4e00;
+    }
+
+    .notice {
+      padding: 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+      display: block;
+      background: #eef6ff;
+      color: #0d47a1;
+      font-weight: 600;
+    }
+
+    .notice.error {
+      background: #ffebee;
+      color: #b71c1c;
+    }
+
+    .notice.success {
+      background: #e8f5e9;
+      color: #1b5e20;
+    }
+
+    .notice.hidden {
+      display: none;
+    }
+
+    @media (max-width: 850px) {
+      .plans-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <nav class="nav">
-        <div class="nav-inner">
-            <a class="brand" href="index.html">MATHS GURU</a>
-            <div class="links">
-                <a href="dashboard.html">Dashboard</a>
-                <a href="ask-doubt.html">Ask Doubt</a>
-                <button class="btn small ghost" data-logout>Logout</button>
-            </div>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">MATHS GURU</a>
+
+      <div class="links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="ask-doubt.html">Ask Doubt</a>
+        <a href="test-generator.html">Apna Test Banao</a>
+        <button class="btn small ghost" type="button" data-logout>Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h1 class="section-title">Upgrade Math Guru Plan</h1>
+    <p class="muted">
+      Plan select karo, UPI payment karo, UTR + screenshot submit karo. Admin verify karke approve karega.
+    </p>
+
+    <section class="plans-grid">
+
+      <div class="plan-card" data-plan="free" data-amount="0" data-title="Free">
+        <div class="plan-title">🆓 Free</div>
+        <div class="price-line">
+          <span class="plan-price">₹0</span>
         </div>
-    </nav>
+        <div class="plan-features">
+          10 Text Doubts<br>
+          3 Image Doubts<br>
+          3 Tests
+        </div>
+      </div>
 
-    <main class="container">
-        <h1 class="section-title">Upgrade to Premium</h1>
-        <p class="muted">Pay ₹99 by UPI, submit UTR, and admin will approve premium access.</p>
+      <div class="plan-card" data-plan="starter" data-amount="79" data-title="Starter">
+        <div class="plan-title">⭐ Starter</div>
+        <div class="price-line">
+          <span class="old-price">₹111</span>
+          <span class="plan-price">₹79 / Month</span>
+        </div>
+        <span class="save-text">Save ₹32</span>
+        <div class="plan-features">
+          100 Text Doubts<br>
+          20 Image Doubts<br>
+          15 Tests
+        </div>
+      </div>
 
-        <section class="grid two" style="margin-top:24px">
-            <div class="qr float">
-                <h2>Scan QR to pay</h2>
-                <img src="qr.png" id="upiQr" alt="UPI QR" style="width:220px; border-radius:12px; margin:15px auto; display:block; border:1px solid #eee;">
-                
-                <h3>UPI ID: raos38908@okhdfcbank</h3>
-                
-                <a id="upiPayLink" class="btn" href="upi://pay?pa=raos38908@okhdfcbank&pn=MathsGuru&am=99&cu=INR" style="display:block; text-align:center;">
-                    Open UPI App
-                </a>
-            </div>
+      <div class="plan-card" data-plan="popular_3m" data-amount="199" data-title="Most Popular">
+        <span class="tag">Most Popular</span>
+        <div class="plan-title">🔥 Most Popular</div>
+        <div class="price-line">
+          <span class="old-price">₹299</span>
+          <span class="plan-price">₹199 / 3 Months</span>
+        </div>
+        <span class="save-text">Save ₹100</span>
+        <div class="plan-features">
+          300 Text Doubts<br>
+          75 Image Doubts<br>
+          40 Tests
+        </div>
+      </div>
 
-            <form id="paymentForm" class="card form full">
-                <h2>Submit payment request</h2>
-                <div class="notice">Amount: ₹99 | Plan: 100 text + 100 image doubts</div>
-                
-                <div>
-                    <label class="label">UTR Number</label>
-                    <input name="utr" required minlength="6" placeholder="Enter bank/UPI UTR">
-                </div>
-                
-                <div>
-                    <label class="label">Screenshot optional</label>
-                    <input name="screenshot" type="file" accept="image/*">
-                </div>
-                
-                <button class="btn" type="submit">Submit for Approval</button>
-                <div id="paymentMsg" class="hidden"></div>
-            </form>
-        </section>
-    </main>
+      <div class="plan-card" data-plan="half_year" data-amount="349" data-title="Half Year">
+        <div class="plan-title">💎 Half Year</div>
+        <div class="price-line">
+          <span class="old-price">₹499</span>
+          <span class="plan-price">₹349 / 6 Months</span>
+        </div>
+        <span class="save-text">Save ₹150</span>
+        <div class="plan-features">
+          700 Text Doubts<br>
+          150 Image Doubts<br>
+          100 Tests
+        </div>
+      </div>
 
-    <script src="script.js"></script>
-    <script src="dashboard.js"></script>
+      <div class="plan-card" data-plan="yearly" data-amount="699" data-title="Best Value">
+        <span class="tag">Best Value</span>
+        <div class="plan-title">🏆 Best Value</div>
+        <div class="price-line">
+          <span class="old-price">₹999</span>
+          <span class="plan-price">₹699 / Year</span>
+        </div>
+        <span class="save-text">Save ₹300</span>
+        <div class="plan-features">
+          1500 Text Doubts<br>
+          400 Image Doubts<br>
+          250 Tests
+        </div>
+      </div>
+
+      <div class="plan-card highlight-unlimited" data-plan="unlimited" data-amount="299" data-title="Unlimited">
+        <span class="tag tag-purple">Unlimited</span>
+        <div class="plan-title">🚀 Unlimited*</div>
+        <div class="price-line">
+          <span class="old-price">₹499</span>
+          <span class="plan-price">₹299 / Month</span>
+        </div>
+        <span class="save-text">Save ₹200</span>
+        <div class="plan-features">
+          Fair Use Unlimited Text Doubts<br>
+          Fair Use Unlimited Image Doubts<br>
+          Fair Use Unlimited Tests
+        </div>
+      </div>
+
+    </section>
+
+    <section class="grid two" style="margin-top:24px">
+      <div class="qr float">
+        <h2>Scan QR to Pay</h2>
+
+        <img
+          src="qr.png"
+          id="upiQr"
+          alt="UPI QR"
+          style="width:220px; border-radius:12px; margin:15px auto; display:block; border:1px solid #eee;"
+        >
+
+        <h3>UPI ID: raos38908@okhdfcbank</h3>
+
+        <div class="payment-summary">
+          <strong>Selected Plan:</strong> <span id="selectedPlanText">Most Popular</span><br>
+          <strong>Amount:</strong> <span id="selectedAmountText">₹199</span><br>
+          <small id="paymentNote">Payment ke baad UTR aur screenshot submit karo.</small>
+        </div>
+
+        <a
+          id="upiPayLink"
+          class="btn"
+          href="#"
+          style="display:block; text-align:center;"
+        >
+          Open UPI App
+        </a>
+
+        <div class="fake-warning">
+          ⚠️ Fake UTR, wrong screenshot, duplicate UTR ya edited screenshot approve nahi hoga.
+          Admin manually amount + UTR + screenshot verify karega.
+        </div>
+      </div>
+
+      <form id="paymentForm" class="card form full" enctype="multipart/form-data">
+        <h2>Submit Payment Request</h2>
+
+        <div class="notice" id="planNotice">
+          Selected Plan: Most Popular | Amount: ₹199
+        </div>
+
+        <input type="hidden" name="planId" id="planIdInput" value="popular_3m">
+        <input type="hidden" name="amount" id="amountInput" value="199">
+
+        <div>
+          <label class="label">UTR Number <span style="color:red;">*</span></label>
+          <input
+            name="utr"
+            id="utrInput"
+            required
+            minlength="10"
+            maxlength="30"
+            placeholder="Enter bank/UPI UTR"
+          >
+          <small class="muted">
+            Fake UTR जैसे 1234567890, 0000000000, testutr accept नहीं होगा.
+          </small>
+        </div>
+
+        <div>
+          <label class="label">Payment Screenshot <span style="color:red;">*</span></label>
+          <input
+            name="screenshot"
+            id="screenshotInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            required
+          >
+          <small class="muted">
+            Screenshot में amount, UTR/payment reference, date/time clear दिखना चाहिए.
+          </small>
+        </div>
+
+        <button class="btn" id="submitPaymentBtn" type="submit">
+          Submit for Approval
+        </button>
+
+        <div id="paymentMsg" class="notice hidden"></div>
+
+        <p class="muted" style="margin-top:12px;">
+          *Unlimited plan fair-use policy ke under hai. Misuse/spam par limit lag sakti hai.
+        </p>
+      </form>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+
+  <script>
+    const UPI_ID = "raos38908@okhdfcbank";
+    const UPI_NAME = "Rao Sahab";
+
+    let selectedPlan = {
+      id: "popular_3m",
+      title: "Most Popular",
+      amount: 199
+    };
+
+    function showPaymentMsg(text, type = "notice") {
+      const box = document.querySelector("#paymentMsg");
+      if (!box) return;
+
+      box.className = `notice ${type}`;
+      box.textContent = text;
+      box.classList.remove("hidden");
+      box.style.display = "block";
+    }
+
+    function makeUpiLink(amount, planTitle) {
+      return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent("MATH GURU " + planTitle)}`;
+    }
+
+    function isValidUTR(utr) {
+      const clean = String(utr || "").trim();
+
+      if (clean.length < 10 || clean.length > 30) return false;
+
+      const fakeList = [
+        "1234567890",
+        "0000000000",
+        "1111111111",
+        "2222222222",
+        "3333333333",
+        "4444444444",
+        "5555555555",
+        "6666666666",
+        "7777777777",
+        "8888888888",
+        "9999999999",
+        "123456789012",
+        "0123456789",
+        "9876543210",
+        "testutr",
+        "fakeutr",
+        "utr123456",
+        "abcdefghij"
+      ];
+
+      if (fakeList.includes(clean.toLowerCase())) return false;
+
+      if (!/^[a-zA-Z0-9]+$/.test(clean)) return false;
+
+      const sameChar = clean.split("").every((ch) => ch === clean[0]);
+      if (sameChar) return false;
+
+      return true;
+    }
+
+    function validateScreenshot(file) {
+      if (!file) {
+        return "Payment screenshot upload karna zaroori hai.";
+      }
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+      if (!allowedTypes.includes(file.type)) {
+        return "Sirf JPG, PNG ya WEBP screenshot upload karo.";
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        return "Screenshot 5MB se chhota hona chahiye.";
+      }
+
+      return "";
+    }
+
+    function updateSelectedPlan(card) {
+      selectedPlan = {
+        id: card.dataset.plan,
+        title: card.dataset.title,
+        amount: Number(card.dataset.amount || 0)
+      };
+
+      document.querySelectorAll(".plan-card").forEach((c) => {
+        c.classList.remove("selected");
+      });
+
+      card.classList.add("selected");
+
+      document.querySelector("#selectedPlanText").textContent = selectedPlan.title;
+      document.querySelector("#selectedAmountText").textContent = "₹" + selectedPlan.amount;
+
+      document.querySelector("#planNotice").textContent =
+        `Selected Plan: ${selectedPlan.title} | Amount: ₹${selectedPlan.amount}`;
+
+      document.querySelector("#planIdInput").value = selectedPlan.id;
+      document.querySelector("#amountInput").value = selectedPlan.amount;
+
+      const utrInput = document.querySelector("#utrInput");
+      const screenshotInput = document.querySelector("#screenshotInput");
+      const submitBtn = document.querySelector("#submitPaymentBtn");
+      const upiPayLink = document.querySelector("#upiPayLink");
+      const paymentNote = document.querySelector("#paymentNote");
+
+      if (selectedPlan.amount <= 0 || selectedPlan.id === "free") {
+        utrInput.required = false;
+        screenshotInput.required = false;
+        submitBtn.textContent = "Free Plan Selected";
+        upiPayLink.href = "#";
+        upiPayLink.style.opacity = "0.5";
+        paymentNote.textContent = "Free plan ke liye payment ki zaroorat nahi.";
+      } else {
+        utrInput.required = true;
+        screenshotInput.required = true;
+        submitBtn.textContent = "Submit for Approval";
+        upiPayLink.href = makeUpiLink(selectedPlan.amount, selectedPlan.title);
+        upiPayLink.style.opacity = "1";
+        paymentNote.textContent = "Payment ke baad UTR aur screenshot submit karo.";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (typeof requireStudent === "function") {
+        requireStudent();
+      }
+
+      document.querySelectorAll(".plan-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          updateSelectedPlan(card);
+        });
+      });
+
+      const params = new URLSearchParams(window.location.search);
+      const planFromUrl = params.get("plan");
+
+      if (planFromUrl) {
+        const targetCard = document.querySelector(`.plan-card[data-plan="${planFromUrl}"]`);
+        if (targetCard) {
+          updateSelectedPlan(targetCard);
+        }
+      } else {
+        const defaultCard = document.querySelector(`.plan-card[data-plan="popular_3m"]`);
+        if (defaultCard) {
+          updateSelectedPlan(defaultCard);
+        }
+      }
+
+      const paymentForm = document.querySelector("#paymentForm");
+
+      paymentForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const utrInput = document.querySelector("#utrInput");
+        const screenshotInput = document.querySelector("#screenshotInput");
+        const submitBtn = document.querySelector("#submitPaymentBtn");
+
+        const planId = document.querySelector("#planIdInput").value;
+        const amount = Number(document.querySelector("#amountInput").value || 0);
+        const utr = utrInput.value.trim();
+
+        if (amount <= 0 || planId === "free") {
+          showPaymentMsg("Free plan ke liye payment request submit karne ki zaroorat nahi.", "error");
+          return;
+        }
+
+        if (!isValidUTR(utr)) {
+          showPaymentMsg("Valid UTR number enter karo. Fake, short, repeated ya invalid UTR accept nahi hoga.", "error");
+          return;
+        }
+
+        const screenshotError = validateScreenshot(screenshotInput.files[0]);
+
+        if (screenshotError) {
+          showPaymentMsg(screenshotError, "error");
+          return;
+        }
+
+        try {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Submitting...";
+          showPaymentMsg("Payment request submit ho rahi hai...", "notice");
+
+          const formData = new FormData(paymentForm);
+
+          const data = await request("/api/payment/request", {
+            method: "POST",
+            body: formData
+          });
+
+          showPaymentMsg(
+            data.message || "Payment request submitted. Admin approval pending.",
+            "success"
+          );
+
+          paymentForm.reset();
+
+          const selectedCard = document.querySelector(`.plan-card[data-plan="${selectedPlan.id}"]`);
+          if (selectedCard) updateSelectedPlan(selectedCard);
+
+        } catch (err) {
+          showPaymentMsg(err.message, "error");
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Submit for Approval";
+        }
+      });
+    });
+  </script>
 </body>
-</html>
+                                              </html>
