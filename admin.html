@@ -1,100 +1,446 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | MATHS GURU</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | MATHS GURU</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin.css">
 </head>
+
 <body>
-    <nav class="nav">
-        <div class="nav-inner">
-            <a class="brand" href="index.html">MATHS GURU Admin</a>
-            <div class="links">
-                <button id="adminLogout" class="btn small ghost">Logout</button>
-            </div>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">MATHS GURU Admin</a>
+
+      <div class="links">
+        <a href="index.html">Website</a>
+        <button id="adminLogout" class="btn small ghost" type="button">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+
+    <!-- ADMIN LOGIN -->
+    <section id="adminLogin" class="admin-login-layout">
+      <div class="admin-hero">
+        <div class="admin-hero-content">
+          <h1 class="admin-title">Secure Admin Login</h1>
+
+          <p class="admin-subtitle">
+            Manage users, payments, plans, doubt limits, test limits, contact messages and admin approvals.
+            Premium kisi user ko tabhi milega jab admin payment verify karke approve karega.
+          </p>
+
+          <div class="admin-badges">
+            <span class="admin-badge">🔐 Admin Only</span>
+            <span class="admin-badge">💳 Payment Approval</span>
+            <span class="admin-badge">👥 User Control</span>
+            <span class="admin-badge">🚀 Premium Activation</span>
+          </div>
         </div>
-    </nav>
+      </div>
 
-    <main class="container">
-        <section id="adminLogin" class="grid two">
-            <div>
-                <h1 class="section-title">Secure Admin Login</h1>
-                <p class="muted">Enter your admin credentials to manage users, payments, and AI doubts.</p>
-            </div>
-            <form id="adminLoginForm" class="card">
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; margin-bottom:5px; font-weight:bold;">Admin Email</label>
-                    <input name="email" type="email" required placeholder="admin@mathsguru.com">
-                </div>
-                <div style="margin-bottom: 20px;">
-                    <label style="display:block; margin-bottom:5px; font-weight:bold;">Password</label>
-                    <input name="password" type="password" required placeholder="••••••••">
-                </div>
-                <button class="btn" type="submit" style="width:100%">Login to Dashboard</button>
-                <div id="adminLoginMsg" class="hidden" style="margin-top:15px;"></div>
-            </form>
-        </section>
+      <form id="adminLoginForm" class="admin-login-card">
+        <h2>Login to Dashboard</h2>
+        <p class="muted">Enter admin credentials.</p>
 
-        <section id="adminPanel" class="hidden">
-            <h1 class="section-title">Admin Dashboard</h1>
-            
-            <div class="grid" id="adminStats" style="margin-bottom: 30px;">
-                </div>
+        <div class="form-field">
+          <label>Admin Email</label>
+          <input name="email" type="email" required placeholder="admin@mathsguru.com">
+        </div>
 
-            <div class="card" style="margin-top:28px">
-                <h2 style="margin-bottom:15px">Pending Payments</h2>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>UTR Number</th>
-                                <th>Status</th>
-                                <th>Screenshot</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="paymentsTable">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="form-field">
+          <label>Password</label>
+          <input name="password" type="password" required placeholder="••••••••">
+        </div>
 
-            <div class="card" style="margin-top:28px">
-                <h2 style="margin-bottom:15px">Registered Users</h2>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Plan</th>
-                                <th>Usage (T/I)</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTable">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
+        <button class="btn full-btn" type="submit">Login to Dashboard</button>
+        <div id="adminLoginMsg" class="hidden message-box"></div>
+      </form>
+    </section>
 
-            <div style="margin-top:28px">
-                <h2 style="margin-bottom:15px">Recent Doubts</h2>
-                <div id="adminDoubts">
-                    </div>
-            </div>
+    <!-- ADMIN PANEL -->
+    <section id="adminPanel" class="hidden">
 
-            <div style="margin-top:28px">
-                <h2 style="margin-bottom:15px">Contact Messages</h2>
-                <div id="contactsList">
-                    </div>
-            </div>
-        </section>
-    </main>
+      <section class="admin-hero">
+        <div class="admin-hero-content">
+          <h1 class="admin-title">Admin Dashboard</h1>
 
-    <script src="script.js"></script>
-    <script src="admin.js"></script>
+          <p class="admin-subtitle">
+            Payments approve/reject karo, users ke plans edit karo, extra doubts/tests do,
+            user details dekho, aur fake/invalid users delete karo.
+          </p>
+
+          <div class="admin-badges">
+            <span class="admin-badge">👑 Full Control</span>
+            <span class="admin-badge">✅ Manual Premium Approval</span>
+            <span class="admin-badge">📊 User Usage Tracking</span>
+            <span class="admin-badge">🛡️ Secure Admin Actions</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATS -->
+      <div class="stats-grid" id="adminStats">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-label">Total Users</div>
+          <div class="stat-value" id="statUsers">-</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">💳</div>
+          <div class="stat-label">Pending Payments</div>
+          <div class="stat-value" id="statPendingPayments">-</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">👑</div>
+          <div class="stat-label">Premium Users</div>
+          <div class="stat-value" id="statPremiumUsers">-</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">🧠</div>
+          <div class="stat-label">Total Doubts</div>
+          <div class="stat-value" id="statDoubts">-</div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" type="button" data-admin-tab="payments">💳 Payments</button>
+        <button class="admin-tab" type="button" data-admin-tab="users">👥 Users</button>
+        <button class="admin-tab" type="button" data-admin-tab="doubts">🧠 Doubts</button>
+        <button class="admin-tab" type="button" data-admin-tab="tests">📝 Tests</button>
+        <button class="admin-tab" type="button" data-admin-tab="contacts">📩 Contacts</button>
+      </div>
+
+      <!-- PAYMENTS -->
+      <section class="admin-section admin-tab-section" id="tab-payments">
+        <div class="section-head">
+          <div>
+            <h2>Pending / All Payments</h2>
+            <p>Admin approval ke bina premium activate nahi hoga.</p>
+          </div>
+
+          <button class="btn ghost" type="button" id="refreshPaymentsBtn">Refresh</button>
+        </div>
+
+        <div class="filter-row">
+          <input id="paymentSearch" type="text" placeholder="Search user, email, UTR...">
+
+          <select id="paymentStatusFilter">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+
+          <select id="paymentPlanFilter">
+            <option value="">All Plans</option>
+            <option value="starter">₹79 Starter</option>
+            <option value="popular_3m">₹199 / 3 Months</option>
+            <option value="half_year">₹349 / 6 Months</option>
+            <option value="yearly">₹699 / Year</option>
+            <option value="unlimited">₹299 Unlimited</option>
+          </select>
+
+          <button class="btn" type="button" id="applyPaymentFilterBtn">Filter</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Plan / Amount</th>
+                <th>UTR Number</th>
+                <th>Status</th>
+                <th>Screenshot</th>
+                <th>Submitted</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody id="paymentsTable">
+              <tr>
+                <td colspan="7">Loading payments...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section class="admin-section admin-tab-section hidden" id="tab-users">
+        <div class="section-head">
+          <div>
+            <h2>Registered Users</h2>
+            <p>User details, plan, limits, usage, premium status and account actions.</p>
+          </div>
+
+          <button class="btn ghost" type="button" id="refreshUsersBtn">Refresh</button>
+        </div>
+
+        <div class="filter-row">
+          <input id="userSearch" type="text" placeholder="Search name, email, mobile, class...">
+
+          <select id="userPlanFilter">
+            <option value="">All Plans</option>
+            <option value="free">Free</option>
+            <option value="starter">Starter</option>
+            <option value="popular_3m">3 Months</option>
+            <option value="half_year">Half Year</option>
+            <option value="yearly">Yearly</option>
+            <option value="unlimited">Unlimited</option>
+          </select>
+
+          <select id="userStatusFilter">
+            <option value="">All Users</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
+            <option value="premium">Premium</option>
+            <option value="free">Free</option>
+          </select>
+
+          <button class="btn" type="button" id="applyUserFilterBtn">Filter</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User Details</th>
+                <th>Signup Info</th>
+                <th>Plan</th>
+                <th>Limits Left</th>
+                <th>Usage</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody id="usersTable">
+              <tr>
+                <td colspan="7">Loading users...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- DOUBTS -->
+      <section class="admin-section admin-tab-section hidden" id="tab-doubts">
+        <div class="section-head">
+          <div>
+            <h2>Recent Doubts</h2>
+            <p>Users ke text/image doubts aur AI usage tracking.</p>
+          </div>
+
+          <button class="btn ghost" type="button" id="refreshDoubtsBtn">Refresh</button>
+        </div>
+
+        <div id="adminDoubts">Loading doubts...</div>
+      </section>
+
+      <!-- TESTS -->
+      <section class="admin-section admin-tab-section hidden" id="tab-tests">
+        <div class="section-head">
+          <div>
+            <h2>Test History</h2>
+            <p>Users ne kaunse AI tests generate/submit kiye.</p>
+          </div>
+
+          <button class="btn ghost" type="button" id="refreshTestsBtn">Refresh</button>
+        </div>
+
+        <div id="adminTests">Loading tests...</div>
+      </section>
+
+      <!-- CONTACTS -->
+      <section class="admin-section admin-tab-section hidden" id="tab-contacts">
+        <div class="section-head">
+          <div>
+            <h2>Contact Messages</h2>
+            <p>Support, payment approval queries and feedback.</p>
+          </div>
+
+          <button class="btn ghost" type="button" id="refreshContactsBtn">Refresh</button>
+        </div>
+
+        <div id="contactsList">Loading contacts...</div>
+      </section>
+
+    </section>
+  </main>
+
+  <!-- USER EDIT MODAL -->
+  <div class="modal-backdrop" id="userEditModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>👤 Edit User / Plan</h2>
+        <button class="mini-btn gray" type="button" data-close-modal="userEditModal">Close</button>
+      </div>
+
+      <form id="editUserForm">
+        <input type="hidden" id="editUserId">
+
+        <div class="modal-grid">
+          <div>
+            <label>Name</label>
+            <input id="editName" type="text" placeholder="User name">
+          </div>
+
+          <div>
+            <label>Email</label>
+            <input id="editEmail" type="email" placeholder="User email">
+          </div>
+
+          <div>
+            <label>Mobile</label>
+            <input id="editMobile" type="text" placeholder="Mobile number">
+          </div>
+
+          <div>
+            <label>Class</label>
+            <input id="editClass" type="text" placeholder="Class">
+          </div>
+
+          <div>
+            <label>Plan</label>
+            <select id="editPlanId">
+              <option value="free">Free</option>
+              <option value="starter">₹79 Starter</option>
+              <option value="popular_3m">₹199 / 3 Months</option>
+              <option value="half_year">₹349 / 6 Months</option>
+              <option value="yearly">₹699 / Year</option>
+              <option value="unlimited">₹299 Unlimited</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Plan Expiry</label>
+            <input id="editPlanExpiry" type="date">
+          </div>
+
+          <div>
+            <label>Extra Text Doubts</label>
+            <input id="editExtraText" type="number" min="0" placeholder="e.g. 50">
+          </div>
+
+          <div>
+            <label>Extra Image Doubts</label>
+            <input id="editExtraImage" type="number" min="0" placeholder="e.g. 20">
+          </div>
+
+          <div>
+            <label>Extra Tests</label>
+            <input id="editExtraTests" type="number" min="0" placeholder="e.g. 10">
+          </div>
+
+          <div>
+            <label>User Status</label>
+            <select id="editStatus">
+              <option value="active">Active</option>
+              <option value="blocked">Blocked</option>
+            </select>
+          </div>
+
+          <div class="full">
+            <label>Admin Note</label>
+            <textarea id="editAdminNote" rows="3" placeholder="Internal admin note..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" type="submit">Save User Changes</button>
+          <button class="btn ghost" type="button" id="resetUserUsageBtn">Reset Usage</button>
+        </div>
+
+        <div class="danger-zone">
+          <h3>Danger Zone</h3>
+          <p class="muted">User delete karne se uska account remove ho jayega. Carefully use karo.</p>
+          <button class="mini-btn red" type="button" id="deleteUserBtn">Delete User</button>
+        </div>
+
+        <div id="editUserMsg" class="hidden message-box"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PAYMENT MODAL -->
+  <div class="modal-backdrop" id="paymentModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>💳 Payment Review</h2>
+        <button class="mini-btn gray" type="button" data-close-modal="paymentModal">Close</button>
+      </div>
+
+      <input type="hidden" id="paymentId">
+
+      <div class="modal-grid">
+        <div>
+          <label>User</label>
+          <input id="paymentUser" type="text" readonly>
+        </div>
+
+        <div>
+          <label>Plan</label>
+          <input id="paymentPlan" type="text" readonly>
+        </div>
+
+        <div>
+          <label>Amount</label>
+          <input id="paymentAmount" type="text" readonly>
+        </div>
+
+        <div>
+          <label>UTR</label>
+          <input id="paymentUtr" type="text" readonly>
+        </div>
+
+        <div class="full">
+          <label>Admin Payment Note</label>
+          <textarea id="paymentAdminNote" rows="3" placeholder="Payment verified / fake / duplicate UTR etc."></textarea>
+        </div>
+
+        <div class="full">
+          <label>Screenshot</label>
+          <div class="screenshot-box" id="paymentScreenshotBox">
+            Screenshot preview will appear here.
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" type="button" id="approvePaymentBtn">✅ Approve & Activate Premium</button>
+        <button class="btn ghost" type="button" id="rejectPaymentBtn">❌ Reject Payment</button>
+      </div>
+
+      <div id="paymentModalMsg" class="hidden message-box"></div>
+    </div>
+  </div>
+
+  <!-- USER DETAILS MODAL -->
+  <div class="modal-backdrop" id="userDetailsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>📋 User Full Details</h2>
+        <button class="mini-btn gray" type="button" data-close-modal="userDetailsModal">Close</button>
+      </div>
+
+      <div id="userDetailsContent">
+        Loading user details...
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="admin.js"></script>
 </body>
-</html>
+          </html>
