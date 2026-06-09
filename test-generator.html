@@ -3,71 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apna Test Banao - Math Guru</title>
+  <title>Apna Test Banao | MATHS GURU</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="style.css">
 
   <style>
-    :root {
-      --primary: #0056b3;
-      --text-main: #333;
-      --card-bg: #ffffff;
-    }
-
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f6f9;
-      margin: 0;
-      padding: 20px;
-      color: var(--text-main);
+      background: #f4f6f9;
+      color: #1f2937;
     }
 
-    .top-links {
-      max-width: 800px;
-      margin: 0 auto 15px auto;
+    .test-hero {
+      background:
+        radial-gradient(circle at top left, rgba(0, 86, 179, 0.28), transparent 35%),
+        linear-gradient(135deg, #07152f, #0a192f 55%, #003b73);
+      color: white;
+      border-radius: 24px;
+      padding: 34px;
+      margin-top: 22px;
+      box-shadow: 0 12px 35px rgba(0, 86, 179, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .test-hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -80px;
+      bottom: -80px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+
+    .test-hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .test-title {
+      font-size: clamp(32px, 5vw, 54px);
+      font-weight: 950;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .test-subtitle {
+      max-width: 760px;
+      color: rgba(255,255,255,0.88);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .hero-badges {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
+      margin-top: 18px;
     }
 
-    .top-links a {
-      color: #0056b3;
-      text-decoration: none;
-      font-weight: 700;
+    .hero-badge {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
     }
 
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: var(--card-bg);
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    .test-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 22px;
+      margin-top: 28px;
+      align-items: start;
     }
 
-    h2 {
-      color: var(--primary);
-      text-align: center;
-      margin-bottom: 25px;
+    .setup-card,
+    .side-card,
+    .test-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    }
+
+    .form-title {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .form-hint {
+      color: #667085;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
     }
 
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
     }
 
     label {
       display: block;
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-weight: 800;
+      color: #374151;
+      margin-bottom: 6px;
+      font-size: 14px;
     }
 
     select,
     input,
     textarea {
       width: 100%;
-      padding: 12px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
       box-sizing: border-box;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 15px;
+      outline: none;
+      transition: 0.2s;
+      background: white;
       font-family: inherit;
     }
 
@@ -79,52 +148,18 @@
     select:focus,
     input:focus,
     textarea:focus {
-      border-color: var(--primary);
-      outline: none;
-    }
-
-    .btn {
-      background-color: var(--primary);
-      color: white;
-      padding: 14px 20px;
-      border: none;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      width: 100%;
-      transition: 0.3s;
-      text-decoration: none;
-      display: inline-block;
-      text-align: center;
-      box-sizing: border-box;
-    }
-
-    .btn:hover {
-      background-color: #004085;
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+      border-color: #0056b3;
+      box-shadow: 0 0 0 4px rgba(0,86,179,0.08);
     }
 
     .notice {
       margin-top: 15px;
       padding: 12px;
-      border-radius: 8px;
+      border-radius: 10px;
       display: none;
-      font-weight: 600;
-    }
-
-    .notice.notice {
-      background: #e3f2fd;
+      font-weight: 700;
+      background: #eef6ff;
       color: #0d47a1;
-    }
-
-    .notice.success {
-      background: #e8f5e9;
-      color: #1b5e20;
     }
 
     .notice.error {
@@ -132,26 +167,184 @@
       color: #b71c1c;
     }
 
+    .notice.success {
+      background: #e8f5e9;
+      color: #1b5e20;
+    }
+
+    .quick-card {
+      background: linear-gradient(135deg, #0056b3, #003b73);
+      color: white;
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 10px 26px rgba(0,86,179,0.22);
+      margin-top: 18px;
+    }
+
+    .quick-card p {
+      color: rgba(255,255,255,0.86);
+      margin: 8px 0 16px;
+      line-height: 1.5;
+    }
+
     #test-status-bar {
       display: none;
       justify-content: space-between;
+      align-items: center;
       background: #e3f2fd;
       padding: 15px;
-      border-radius: 8px;
+      border-radius: 14px;
       margin-bottom: 20px;
-      font-weight: bold;
-      font-size: 18px;
-      color: var(--primary);
+      font-weight: 900;
+      font-size: 16px;
+      color: #0056b3;
       gap: 10px;
       flex-wrap: wrap;
     }
 
+    /* SCORE RESULT BOX */
+    .score-box {
+      display: none;
+      background: linear-gradient(135deg, #07152f, #003b73);
+      color: white;
+      border-radius: 22px;
+      padding: 26px;
+      margin-bottom: 24px;
+      box-shadow: 0 14px 36px rgba(0,86,179,0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .score-box::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      right: -80px;
+      bottom: -90px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+
+    .score-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .score-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .score-title {
+      font-size: 28px;
+      font-weight: 950;
+      margin: 0 0 6px;
+    }
+
+    .score-subtitle {
+      color: rgba(255,255,255,0.82);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .score-circle {
+      width: 118px;
+      height: 118px;
+      border-radius: 50%;
+      background: white;
+      color: #0056b3;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+      flex-shrink: 0;
+    }
+
+    .score-percent {
+      font-size: 34px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: #667085;
+      margin-top: 4px;
+    }
+
+    .score-main-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .score-mini-card {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(4px);
+    }
+
+    .score-mini-label {
+      color: rgba(255,255,255,0.75);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .score-mini-value {
+      color: white;
+      font-size: 23px;
+      font-weight: 950;
+    }
+
+    .score-note {
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(255,255,255,0.12);
+      border-left: 4px solid #ffca28;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.88);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
     .question-card {
-      background: #f8f9fa;
-      border-left: 5px solid var(--primary);
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-left: 6px solid #0056b3;
       padding: 20px;
-      margin-bottom: 25px;
-      border-radius: 0 8px 8px 0;
+      margin-bottom: 20px;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+    }
+
+    .question-text {
+      font-size: 17px;
+      font-weight: 800;
+      color: #1f2937;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+
+    .q-type-badge {
+      display: inline-block;
+      background: #e2e8f0;
+      color: #334155;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 8px;
     }
 
     .options-container {
@@ -163,548 +356,284 @@
     }
 
     .option-btn {
-      background: white;
-      border: 2px solid #dee2e6;
+      background: #f8fafc;
+      border: 2px solid #e5e7eb;
       padding: 12px;
-      border-radius: 6px;
+      border-radius: 10px;
       cursor: pointer;
       text-align: left;
       font-size: 15px;
       transition: 0.2s;
+      font-weight: 700;
     }
 
     .option-btn:hover {
-      border-color: var(--primary);
-      background: #f0f4f8;
+      border-color: #0056b3;
+      background: #eef6ff;
     }
 
     .option-btn.selected {
       background: #d1ecf1;
       border-color: #0c5460;
-      font-weight: 700;
-    }
-
-    .action-btns {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-    }
-
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-      padding: 8px 15px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .solution-box {
-      background: #fff3cd;
-      border: 1px solid #ffeeba;
-      padding: 15px;
-      margin-top: 10px;
-      border-radius: 6px;
-      display: none;
-      color: #856404;
-      white-space: pre-wrap;
-    }
-
-    .q-type-badge {
-      display: inline-block;
-      background: #e2e8f0;
-      color: #4a5568;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-bottom: 10px;
+      color: #0c5460;
+      font-weight: 900;
     }
 
     .answer-box {
       margin-top: 15px;
     }
 
-    .score-box {
-      background: #f1f8e9;
-      border-left: 5px solid #28a745;
-      padding: 15px;
+    .answer-box textarea {
+      min-height: 95px;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      padding: 9px 14px;
+      border: none;
       border-radius: 8px;
-      margin-bottom: 20px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .solution-box {
+      background: #fff8e1;
+      border-left: 5px solid #ff9800;
+      padding: 15px;
+      margin-top: 12px;
+      border-radius: 10px;
       display: none;
+      color: #6b4e00;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .test-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .score-main-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 600px) {
+      .test-hero,
+      .setup-card,
+      .side-card,
+      .test-card,
+      .score-box {
+        padding: 18px;
+        border-radius: 18px;
+      }
+
       .options-container {
         grid-template-columns: 1fr;
       }
 
-      .container {
-        padding: 18px;
+      .score-top {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .score-circle {
+        width: 105px;
+        height: 105px;
+      }
+
+      .score-main-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 
 <body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">MATHS GURU</a>
 
-  <div class="top-links">
-    <a href="dashboard.html">← Dashboard</a>
-    <a href="ask-doubt.html">Ask Doubt</a>
-  </div>
-
-  <div class="container">
-    <h2>📝 Apna Test Banao</h2>
-    <p style="text-align:center; color:#666; margin-top:-15px;">
-      Class, Chapter aur Difficulty chuno — apna Maths Test turant banao.
-    </p>
-
-    <div id="setup-container">
-      <div class="form-group">
-        <label>Select Class</label>
-        <select id="classLevel">
-          <option value="1">Class 1</option>
-          <option value="2">Class 2</option>
-          <option value="3">Class 3</option>
-          <option value="4">Class 4</option>
-          <option value="5">Class 5</option>
-          <option value="6">Class 6</option>
-          <option value="7">Class 7</option>
-          <option value="8">Class 8</option>
-          <option value="9">Class 9</option>
-          <option value="10" selected>Class 10</option>
-          <option value="11">Class 11</option>
-          <option value="12">Class 12</option>
-        </select>
+      <div class="links">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="ask-doubt.html">Ask Doubt</a>
+        <a href="test-history.html">Test History</a>
+        <a href="upgrade.html">Upgrade</a>
+        <button class="btn small ghost" type="button" data-logout>Logout</button>
       </div>
-
-      <div class="form-group">
-        <label>Chapter Name</label>
-        <input type="text" id="chapter" placeholder="e.g., Polynomials, Trigonometry" required>
-      </div>
-
-      <div class="form-group">
-        <label>Difficulty</label>
-        <select id="difficulty">
-          <option value="Easy">Easy</option>
-          <option value="Medium" selected>Medium</option>
-          <option value="Hard">Hard</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Question Type</label>
-        <select id="questionType">
-          <option value="MCQ">MCQ</option>
-          <option value="Very Short">Very Short Question</option>
-          <option value="Short">Short Question</option>
-          <option value="Long">Long Question</option>
-          <option value="Mixed" selected>Mixed Questions</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Number of Questions</label>
-        <select id="numQuestions">
-          <option value="5" selected>5 Questions</option>
-          <option value="10">10 Questions</option>
-          <option value="20">20 Questions</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Language</label>
-        <select id="language">
-          <option value="Hinglish" selected>Hinglish</option>
-          <option value="English">English</option>
-          <option value="Hindi">Hindi</option>
-        </select>
-      </div>
-
-      <button class="btn" id="generate-btn" type="button">⚡ Test Generate Karo</button>
-      <div id="testMsg" class="notice"></div>
     </div>
+  </nav>
 
-    <div id="test-container" style="display:none;">
+  <main class="container">
+
+    <!-- HERO -->
+    <section class="test-hero">
+      <div class="test-hero-content">
+        <h1 class="test-title">Apna Test Banao</h1>
+
+        <p class="test-subtitle">
+          Class, chapter, difficulty aur question type select karo. Math Guru AI tumhare liye
+          MCQ, short, long ya mixed maths test generate karega.
+        </p>
+
+        <div class="hero-badges">
+          <span class="hero-badge">📝 Custom Test</span>
+          <span class="hero-badge">🎯 MCQ + Written</span>
+          <span class="hero-badge">⏰ Timer</span>
+          <span class="hero-badge">📊 Smart Score Box</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETUP AREA -->
+    <section class="test-layout">
+
+      <div class="setup-card" id="setup-container">
+        <h2 class="form-title">Create Your Maths Test</h2>
+        <p class="form-hint">
+          Topic fill karo, AI test generate karega. Clear topic likhna better result dega.
+        </p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Select Class</label>
+            <select id="classLevel">
+              <option value="1">Class 1</option>
+              <option value="2">Class 2</option>
+              <option value="3">Class 3</option>
+              <option value="4">Class 4</option>
+              <option value="5">Class 5</option>
+              <option value="6">Class 6</option>
+              <option value="7">Class 7</option>
+              <option value="8">Class 8</option>
+              <option value="9">Class 9</option>
+              <option value="10" selected>Class 10</option>
+              <option value="11">Class 11</option>
+              <option value="12">Class 12</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Difficulty</label>
+            <select id="difficulty">
+              <option value="Easy">Easy</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label>Chapter / Topic Name</label>
+            <input
+              type="text"
+              id="chapter"
+              placeholder="e.g., Polynomials, Trigonometry, Linear Equations"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label>Question Type</label>
+            <select id="questionType">
+              <option value="MCQ">MCQ</option>
+              <option value="Very Short">Very Short Question</option>
+              <option value="Short">Short Question</option>
+              <option value="Long">Long Question</option>
+              <option value="Mixed" selected>Mixed Questions</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Number of Questions</label>
+            <select id="numQuestions">
+              <option value="5" selected>5 Questions</option>
+              <option value="10">10 Questions</option>
+              <option value="20">20 Questions</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label>Language</label>
+            <select id="language">
+              <option value="Hinglish" selected>Hinglish</option>
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn" id="generate-btn" type="button" style="margin-top:8px;">
+          ⚡ Test Generate Karo
+        </button>
+
+        <div id="testMsg" class="notice"></div>
+      </div>
+
+      <aside>
+        <div class="side-card">
+          <h3 style="font-size:20px; font-weight:900;">Test Tips</h3>
+          <p class="muted">Better output ke liye topic specific likho.</p>
+
+          <div style="margin-top:14px; line-height:1.8; color:#374151;">
+            <p>✅ Topic: “Trigonometry identities”</p>
+            <p>✅ Type: MCQ / Short / Mixed</p>
+            <p>✅ Difficulty: Easy se start karo</p>
+            <p>✅ Submit ke baad score automatic dikhega</p>
+          </div>
+
+          <a class="btn ghost" href="test-history.html" style="width:100%; margin-top:16px;">
+            📊 View Test History
+          </a>
+        </div>
+
+        <div class="quick-card">
+          <h3 style="font-weight:900; font-size:21px;">Doubt solve karna hai?</h3>
+          <p>Test se pehle kisi question ka step-by-step solution chahiye to doubt solver use karo.</p>
+
+          <a class="btn secondary" href="ask-doubt.html" style="width:100%;">
+            ✍️ Ask Doubt
+          </a>
+        </div>
+      </aside>
+
+    </section>
+
+    <!-- TEST AREA -->
+    <section class="test-card" id="test-container" style="display:none; margin-top:28px;">
       <div id="test-status-bar">
         <div id="running-chapter">Chapter:</div>
         <div id="timer">⏰ Time: 00:00</div>
       </div>
 
+      <!-- Score result yahin design me dikhega -->
       <div id="scoreBox" class="score-box"></div>
 
       <div id="questions-area"></div>
 
-      <button class="btn" id="submit-test-btn" type="button" style="background:#28a745; margin-top:20px;">
+      <button class="btn" id="submit-test-btn" type="button" style="background:#28a745; margin-top:8px;">
         🎯 Test Submit Karo
       </button>
-    </div>
-  </div>
+    </section>
+
+  </main>
 
   <script src="script.js"></script>
-
-  <script>
-    let activeTestId = "";
-    let testQuestions = [];
-    let timerInterval = null;
-    let secondsElapsed = 0;
-
-    const userAnswers = {};
-
-    function showTestMsg(text, type = "notice") {
-      const box = document.querySelector("#testMsg");
-
-      if (!box) {
-        alert(text);
-        return;
-      }
-
-      box.className = `notice ${type}`;
-      box.textContent = text;
-      box.style.display = "block";
-    }
-
-    function safeText(value) {
-      return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-    }
-
-    function normalizeAnswer(value) {
-      return String(value || "")
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, " ")
-        .replace(/[.,;:!?]/g, "");
-    }
-
-    function isAnswerCorrect(userAnswer, correctAnswer) {
-      const u = normalizeAnswer(userAnswer);
-      const c = normalizeAnswer(correctAnswer);
-
-      if (!u || !c) return false;
-
-      return u === c;
-    }
-
-    function getApiBase() {
-      if (
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1"
-      ) {
-        return "http://localhost:3000/api";
-      }
-
-      return "https://math-guru.onrender.com/api";
-    }
-
-    async function apiRequest(path, options = {}) {
-      if (typeof request === "function") {
-        return await request(path, options);
-      }
-
-      const token = localStorage.getItem("mg_token") || "";
-
-      const res = await fetch(getApiBase() + path.replace("/api", ""), {
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          ...(options.headers || {})
-        }
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Request failed");
-      }
-
-      return data;
-    }
-
-    async function startTestGeneration() {
-      const token = localStorage.getItem("mg_token");
-
-      if (!token) {
-        alert("Pehle login karo.");
-        window.location.href = "login.html";
-        return;
-      }
-
-      const btn = document.querySelector("#generate-btn");
-
-      const classLevel = document.querySelector("#classLevel").value;
-      const chapter = document.querySelector("#chapter").value.trim();
-      const difficulty = document.querySelector("#difficulty").value;
-      const questionType = document.querySelector("#questionType").value;
-      const numQuestions = document.querySelector("#numQuestions").value;
-      const language = document.querySelector("#language").value;
-
-      if (!chapter) {
-        showTestMsg("Chapter/topic enter karo.", "error");
-        return;
-      }
-
-      const payload = {
-        classLevel,
-        subject: "Mathematics",
-        chapter,
-        difficulty,
-        questionType,
-        numQuestions,
-        language
-      };
-
-      try {
-        btn.disabled = true;
-        btn.textContent = "🔄 AI Test ban raha hai...";
-        showTestMsg("AI test generate kar raha hai. Please wait...", "notice");
-
-        const data = await apiRequest("/api/test/generate", {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-
-        activeTestId = data.testId;
-        testQuestions = Array.isArray(data.questions) ? data.questions : [];
-
-        if (testQuestions.length === 0) {
-          throw new Error("AI ne questions return nahi kiye.");
-        }
-
-        Object.keys(userAnswers).forEach((key) => delete userAnswers[key]);
-
-        document.querySelector("#setup-container").style.display = "none";
-        document.querySelector("#test-container").style.display = "block";
-        document.querySelector("#test-status-bar").style.display = "flex";
-        document.querySelector("#running-chapter").textContent = `Chapter: ${chapter}`;
-
-        const scoreBox = document.querySelector("#scoreBox");
-        if (scoreBox) {
-          scoreBox.style.display = "none";
-          scoreBox.innerHTML = "";
-        }
-
-        renderQuestions();
-        startTimer();
-
-      } catch (err) {
-        showTestMsg(err.message, "error");
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "⚡ Test Generate Karo";
-      }
-    }
-
-    function startTimer() {
-      secondsElapsed = 0;
-
-      if (timerInterval) clearInterval(timerInterval);
-
-      timerInterval = setInterval(() => {
-        secondsElapsed++;
-
-        const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
-        const secs = String(secondsElapsed % 60).padStart(2, "0");
-
-        document.querySelector("#timer").textContent = `⏰ Time: ${mins}:${secs}`;
-      }, 1000);
-    }
-
-    function renderQuestions() {
-      const area = document.querySelector("#questions-area");
-      area.innerHTML = "";
-
-      testQuestions.forEach((q, idx) => {
-        userAnswers[idx] = "";
-
-        const card = document.createElement("div");
-        card.className = "question-card";
-
-        const qType = q.type || "Question";
-        const isMCQ = Array.isArray(q.options) && q.options.length > 0;
-
-        let answerHTML = "";
-
-        if (isMCQ) {
-          answerHTML = `
-            <div class="options-container">
-              ${q.options.map((opt, oIdx) => `
-                <button
-                  type="button"
-                  class="option-btn"
-                  id="opt-${idx}-${oIdx}"
-                >
-                  ${safeText(opt)}
-                </button>
-              `).join("")}
-            </div>
-          `;
-        } else {
-          answerHTML = `
-            <div class="answer-box">
-              <label style="font-weight:600; display:block; margin-bottom:6px;">
-                Apna answer likho:
-              </label>
-
-              <textarea
-                id="written-answer-${idx}"
-                placeholder="Yahan apna answer likho..."
-              ></textarea>
-            </div>
-          `;
-        }
-
-        card.innerHTML = `
-          <span class="q-type-badge">${safeText(qType)}</span><br>
-
-          <strong>Q${idx + 1}: ${safeText(q.question)}</strong>
-
-          ${answerHTML}
-
-          <div class="action-btns">
-            <button type="button" class="btn-secondary" onclick="toggleAnswer(${idx})">
-              ✅ Final Answer Dekho
-            </button>
-          </div>
-
-          <div class="solution-box" id="sol-${idx}">
-            <strong>Correct Final Answer:</strong>
-            ${safeText(q.correctAnswer || "Answer not available")}
-          </div>
-        `;
-
-        area.appendChild(card);
-
-        if (isMCQ) {
-          q.options.forEach((opt, oIdx) => {
-            const btn = card.querySelector(`#opt-${idx}-${oIdx}`);
-
-            btn.addEventListener("click", () => {
-              selectOption(idx, oIdx, opt);
-            });
-          });
-        } else {
-          const textarea = card.querySelector(`#written-answer-${idx}`);
-
-          textarea.addEventListener("input", () => {
-            userAnswers[idx] = textarea.value;
-          });
-        }
-      });
-    }
-
-    function selectOption(qIdx, oIdx, selectedValue) {
-      const selectedBtn = document.querySelector(`#opt-${qIdx}-${oIdx}`);
-      if (!selectedBtn) return;
-
-      const allBtns = selectedBtn.parentNode.querySelectorAll(".option-btn");
-
-      allBtns.forEach((btn) => {
-        btn.classList.remove("selected");
-      });
-
-      selectedBtn.classList.add("selected");
-      userAnswers[qIdx] = selectedValue;
-    }
-
-    function toggleAnswer(idx) {
-      const box = document.querySelector(`#sol-${idx}`);
-      if (!box) return;
-
-      box.style.display = box.style.display === "block" ? "none" : "block";
-    }
-
-    async function submitFinalTest() {
-      if (timerInterval) clearInterval(timerInterval);
-
-      let attemptedCount = 0;
-      let correctCount = 0;
-      let mcqCount = 0;
-      let writtenCount = 0;
-
-      testQuestions.forEach((q, idx) => {
-        const answer = String(userAnswers[idx] || "").trim();
-
-        if (answer) attemptedCount++;
-
-        const isMCQ = Array.isArray(q.options) && q.options.length > 0;
-
-        if (isMCQ) {
-          mcqCount++;
-
-          if (isAnswerCorrect(answer, q.correctAnswer)) {
-            correctCount++;
-          }
-        } else {
-          writtenCount++;
-        }
-      });
-
-      const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
-      const secs = String(secondsElapsed % 60).padStart(2, "0");
-      const finalTimeStr = `${mins}:${secs}`;
-
-      try {
-        if (activeTestId) {
-          await apiRequest(`/api/test/submit/${activeTestId}`, {
-            method: "POST",
-            body: JSON.stringify({
-              score: correctCount,
-              attempted: attemptedCount,
-              totalQuestions: testQuestions.length,
-              mcqCount,
-              writtenCount,
-              answers: userAnswers,
-              timeTaken: finalTimeStr
-            })
-          });
-        }
-
-        const scoreBox = document.querySelector("#scoreBox");
-
-        if (scoreBox) {
-          scoreBox.innerHTML = `
-            <h3 style="margin-top:0;">🎉 Test Completed</h3>
-            <p><strong>Attempted:</strong> ${attemptedCount} / ${testQuestions.length}</p>
-            <p><strong>MCQ Correct:</strong> ${correctCount} / ${mcqCount}</p>
-            <p><strong>Written Questions:</strong> ${writtenCount}</p>
-            <p><strong>Time Taken:</strong> ${finalTimeStr}</p>
-            <p style="margin-bottom:0;">Ab niche final answers se match karo.</p>
-          `;
-          scoreBox.style.display = "block";
-          scoreBox.scrollIntoView({ behavior: "smooth" });
-        }
-
-        alert(
-          `🎉 Test Completed!\n\nAttempted: ${attemptedCount} / ${testQuestions.length}\nMCQ Correct: ${correctCount} / ${mcqCount}\nWritten Questions: ${writtenCount}\nTime Taken: ${finalTimeStr}\n\nAb Final Answer se match karo.`
-        );
-
-        testQuestions.forEach((_, idx) => {
-          const sol = document.querySelector(`#sol-${idx}`);
-          if (sol) sol.style.display = "block";
-        });
-
-      } catch (err) {
-        alert("Score saving error: " + err.message);
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const generateBtn = document.querySelector("#generate-btn");
-      const submitBtn = document.querySelector("#submit-test-btn");
-
-      if (generateBtn) {
-        generateBtn.addEventListener("click", startTestGeneration);
-      }
-
-      if (submitBtn) {
-        submitBtn.addEventListener("click", submitFinalTest);
-      }
-    });
-  </script>
-
+  <script src="test-generator.js"></script>
 </body>
   </html>
