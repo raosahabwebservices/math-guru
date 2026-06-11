@@ -11,8 +11,8 @@ const fsSync = require("fs");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
 
-// ✅ Same ai.js se doubt + test generator dono
 const {
   solveTextDoubt,
   solveImageDoubt,
@@ -26,14 +26,16 @@ app.use(express.json({ limit: "10mb" }));
 
 const dataDir = path.join(__dirname, "data");
 const uploadDir = path.join(__dirname, "uploads");
+const paymentUploadDir = path.join(uploadDir, "payments");
 
-// Render folders fix
 if (!fsSync.existsSync(dataDir)) fsSync.mkdirSync(dataDir, { recursive: true });
 if (!fsSync.existsSync(uploadDir)) fsSync.mkdirSync(uploadDir, { recursive: true });
+if (!fsSync.existsSync(paymentUploadDir)) fsSync.mkdirSync(paymentUploadDir, { recursive: true });
 
 // ==========================================
 // 2. HELPERS
 // ==========================================
+
 async function readJson(file) {
   try {
     const filePath = path.join(dataDir, `${file}.json`);
@@ -58,7 +60,7 @@ async function writeJson(file, data) {
     const filePath = path.join(dataDir, `${file}.json`);
     await fs.writeFile(filePath, JSON.stringify(data, null, 2));
   } catch (err) {
-    console.error(`Error writing ${file}:`, err.message);
+    console.error(`Write JSON Error ${file}:`, err.message);
   }
 }
 
@@ -69,7 +71,6 @@ function normalizeEmail(email) {
 function normalizeMobile(mobile) {
   let digits = String(mobile || "").replace(/\D/g, "");
 
-  // +91 support
   if (digits.length === 12 && digits.startsWith("91")) {
     digits = digits.slice(2);
   }
@@ -95,16 +96,105 @@ function signToken(payload) {
   });
 }
 
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function otpExpiryTime() {
+  return new Date(Date.now() + 10 * 60 * 1000).toISOString();
+}
+
+function isOtpExpired(expiresAt) {
+  return new Date(expiresAt).getTime() < Date.now();
+}
+
+function isFakeEmail(email) {
+  const fakeDomains = [
+    "mailinator.com",
+    "tempmail.com",
+    "10minutemail.com",
+    "guerrillamail.com",
+    "yopmail.com",
+    "fakegmail.com",
+    "example.com",
+    "test.com"
+  ];
+
+  const domain = String(email || "").split("@")[1]?.toLowerCase();
+  if (!domain) return true;
+
+  return fakeDomains.includes(domain);
+}
+
+function getPlanExpiry(planId) {
+  const expiry = new Date();
+
+  if (planId === "starter" || planId === "unlimited") {
+    expiry.setMonth(expiry.getMonth() + 1);
+  } else if (planId === "popular_3m") {
+    expiry.setMonth(expiry.getMonth() + 3);
+  } else if (planId === "half_year") {
+    expiry.setMonth(expiry.getMonth() + 6);
+  } else if (planId === "yearly") {
+    expiry.setFullYear(expiry.getFullYear() + 1);
+  } else {
+    return null;
+  }
+
+  return expiry.toISOString();
+}
+
+function isPremiumValid(user) {
+  if (!user || !user.premiumActive) return false;
+  if (!user.planId || user.planId === "free") return false;
+
+  if (user.planExpiry) {
+    const expired = new Date(user.planExpiry).getTime() < Date.now();
+    if (expired) return false;
+  }
+
+  return true;
+}
 function textLimit(user) {
-  return user.premiumActive ? 100 : 10;
+  const extra = Number(user.extraText || 0);
+
+  if (!isPremiumValid(user)) return 10 + extra;
+
+  if (user.planId === "unlimited") return 999999 + extra;
+  if (user.planId === "yearly") return 1500 + extra;
+  if (user.planId === "half_year") return 700 + extra;
+  if (user.planId === "popular_3m") return 300 + extra;
+  if (user.planId === "starter") return 100 + extra;
+
+  return 10 + extra;
 }
 
 function imageLimit(user) {
-  return user.premiumActive ? 100 : 3;
+  const extra = Number(user.extraImage || 0);
+
+  if (!isPremiumValid(user)) return 3 + extra;
+
+  if (user.planId === "unlimited") return 999999 + extra;
+  if (user.planId === "yearly") return 400 + extra;
+  if (user.planId === "half_year") return 150 + extra;
+  if (user.planId === "popular_3m") return 75 + extra;
+  if (user.planId === "starter") return 20 + extra;
+
+  return 3 + extra;
 }
 
 function testLimit(user) {
-  return user.premiumActive ? 100 : 5;
+  const extra = Number(user.extraTests || 0);
+
+  if (!isPremiumValid(user)) return 3 + extra;
+
+  if (user.planId === "unlimited") return 999999 + extra;
+  if (user.planId === "yearly") return 250 + extra;
+  if (user.planId === "half_year") return 100 + extra;
+  if (user.planId === "popular_3m") return 40 + extra;
+  if (user.planId === "starter") return 15 + extra;
+
+  return 3 + extra;
 }
 
 const publicUser = (u) => ({
@@ -112,34 +202,150 @@ const publicUser = (u) => ({
   name: u.name,
   email: u.email,
   mobile: u.mobile || "",
-  premiumActive: Boolean(u.premiumActive),
+  planId: isPremiumValid(u) ? u.planId || "free" : "free",
+  planExpiry: u.planExpiry || null,
+  paymentStatus: u.paymentStatus || "free",
+  premiumActive: isPremiumValid(u),
+  textUsed: u.textUsed || 0,
+  imageUsed: u.imageUsed || 0,
+  testUsed: u.testUsed || 0,
+  textLeft: Math.max(0, textLimit(u) - (u.textUsed || 0)),
+  imageLeft: Math.max(0, imageLimit(u) - (u.imageUsed || 0)),
+  testLeft: Math.max(0, testLimit(u) - (u.testUsed || 0)),
   remainingText: Math.max(0, textLimit(u) - (u.textUsed || 0)),
   remainingImage: Math.max(0, imageLimit(u) - (u.imageUsed || 0)),
   remainingTest: Math.max(0, testLimit(u) - (u.testUsed || 0))
 });
 
-const requireAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+function safeAdminUser(user) {
+  const copy = { ...user };
+  delete copy.password;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({
-      message: "No token provided"
-    });
+  copy.premiumActive = isPremiumValid(user);
+  copy.textLeft = Math.max(0, textLimit(user) - (user.textUsed || 0));
+  copy.imageLeft = Math.max(0, imageLimit(user) - (user.imageUsed || 0));
+  copy.testLeft = Math.max(0, testLimit(user) - (user.testUsed || 0));
+
+  return copy;
+}
+
+async function sendEmailOtp(email, otp) {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error("EMAIL_USER or EMAIL_PASS missing");
   }
 
-  const token = authHeader.split(" ")[1];
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
 
-  jwt.verify(token, process.env.JWT_SECRET || "secret123", (err, user) => {
-    if (err) {
+  await transporter.sendMail({
+    from: `"MATHS GURU" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Your MATHS GURU Signup OTP",
+    html: `
+      <div style="font-family:Arial,sans-serif;background:#f4f6f9;padding:20px;">
+        <div style="max-width:520px;margin:auto;background:white;border-radius:14px;padding:24px;border:1px solid #e5e7eb;">
+          <h2 style="color:#0056b3;margin-top:0;">MATHS GURU Email Verification</h2>
+          <p>Your signup OTP is:</p>
+          <div style="font-size:34px;font-weight:900;letter-spacing:6px;color:#07152f;background:#eef6ff;padding:16px;border-radius:12px;text-align:center;">
+            ${otp}
+          </div>
+          <p style="color:#555;">This OTP is valid for 10 minutes.</p>
+          <p style="color:#777;font-size:13px;">If you did not request this, ignore this email.</p>
+        </div>
+      </div>
+    `
+  });
+}
+
+// ==========================================
+// 3. AUTH MIDDLEWARE
+// ==========================================
+
+const requireAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "No token provided"
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    let decoded;
+
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || "secret123");
+    } catch (err) {
       return res.status(403).json({
-        message: "Invalid token"
+        message: "Invalid token. Please login again."
+      });
+    }
+
+    const users = await readJson("users");
+    const user = users.find((u) => String(u.id) === String(decoded.id));
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found. Please logout and login again."
+      });
+    }
+
+    if (user.status === "blocked") {
+      return res.status(403).json({
+        message: "Your account is blocked. Contact admin."
       });
     }
 
     req.user = user;
     next();
-  });
+
+  } catch (err) {
+    console.error("Auth error:", err);
+    res.status(500).json({
+      message: "Authentication failed"
+    });
+  }
 };
+
+function requireAdmin(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization || "";
+
+    if (!authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "Admin login required"
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret123");
+
+    if (decoded.role !== "admin") {
+      return res.status(403).json({
+        message: "Admin access only"
+      });
+    }
+
+    req.admin = decoded;
+    next();
+
+  } catch (err) {
+    return res.status(401).json({
+      message: "Invalid or expired admin token"
+    });
+  }
+};
+
+// ==========================================
+// 4. MULTER UPLOADS
+// ==========================================
 
 const upload = multer({
   dest: uploadDir,
@@ -148,12 +354,27 @@ const upload = multer({
   }
 });
 
+const paymentUpload = multer({
+  dest: paymentUploadDir,
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  },
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+
+    if (!allowed.includes(file.mimetype)) {
+      return cb(new Error("Only JPG, PNG, WEBP screenshot allowed"));
+    }
+
+    cb(null, true);
+  }
+});
 // ==========================================
-// 3. AUTH ROUTES
+// 5. AUTH ROUTES
 // ==========================================
 
-// ✅ Signup: name + email + mobile + password
-app.post("/api/signup", async (req, res) => {
+// Send Email OTP for Signup
+app.post("/api/auth/send-signup-otp", async (req, res) => {
   try {
     let { name, email, mobile, password } = req.body;
 
@@ -173,6 +394,12 @@ app.post("/api/signup", async (req, res) => {
       });
     }
 
+    if (isFakeEmail(email)) {
+      return res.status(400).json({
+        message: "Fake or temporary email is not allowed"
+      });
+    }
+
     if (!isValidMobile(mobile)) {
       return res.status(400).json({
         message: "Invalid mobile number. Enter valid 10 digit Indian mobile number"
@@ -189,13 +416,124 @@ app.post("/api/signup", async (req, res) => {
 
     if (users.find((u) => normalizeEmail(u.email) === email)) {
       return res.status(400).json({
-        message: "Email already exists"
+        message: "This email is already registered. Please login."
       });
     }
 
     if (users.find((u) => normalizeMobile(u.mobile) === mobile)) {
       return res.status(400).json({
-        message: "Mobile number already exists"
+        message: "This mobile number is already registered. Please login."
+      });
+    }
+
+    let otps = await readJson("otps");
+
+    otps = otps.filter((item) => {
+      return !(normalizeEmail(item.email) === email || normalizeMobile(item.mobile) === mobile);
+    });
+
+    const otp = generateOtp();
+
+    otps.unshift({
+      id: Date.now().toString(),
+      name,
+      email,
+      mobile,
+      otp,
+      purpose: "signup",
+      expiresAt: otpExpiryTime(),
+      createdAt: new Date().toISOString()
+    });
+
+    await writeJson("otps", otps);
+    await sendEmailOtp(email, otp);
+
+    res.json({
+      message: "OTP sent successfully to your email"
+    });
+
+  } catch (err) {
+    console.error("Send OTP Error:", err);
+    res.status(500).json({
+      message: "OTP send failed. Check EMAIL_USER and EMAIL_PASS."
+    });
+  }
+});
+
+// Signup with Email OTP
+app.post("/api/signup", async (req, res) => {
+  try {
+    let { name, email, mobile, password, otp } = req.body;
+
+    name = String(name || "").trim();
+    email = normalizeEmail(email);
+    mobile = normalizeMobile(mobile);
+    otp = String(otp || "").trim();
+
+    if (!name || !email || !mobile || !password || !otp) {
+      return res.status(400).json({
+        message: "Name, email, mobile number, password and OTP are required"
+      });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        message: "Invalid email address"
+      });
+    }
+
+    if (isFakeEmail(email)) {
+      return res.status(400).json({
+        message: "Fake or temporary email is not allowed"
+      });
+    }
+
+    if (!isValidMobile(mobile)) {
+      return res.status(400).json({
+        message: "Invalid mobile number. Enter valid 10 digit Indian mobile number"
+      });
+    }
+
+    if (String(password).length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters"
+      });
+    }
+
+    const users = await readJson("users");
+
+    if (users.find((u) => normalizeEmail(u.email) === email)) {
+      return res.status(400).json({
+        message: "This email is already registered. Please login."
+      });
+    }
+
+    if (users.find((u) => normalizeMobile(u.mobile) === mobile)) {
+      return res.status(400).json({
+        message: "This mobile number is already registered. Please login."
+      });
+    }
+
+    const otps = await readJson("otps");
+
+    const otpRecord = otps.find((item) => {
+      return (
+        normalizeEmail(item.email) === email &&
+        normalizeMobile(item.mobile) === mobile &&
+        String(item.otp) === otp &&
+        item.purpose === "signup"
+      );
+    });
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        message: "Invalid OTP"
+      });
+    }
+
+    if (isOtpExpired(otpRecord.expiresAt)) {
+      return res.status(400).json({
+        message: "OTP expired. Please request new OTP."
       });
     }
 
@@ -208,6 +546,13 @@ app.post("/api/signup", async (req, res) => {
       mobile,
       password: hashedPassword,
       premiumActive: false,
+      planId: "free",
+      planExpiry: null,
+      paymentStatus: "free",
+      extraText: 0,
+      extraImage: 0,
+      extraTests: 0,
+      status: "active",
       textUsed: 0,
       imageUsed: 0,
       testUsed: 0,
@@ -215,13 +560,20 @@ app.post("/api/signup", async (req, res) => {
     };
 
     users.push(newUser);
+
+    const remainingOtps = otps.filter((item) => {
+      return !(normalizeEmail(item.email) === email || normalizeMobile(item.mobile) === mobile);
+    });
+
     await writeJson("users", users);
+    await writeJson("otps", remainingOtps);
 
     res.json({
       message: "Signup successful",
       token: signToken({ id: newUser.id }),
       user: publicUser(newUser)
     });
+
   } catch (err) {
     console.error("Signup Error:", err);
     res.status(500).json({
@@ -230,13 +582,12 @@ app.post("/api/signup", async (req, res) => {
   }
 });
 
-// Optional new route support
 app.post("/api/auth/signup", async (req, res) => {
   req.url = "/api/signup";
   app._router.handle(req, res);
 });
 
-// ✅ Login: email/mobile + password
+// Login
 app.post("/api/login", async (req, res) => {
   try {
     const { email, mobile, identifier, password } = req.body;
@@ -266,13 +617,17 @@ app.post("/api/login", async (req, res) => {
       });
     }
 
+    if (user.status === "blocked") {
+      return res.status(403).json({
+        message: "Your account is blocked. Contact admin."
+      });
+    }
+
     let passwordMatch = false;
 
-    // ✅ New hashed password check
     if (isHashedPassword(user.password)) {
       passwordMatch = await bcrypt.compare(password, user.password);
     } else {
-      // ✅ Old plain password support + auto migration
       passwordMatch = user.password === password;
 
       if (passwordMatch) {
@@ -292,6 +647,7 @@ app.post("/api/login", async (req, res) => {
       token: signToken({ id: user.id }),
       user: publicUser(user)
     });
+
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({
@@ -300,7 +656,6 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// Optional new route support
 app.post("/api/auth/login", async (req, res) => {
   req.url = "/api/login";
   app._router.handle(req, res);
@@ -308,17 +663,8 @@ app.post("/api/auth/login", async (req, res) => {
 
 app.get("/api/profile", requireAuth, async (req, res) => {
   try {
-    const users = await readJson("users");
-    const user = users.find((u) => u.id === req.user.id);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
-    }
-
     res.json({
-      user: publicUser(user)
+      user: publicUser(req.user)
     });
   } catch (err) {
     res.status(500).json({
@@ -328,10 +674,9 @@ app.get("/api/profile", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 4. AI DOUBT ROUTES
+// 6. AI DOUBT ROUTES
 // ==========================================
 
-// ✅ Text Doubt
 app.post("/api/doubt/text", requireAuth, async (req, res) => {
   try {
     const { question, language } = req.body;
@@ -343,7 +688,7 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
     }
 
     const users = await readJson("users");
-    const user = users.find((u) => u.id === req.user.id);
+    const user = users.find((u) => String(u.id) === String(req.user.id));
 
     if (!user) {
       return res.status(404).json({
@@ -366,6 +711,8 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
     const doubt = {
       id: Date.now().toString(),
       userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
       type: "text",
       question,
       solution,
@@ -382,6 +729,7 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
       doubt,
       user: publicUser(user)
     });
+
   } catch (err) {
     console.error("Text Doubt Error:", err);
     res.status(500).json({
@@ -390,13 +738,10 @@ app.post("/api/doubt/text", requireAuth, async (req, res) => {
   }
 });
 
-// ✅ New route support
 app.post("/api/doubt/solve", requireAuth, async (req, res) => {
   req.url = "/api/doubt/text";
   app._router.handle(req, res);
 });
-
-// ✅ Image Doubt
 app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
@@ -408,7 +753,7 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
     const { question, language } = req.body;
 
     const users = await readJson("users");
-    const user = users.find((u) => u.id === req.user.id);
+    const user = users.find((u) => String(u.id) === String(req.user.id));
 
     if (!user) {
       return res.status(404).json({
@@ -436,6 +781,8 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
     const doubt = {
       id: Date.now().toString(),
       userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
       type: "image",
       question: question || "",
       imagePath: `/uploads/${req.file.filename}`,
@@ -453,6 +800,7 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
       doubt,
       user: publicUser(user)
     });
+
   } catch (err) {
     console.error("Image Doubt Error:", err);
     res.status(500).json({
@@ -466,8 +814,9 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
     const doubts = await readJson("doubts");
 
     res.json({
-      doubts: doubts.filter((d) => d.userId === req.user.id)
+      doubts: doubts.filter((d) => String(d.userId) === String(req.user.id))
     });
+
   } catch (err) {
     res.status(500).json({
       message: "History Failed"
@@ -476,7 +825,7 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 5. AI TEST GENERATOR ROUTES
+// 7. AI TEST GENERATOR ROUTES
 // ==========================================
 
 app.post("/api/test/generate", requireAuth, async (req, res) => {
@@ -525,7 +874,7 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
     }
 
     const users = await readJson("users");
-    const user = users.find((u) => u.id === req.user.id);
+    const user = users.find((u) => String(u.id) === String(req.user.id));
 
     if (!user) {
       return res.status(404).json({
@@ -554,8 +903,13 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
     const test = {
       id: Date.now().toString(),
       userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
       ...testData,
       score: null,
+      scorePercent: null,
+      wrongCount: null,
+      attempted: null,
       timeTaken: null,
       createdAt: new Date().toISOString()
     };
@@ -581,6 +935,7 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
       answerKey: test.answerKey,
       user: publicUser(user)
     });
+
   } catch (err) {
     console.error("Test Generator Error:", err);
     res.status(500).json({
@@ -595,19 +950,25 @@ app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
 
     const {
       score,
+      scorePercent,
       attempted,
       totalQuestions,
+      wrongCount,
       mcqCount,
       mcqAttempted,
+      mcqWrong,
       writtenCount,
       writtenAttempted,
+      writtenCorrect,
       answers,
       timeTaken
     } = req.body;
 
     const tests = await readJson("tests");
 
-    const test = tests.find((t) => t.id === testId && t.userId === req.user.id);
+    const test = tests.find((t) => {
+      return String(t.id) === String(testId) && String(t.userId) === String(req.user.id);
+    });
 
     if (!test) {
       return res.status(404).json({
@@ -616,14 +977,18 @@ app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
     }
 
     test.score = Number(score || 0);
+    test.scorePercent = Number(scorePercent || 0);
     test.attempted = Number(attempted || 0);
     test.totalQuestions = Number(totalQuestions || test.questions?.length || 0);
+    test.wrongCount = Number(wrongCount || 0);
 
     test.mcqCount = Number(mcqCount || 0);
     test.mcqAttempted = Number(mcqAttempted || 0);
+    test.mcqWrong = Number(mcqWrong || 0);
 
     test.writtenCount = Number(writtenCount || 0);
     test.writtenAttempted = Number(writtenAttempted || 0);
+    test.writtenCorrect = Number(writtenCorrect || 0);
 
     test.answers = answers || {};
     test.timeTaken = timeTaken || "00:00";
@@ -635,9 +1000,9 @@ app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
       message: "Test submitted successfully",
       test
     });
+
   } catch (err) {
     console.error("Test submit error:", err);
-
     res.status(500).json({
       message: "Test submit failed"
     });
@@ -649,8 +1014,9 @@ app.get("/api/test/history", requireAuth, async (req, res) => {
     const tests = await readJson("tests");
 
     res.json({
-      tests: tests.filter((t) => t.userId === req.user.id)
+      tests: tests.filter((t) => String(t.userId) === String(req.user.id))
     });
+
   } catch (err) {
     res.status(500).json({
       message: "Test history failed"
@@ -659,8 +1025,451 @@ app.get("/api/test/history", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 6. STATIC FILES & FALLBACK
+// 8. PAYMENT + CONTACT ROUTES
 // ==========================================
+
+app.post("/api/payment/request", requireAuth, paymentUpload.single("screenshot"), async (req, res) => {
+  try {
+    const { planId, amount, utr } = req.body;
+
+    if (!planId || !amount || !utr) {
+      return res.status(400).json({
+        message: "Plan, amount and UTR are required"
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Payment screenshot is required"
+      });
+    }
+
+    const cleanUtr = String(utr || "").trim();
+
+    if (
+      cleanUtr.length < 10 ||
+      cleanUtr.length > 30 ||
+      !/^[a-zA-Z0-9]+$/.test(cleanUtr)
+    ) {
+      return res.status(400).json({
+        message: "Invalid UTR number"
+      });
+    }
+
+    const payments = await readJson("payments");
+
+    const alreadyExists = payments.find((p) => {
+      return String(p.utr || "").toLowerCase() === cleanUtr.toLowerCase();
+    });
+
+    if (alreadyExists) {
+      return res.status(400).json({
+        message: "This UTR is already submitted"
+      });
+    }
+
+    const payment = {
+      id: Date.now().toString(),
+      userId: req.user.id,
+      userName: req.user.name,
+      userEmail: req.user.email,
+      planId,
+      amount: Number(amount),
+      utr: cleanUtr,
+      screenshotPath: `/uploads/payments/${req.file.filename}`,
+      status: "pending",
+      createdAt: new Date().toISOString()
+    };
+
+    payments.unshift(payment);
+
+    await writeJson("payments", payments);
+
+    res.json({
+      message: "Payment request submitted. Admin approval pending.",
+      payment
+    });
+
+  } catch (err) {
+    console.error("Payment request error:", err);
+    res.status(500).json({
+      message: "Payment request failed"
+    });
+  }
+});
+
+app.post("/api/contact", async (req, res) => {
+  try {
+    const { name, email, mobile, message } = req.body;
+
+    if (!name || !message) {
+      return res.status(400).json({
+        message: "Name and message are required"
+      });
+    }
+
+    const contacts = await readJson("contacts");
+
+    const contact = {
+      id: Date.now().toString(),
+      name: String(name || "").trim(),
+      email: normalizeEmail(email),
+      mobile: normalizeMobile(mobile),
+      message: String(message || "").trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    contacts.unshift(contact);
+
+    await writeJson("contacts", contacts);
+
+    res.json({
+      message: "Message submitted successfully",
+      contact
+    });
+
+  } catch (err) {
+    console.error("Contact error:", err);
+    res.status(500).json({
+      message: "Contact submit failed"
+    });
+  }
+});
+
+// ==========================================
+// 9. ADMIN ROUTES
+// ==========================================
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@mathsguru.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const password = String(req.body.password || "");
+
+    if (email !== normalizeEmail(ADMIN_EMAIL) || password !== ADMIN_PASSWORD) {
+      return res.status(401).json({
+        message: "Invalid admin email or password"
+      });
+    }
+
+    const token = signToken({
+      role: "admin",
+      email: ADMIN_EMAIL
+    });
+
+    res.json({
+      message: "Admin login successful",
+      token,
+      admin: {
+        email: ADMIN_EMAIL,
+        role: "admin"
+      }
+    });
+
+  } catch (err) {
+    console.error("Admin login error:", err);
+    res.status(500).json({
+      message: "Admin login failed"
+    });
+  }
+});
+
+app.get("/api/admin/dashboard", requireAdmin, async (req, res) => {
+  try {
+    const users = await readJson("users");
+    const payments = await readJson("payments");
+    const doubts = await readJson("doubts");
+    const tests = await readJson("tests");
+    const contacts = await readJson("contacts");
+
+    const safeUsers = users.map(safeAdminUser);
+    const premiumUsers = users.filter((u) => isPremiumValid(u)).length;
+
+    const pendingPayments = payments.filter((p) => {
+      return (p.status || "pending") === "pending";
+    }).length;
+
+    res.json({
+      totalUsers: users.length,
+      pendingPayments,
+      premiumUsers,
+      totalDoubts: doubts.length,
+      stats: {
+        totalUsers: users.length,
+        pendingPayments,
+        premiumUsers,
+        totalDoubts: doubts.length,
+        totalPayments: payments.length,
+        totalTests: tests.length,
+        totalContacts: contacts.length
+      },
+      users: safeUsers,
+      payments,
+      doubts: doubts.slice(0, 100),
+      recentDoubts: doubts.slice(0, 100),
+      tests: tests.slice(0, 100),
+      contacts: contacts.slice(0, 100)
+    });
+
+  } catch (err) {
+    console.error("Admin dashboard error:", err);
+    res.status(500).json({
+      message: "Admin dashboard failed"
+    });
+  }
+});
+
+app.post("/api/admin/payments/:paymentId/approve", requireAdmin, async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { adminNote } = req.body;
+
+    const payments = await readJson("payments");
+    const users = await readJson("users");
+
+    const payment = payments.find((p) => String(p.id) === String(paymentId));
+
+    if (!payment) {
+      return res.status(404).json({
+        message: "Payment not found"
+      });
+    }
+
+    const user = users.find((u) => String(u.id) === String(payment.userId));
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found for this payment"
+      });
+    }
+
+    payment.status = "approved";
+    payment.adminNote = adminNote || "";
+    payment.approvedAt = new Date().toISOString();
+
+    user.planId = payment.planId || "popular_3m";
+    user.premiumActive = true;
+    user.paymentStatus = "approved";
+    user.lastPaymentId = payment.id;
+    user.planExpiry = getPlanExpiry(user.planId);
+    user.updatedAt = new Date().toISOString();
+
+    await writeJson("payments", payments);
+    await writeJson("users", users);
+
+    res.json({
+      message: "Payment approved and premium activated",
+      payment,
+      user: safeAdminUser(user)
+    });
+
+  } catch (err) {
+    console.error("Payment approve error:", err);
+    res.status(500).json({
+      message: "Payment approve failed"
+    });
+  }
+});
+
+app.post("/api/admin/payments/:paymentId/reject", requireAdmin, async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { adminNote } = req.body;
+
+    const payments = await readJson("payments");
+    const payment = payments.find((p) => String(p.id) === String(paymentId));
+
+    if (!payment) {
+      return res.status(404).json({
+        message: "Payment not found"
+      });
+    }
+
+    payment.status = "rejected";
+    payment.adminNote = adminNote || "";
+    payment.rejectedAt = new Date().toISOString();
+
+    await writeJson("payments", payments);
+
+    res.json({
+      message: "Payment rejected",
+      payment
+    });
+
+  } catch (err) {
+    console.error("Payment reject error:", err);
+    res.status(500).json({
+      message: "Payment reject failed"
+    });
+  }
+});
+
+app.put("/api/admin/users/:userId", requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const users = await readJson("users");
+    const user = users.find((u) => String(u.id) === String(userId));
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    const {
+      name,
+      email,
+      mobile,
+      className,
+      planId,
+      planExpiry,
+      extraText,
+      extraImage,
+      extraTests,
+      status,
+      adminNote
+    } = req.body;
+
+    user.name = name || user.name;
+    user.email = email ? normalizeEmail(email) : user.email;
+    user.mobile = mobile ? normalizeMobile(mobile) : user.mobile;
+    user.className = className || user.className || "";
+
+    user.planId = planId || "free";
+    user.planExpiry = planExpiry || null;
+    user.premiumActive = user.planId !== "free";
+    user.paymentStatus = user.planId !== "free" ? "manual_admin" : "free";
+
+    user.extraText = Number(extraText || 0);
+    user.extraImage = Number(extraImage || 0);
+    user.extraTests = Number(extraTests || 0);
+
+    user.status = status || "active";
+    user.adminNote = adminNote || "";
+    user.updatedAt = new Date().toISOString();
+
+    await writeJson("users", users);
+
+    res.json({
+      message: "User updated successfully",
+      user: safeAdminUser(user)
+    });
+
+  } catch (err) {
+    console.error("Admin user update error:", err);
+    res.status(500).json({
+      message: "User update failed"
+    });
+  }
+});
+
+app.post("/api/admin/users/:userId/activate", requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { planId } = req.body;
+
+    const users = await readJson("users");
+    const user = users.find((u) => String(u.id) === String(userId));
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    const finalPlan = planId || "popular_3m";
+
+    user.planId = finalPlan;
+    user.premiumActive = true;
+    user.paymentStatus = "manual_admin";
+    user.planExpiry = getPlanExpiry(finalPlan);
+    user.updatedAt = new Date().toISOString();
+
+    await writeJson("users", users);
+
+    res.json({
+      message: "Premium activated manually",
+      user: safeAdminUser(user)
+    });
+
+  } catch (err) {
+    console.error("Manual activate error:", err);
+    res.status(500).json({
+      message: "Manual activation failed"
+    });
+  }
+});
+
+app.post("/api/admin/users/:userId/reset-usage", requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const users = await readJson("users");
+    const user = users.find((u) => String(u.id) === String(userId));
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    user.textUsed = 0;
+    user.imageUsed = 0;
+    user.testUsed = 0;
+    user.updatedAt = new Date().toISOString();
+
+    await writeJson("users", users);
+
+    res.json({
+      message: "Usage reset successfully",
+      user: safeAdminUser(user)
+    });
+
+  } catch (err) {
+    console.error("Reset usage error:", err);
+    res.status(500).json({
+      message: "Usage reset failed"
+    });
+  }
+});
+
+app.delete("/api/admin/users/:userId", requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    let users = await readJson("users");
+
+    const exists = users.find((u) => String(u.id) === String(userId));
+
+    if (!exists) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    users = users.filter((u) => String(u.id) !== String(userId));
+
+    await writeJson("users", users);
+
+    res.json({
+      message: "User deleted successfully"
+    });
+
+  } catch (err) {
+    console.error("Delete user error:", err);
+    res.status(500).json({
+      message: "User delete failed"
+    });
+  }
+});
+
+// ==========================================
+// 10. STATIC FILES & FALLBACK
+// ==========================================
+
 app.use("/uploads", express.static(uploadDir));
 app.use(express.static(__dirname));
 
