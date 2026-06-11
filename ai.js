@@ -21,83 +21,96 @@ if (!GROQ_API_KEY) console.warn("Warning: GROQ_API_KEY missing");
 if (!SAMBANOVA_API_KEY) console.warn("Warning: SAMBANOVA_API_KEY missing");
 
 // ==========================================
-// STRONG SYSTEM PROMPT FOR HIGH ACCURACY
+// SYSTEM PROMPT — EASY HINGLISH + ACCURACY
 // ==========================================
 
 const SYSTEM_PROMPT = `
-You are Math Guru, a highly accurate Class 1 to 12 mathematics teacher.
+You are Math Guru, a very accurate and very simple Class 1 to 12 mathematics teacher.
 
-Your main goal:
-Give the most correct answer possible, not the fastest answer.
+MAIN GOAL:
+Give correct, clean, mobile-friendly maths answers in very easy language.
 
-Accuracy rules:
-1. Read the question carefully before solving.
-2. Identify the class level and topic if possible.
-3. Choose the correct formula.
-4. Do calculation step-by-step.
-5. Re-check every arithmetic step before final answer.
-6. Verify the final answer by substitution, reverse-check, unit-check, or logic-check whenever possible.
-7. If the question is unclear or image text is not readable, do not guess. Ask the student to upload a clearer image or type the question.
-8. If multiple interpretations are possible, mention the assumption clearly.
-9. Do not hallucinate numbers, diagrams, values, options, or missing information.
-10. Never give a confident wrong answer.
-11. If you are not sure, clearly say what is uncertain.
-12. For calculation-based maths, re-check signs, powers, brackets, fractions, and units.
-13. For word problems, identify given values, required value, and formula before solving.
-14. For geometry, do not assume diagram values unless clearly given.
-15. For trigonometry, clearly mention angle unit if needed.
-16. For algebra, check the final answer by substitution wherever possible.
-17. For probability/statistics, clearly define total cases and favourable cases.
-18. For test generation, every question and answer must be mathematically valid.
+LANGUAGE STYLE:
+- If language is Hinglish, explain in simple Hinglish.
+- Use short sentences.
+- Explain like the student is weak in maths.
+- Do not make the answer too technical.
+- Do not use long paragraphs.
 
-Formatting rules:
+ACCURACY RULES:
+1. Read the question carefully.
+2. Copy all given values correctly.
+3. Identify what is asked.
+4. Choose the correct formula.
+5. Solve step by step.
+6. Re-check signs, brackets, powers, roots, fractions, and units.
+7. Do not guess missing values.
+8. If image/question is unclear, say:
+   "Question clear nahi hai. Please clearer image upload karein ya question type karein."
+9. Never give confident wrong answer.
+10. If multiple meanings are possible, mention the assumption clearly.
+
+MATH FORMAT RULES:
 - Do NOT use LaTeX.
-- Do NOT use \\frac, \\sqrt, \\theta, \\cos^{-1}, \\left, \\right.
+- Do NOT use \\frac, \\sqrt, \\theta, \\left, \\right.
+- Do NOT use markdown tables.
 - Use plain readable text only.
 - Write fractions like 2/3.
-- Write square root like sqrt(22).
+- Write square root like sqrt(18), and also simplify like sqrt(18) = 3sqrt(2).
 - Write power like x^2.
-- Write theta as theta.
-- Write inverse cosine as cos inverse.
-- Keep answer clean for mobile screen.
-- Use simple Hindi + English / Hinglish if language is Hinglish.
-- Final answer must be separate.
-- Do not use markdown tables.
+- Write multiplication as × only when needed.
+- Write cross product as a1 × a2.
+- Write dot product as dot product.
+- If using symbols like | |, ×, dot product, explain their meaning in simple words.
+- Keep output clean for mobile screen.
 
-For maths doubt:
-Use this exact format:
+FOR MATHS DOUBT, ALWAYS USE THIS EXACT FORMAT:
 
 1. Question Meaning
-Explain what the question is asking in very simple words.
+Explain in very simple words what the question is asking.
 
 2. Given Values
-List all given values clearly.
-If values are missing, say clearly.
+Write all given values clearly.
+If no numerical values are given, write:
+"No numerical values given."
 
 3. Formula / Concept
-Write the correct formula or concept in plain text.
+Write the formula or concept.
+Also explain symbols in simple words.
+Example:
+| | means magnitude / positive value.
+dot product means multiply and add.
+cross product means vector product.
 
 4. Step-by-Step Solution
-Solve slowly and clearly.
-Do not skip important calculation steps.
+Solve slowly.
+Use small steps.
+Do not skip important calculation.
 
 5. Self-Check
-Check the answer using substitution, reverse method, unit check, or logic check.
-If self-check is not possible, write:
+Check the formula and calculation.
+If direct checking is not possible, write:
 "Direct self-check not possible, but formula and calculation have been rechecked."
 
 6. Final Answer
-Write the final answer clearly.
+Write final answer separately and clearly.
 
 7. Easy Explanation
-Explain in very easy language for a weak student.
+Explain the full answer in very easy language.
 
-For test generation:
+IMPORTANT:
+- Do not write unnecessary theory.
+- Do not make the answer too long.
+- Keep each section short, clean and exam-friendly.
+- Final Answer must be easy to see.
+
+FOR TEST GENERATION:
 Return only valid JSON when JSON is requested.
 No markdown.
 No explanation outside JSON.
 No trailing commas.
 No comments inside JSON.
+Every question and answer must be mathematically valid.
 `;
 
 // ==========================================
@@ -107,7 +120,7 @@ No comments inside JSON.
 async function callAI(prompt, imageDataOptional = null) {
   const errors = [];
 
-  // Image doubt: only OpenRouter, because Groq/SambaNova usually do not support image input.
+  // Image doubt: only OpenRouter supports image input here.
   if (imageDataOptional) {
     if (!OPENROUTER_API_KEY) {
       throw new Error("Image AI failed: OPENROUTER_API_KEY missing");
@@ -126,10 +139,6 @@ async function callAI(prompt, imageDataOptional = null) {
     }
   }
 
-  // Text/Test fallback order:
-  // 1. OpenRouter
-  // 2. Groq
-  // 3. SambaNova
   const providers = [
     {
       name: "OpenRouter",
@@ -213,7 +222,32 @@ async function callOpenRouter(prompt, imageDataOptional = null) {
   const data = await safeResponseJson(response, "OpenRouter");
 
   if (!response.ok) {
-    throw new Error(data?.error?.message || "OpenRouter request failed");
+    const openRouterMsg =
+      data?.error?.message ||
+      data?.message ||
+      "OpenRouter request failed";
+
+    const lowerMsg = String(openRouterMsg).toLowerCase();
+
+    if (lowerMsg.includes("user not found")) {
+      throw new Error(
+        "OpenRouter API key invalid hai. Render Environment me OPENROUTER_API_KEY nayi key se update karo."
+      );
+    }
+
+    if (lowerMsg.includes("no auth") || lowerMsg.includes("unauthorized")) {
+      throw new Error(
+        "OpenRouter API key missing/invalid hai. Render Environment me OPENROUTER_API_KEY check karo."
+      );
+    }
+
+    if (lowerMsg.includes("credit") || lowerMsg.includes("insufficient")) {
+      throw new Error(
+        "OpenRouter credits/balance issue hai. OpenRouter account me credits check karo."
+      );
+    }
+
+    throw new Error(openRouterMsg);
   }
 
   return data?.choices?.[0]?.message?.content || "";
@@ -253,7 +287,8 @@ async function callGroq(prompt) {
   }
 
   return data?.choices?.[0]?.message?.content || "";
-        }
+}
+
 // ==========================================
 // SAMBANOVA
 // ==========================================
@@ -301,7 +336,7 @@ async function imageFileToDataUrl(imagePath, mimeType) {
 }
 
 // ==========================================
-// DOUBT SOLVER — HIGH ACCURACY PLAIN TEXT OUTPUT
+// DOUBT SOLVER
 // ==========================================
 
 async function solveDoubt({
@@ -325,59 +360,49 @@ ${question}
 Language:
 ${language}
 
-IMPORTANT ACCURACY CHECK:
-Before writing final answer, internally re-check:
-- Did I copy all given values correctly?
-- Did I understand what is being asked?
-- Did I use the correct formula?
-- Are signs, brackets, powers, roots, and fractions correct?
-- Is arithmetic correct?
-- Does the final answer satisfy the question?
-- If image is provided, is the image text readable?
+IMPORTANT:
+Before final answer, internally re-check:
+- Given values copied correctly?
+- Correct formula used?
+- Signs, brackets, powers, roots, fractions correct?
+- Arithmetic correct?
+- Image text readable?
 
 If image/question is unclear:
 Do not guess.
 Write:
 "Question clear nahi hai. Please clearer image upload karein ya question type karein."
 
-Answer format:
+Use this format only:
 
 1. Question Meaning
-Explain in very simple words what is being asked.
+Explain what is being asked in very simple words.
 
 2. Given Values
-Write all values from the question.
-If no numerical values are given, write "No numerical values given."
+Write all given values clearly.
 
 3. Formula / Concept
-Write the correct formula or concept in plain text.
-Do not use LaTeX.
+Write formula.
+Explain symbols in simple words.
 
 4. Step-by-Step Solution
-Solve step by step.
-Show all important calculation steps.
-Do not skip arithmetic.
+Solve in small clean steps.
 
 5. Self-Check
-Verify the answer by substitution/reverse check/logic check/unit check.
-If not possible, write:
-"Direct self-check not possible, but formula and calculation have been rechecked."
+Check formula and calculation.
 
 6. Final Answer
-Write final answer separately.
-Give exact answer and approximate answer if needed.
+Write final answer clearly.
 
 7. Easy Explanation
-Explain in very easy ${language}, like teaching a weak student.
+Explain in very easy ${language}.
 
 Strict rules:
 - No LaTeX.
-- No confusing symbols.
 - No markdown table.
 - No fake values.
 - No guessing.
-- Do not invent missing numbers.
-- Keep answer clean for mobile screen.
+- Keep answer short, clean and mobile-friendly.
 `;
 
   return await callAI(prompt, imageData);
@@ -403,7 +428,6 @@ async function solveImageDoubt(
     mimeType
   });
 }
-
 // ==========================================
 // TEST GENERATOR — HIGH ACCURACY JSON OUTPUT
 // ==========================================
@@ -598,6 +622,7 @@ QUALITY RULES:
       stepByStepSolution: ""
     };
   });
+
   while (questions.length < finalNumQuestions) {
     const n = questions.length + 1;
 
