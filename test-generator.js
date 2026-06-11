@@ -79,11 +79,20 @@ async function apiRequest(path, options = {}) {
     ? path.replace("/api", "")
     : path;
 
+  const headers = {};
+
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(API_BASE + finalPath, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
+      ...headers,
       ...(options.headers || {})
     }
   });
@@ -95,6 +104,30 @@ async function apiRequest(path, options = {}) {
   }
 
   return data;
+}
+
+/* =========================
+   EXTRACT QUESTIONS FROM BACKEND
+========================= */
+function extractTestData(data) {
+  const testRecord = data?.test || {};
+  const generatedTest = testRecord?.test || data?.test || {};
+
+  const questions = Array.isArray(generatedTest.questions)
+    ? generatedTest.questions
+    : Array.isArray(testRecord.questions)
+      ? testRecord.questions
+      : Array.isArray(data.questions)
+        ? data.questions
+        : [];
+
+  const testId = testRecord.id || data.testId || data.id || "";
+
+  return {
+    testId,
+    generatedTest,
+    questions
+  };
 }
 
 /* =========================
@@ -111,12 +144,17 @@ async function startTestGeneration() {
 
   const btn = document.querySelector("#generate-btn");
 
-  const classLevel = document.querySelector("#classLevel").value;
-  const chapter = document.querySelector("#chapter").value.trim();
-  const difficulty = document.querySelector("#difficulty").value;
-  const questionType = document.querySelector("#questionType").value;
-  const numQuestions = document.querySelector("#numQuestions").value;
-  const language = document.querySelector("#language").value;
+  const classLevel = document.querySelector("#classLevel")?.value || "";
+  const chapter = document.querySelector("#chapter")?.value.trim() || "";
+  const difficulty = document.querySelector("#difficulty")?.value || "Easy";
+  const questionType = document.querySelector("#questionType")?.value || "Mixed";
+  const numQuestions = document.querySelector("#numQuestions")?.value || 5;
+  const language = document.querySelector("#language")?.value || "Hinglish";
+
+  if (!classLevel) {
+    showTestMsg("Class select karo.", "error");
+    return;
+  }
 
   if (!chapter) {
     showTestMsg("Chapter/topic enter karo.", "error");
@@ -127,6 +165,7 @@ async function startTestGeneration() {
     classLevel,
     subject: "Mathematics",
     chapter,
+    topic: chapter,
     difficulty,
     questionType,
     numQuestions,
@@ -134,8 +173,11 @@ async function startTestGeneration() {
   };
 
   try {
-    btn.disabled = true;
-    btn.textContent = "🔄 AI Test ban raha hai...";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "🔄 AI Test ban raha hai...";
+    }
+
     showTestMsg("AI test generate kar raha hai. Please wait...", "notice");
 
     const data = await apiRequest("/api/test/generate", {
@@ -143,20 +185,32 @@ async function startTestGeneration() {
       body: JSON.stringify(payload)
     });
 
-    activeTestId = data.testId;
-    testQuestions = Array.isArray(data.questions) ? data.questions : [];
+    const extracted = extractTestData(data);
+
+    activeTestId = extracted.testId;
+    testQuestions = extracted.questions;
     isTestSubmitted = false;
 
-    if (testQuestions.length === 0) {
-      throw new Error("AI ne questions return nahi kiye.");
+    if (!Array.isArray(testQuestions) || testQuestions.length === 0) {
+      console.log("Full test response:", data);
+      throw new Error("AI ne questions return nahi kiye. Backend response format check karo.");
     }
 
     Object.keys(userAnswers).forEach((key) => delete userAnswers[key]);
 
-    document.querySelector("#setup-container").style.display = "none";
-    document.querySelector("#test-container").style.display = "block";
-    document.querySelector("#test-status-bar").style.display = "flex";
-    document.querySelector("#running-chapter").textContent = `Chapter: ${chapter}`;
+    const setupContainer = document.querySelector("#setup-container");
+    const testContainer = document.querySelector("#test-container");
+    const statusBar = document.querySelector("#test-status-bar");
+    const runningChapter = document.querySelector("#running-chapter");
+
+    if (setupContainer) setupContainer.style.display = "none";
+    if (testContainer) testContainer.style.display = "block";
+    if (statusBar) statusBar.style.display = "flex";
+
+    if (runningChapter) {
+      runningChapter.textContent =
+        `Chapter: ${extracted.generatedTest.topic || chapter}`;
+    }
 
     const scoreBox = document.querySelector("#scoreBox");
     if (scoreBox) {
@@ -173,15 +227,21 @@ async function startTestGeneration() {
     renderQuestions();
     startTimer();
 
-    document.querySelector("#test-container").scrollIntoView({
-      behavior: "smooth"
-    });
+    if (testContainer) {
+      testContainer.scrollIntoView({
+        behavior: "smooth"
+      });
+    }
+
+    showTestMsg("Test ready hai. Ab solve karo.", "success");
 
   } catch (err) {
     showTestMsg(err.message, "error");
   } finally {
-    btn.disabled = false;
-    btn.textContent = "⚡ Test Generate Karo";
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "⚡ Test Generate Karo";
+    }
   }
 }
 
@@ -213,6 +273,8 @@ function startTimer() {
 ========================= */
 function renderQuestions() {
   const area = document.querySelector("#questions-area");
+  if (!area) return;
+
   area.innerHTML = "";
 
   testQuestions.forEach((q, idx) => {
@@ -282,18 +344,22 @@ function renderQuestions() {
       q.options.forEach((opt, oIdx) => {
         const btn = card.querySelector(`#opt-${idx}-${oIdx}`);
 
-        btn.addEventListener("click", () => {
-          if (isTestSubmitted) return;
-          selectOption(idx, oIdx, opt);
-        });
+        if (btn) {
+          btn.addEventListener("click", () => {
+            if (isTestSubmitted) return;
+            selectOption(idx, oIdx, opt);
+          });
+        }
       });
     } else {
       const textarea = card.querySelector(`#written-answer-${idx}`);
 
-      textarea.addEventListener("input", () => {
-        if (isTestSubmitted) return;
-        userAnswers[idx] = textarea.value;
-      });
+      if (textarea) {
+        textarea.addEventListener("input", () => {
+          if (isTestSubmitted) return;
+          userAnswers[idx] = textarea.value;
+        });
+      }
     }
   });
 }
