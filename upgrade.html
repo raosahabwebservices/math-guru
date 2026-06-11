@@ -1,14 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Upgrade | MATHS GURU</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 
   <style>
+    body {
+      min-height: 100vh;
+    }
+
+    .upgrade-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .upgrade-title {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 58px);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+      color: var(--dark);
+    }
+
+    .upgrade-subtitle {
+      max-width: 760px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-weight: 650;
+    }
+
+    .trust-strip {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 18px 0 0;
+    }
+
+    .trust-chip {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 850;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+    }
+
     .plans-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -20,146 +66,257 @@
     .plan-card {
       background: #ffffff;
       border: 2px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 18px;
+      border-radius: 24px;
+      padding: 20px;
       cursor: pointer;
-      transition: 0.25s;
+      transition: 0.22s ease;
       position: relative;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .plan-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -30px -40px auto;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(20, 85, 217, 0.08);
     }
 
     .plan-card:hover {
       transform: translateY(-3px);
-      border-color: #0056b3;
+      border-color: var(--blue);
+      box-shadow: 0 18px 44px rgba(20, 85, 217, 0.12);
     }
 
     .plan-card.selected {
-      border-color: #0056b3;
-      background: #eef6ff;
-      box-shadow: 0 6px 20px rgba(0,86,179,0.18);
+      border-color: var(--blue);
+      background: linear-gradient(180deg, #ffffff, #eff6ff);
+      box-shadow: 0 16px 42px rgba(20, 85, 217, 0.18);
+    }
+
+    .plan-card.selected::before {
+      content: "✓ Selected";
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 2;
+      background: var(--blue);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 950;
     }
 
     .plan-card.highlight-unlimited {
-      border-color: #7c3aed;
+      border-color: #c4b5fd;
       background: linear-gradient(135deg, #f5f3ff, #ffffff);
     }
 
     .plan-card.highlight-unlimited.selected {
-      border-color: #7c3aed;
-      box-shadow: 0 8px 24px rgba(124,58,237,0.22);
+      border-color: var(--purple);
+      box-shadow: 0 16px 42px rgba(124, 58, 237, 0.20);
+    }
+
+    .plan-card.highlight-unlimited.selected::before {
+      background: var(--purple);
     }
 
     .plan-title {
       font-size: 20px;
-      font-weight: 800;
-      margin-bottom: 8px;
+      font-weight: 950;
+      margin-bottom: 10px;
+      color: var(--dark);
+      padding-right: 80px;
+      position: relative;
+      z-index: 1;
     }
 
     .price-line {
       margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
     }
 
     .old-price {
       font-size: 16px;
-      color: #888;
+      color: #94a3b8;
       text-decoration: line-through;
       margin-right: 8px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .plan-price {
-      font-size: 27px;
-      font-weight: 900;
-      color: #0056b3;
+      font-size: 28px;
+      font-weight: 950;
+      color: var(--blue);
+      letter-spacing: -0.04em;
     }
 
     .save-text {
       display: inline-block;
       margin-top: 6px;
-      background: #e8f5e9;
-      color: #1b5e20;
-      padding: 3px 8px;
+      background: var(--green-soft);
+      color: #15803d;
+      padding: 4px 9px;
       border-radius: 999px;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
+      position: relative;
+      z-index: 1;
     }
 
     .plan-features {
-      color: #444;
+      color: #334155;
       font-size: 14px;
-      line-height: 1.6;
-      margin-top: 10px;
+      line-height: 1.7;
+      margin-top: 12px;
+      font-weight: 700;
+      position: relative;
+      z-index: 1;
+    }
+
+    .plan-features span {
+      display: block;
+      margin: 4px 0;
     }
 
     .tag {
       position: absolute;
       top: -10px;
-      right: 12px;
-      background: #ff5722;
+      left: 16px;
+      background: #f97316;
       color: white;
-      padding: 4px 9px;
+      padding: 5px 10px;
       border-radius: 999px;
       font-size: 11px;
-      font-weight: 800;
+      font-weight: 950;
+      z-index: 3;
+      box-shadow: 0 10px 22px rgba(249, 115, 22, 0.25);
     }
 
     .tag-purple {
-      background: #7c3aed;
+      background: var(--purple);
+      box-shadow: 0 10px 22px rgba(124, 58, 237, 0.25);
+    }
+
+    .payment-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    .pay-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .qr-box {
+      text-align: center;
+    }
+
+    .qr-img {
+      width: 230px;
+      max-width: 100%;
+      border-radius: 18px;
+      margin: 15px auto;
+      display: block;
+      border: 1px solid var(--line);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .upi-id {
+      background: #f8fbff;
+      border: 1px dashed #bfdbfe;
+      color: var(--blue);
+      padding: 11px 12px;
+      border-radius: 16px;
+      font-weight: 950;
+      overflow-wrap: anywhere;
+      margin: 12px 0;
     }
 
     .payment-summary {
-      background: #f8fafc;
-      border-left: 5px solid #0056b3;
-      padding: 14px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      line-height: 1.6;
-    }
-
-    .qr {
-      background: #fff;
+      background: linear-gradient(180deg, #f8fafc, #eef6ff);
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--blue);
+      padding: 15px;
       border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+      margin: 16px 0;
+      line-height: 1.7;
+      text-align: left;
+      color: #334155;
     }
 
     .fake-warning {
-      background: #fff3cd;
-      border-left: 5px solid #ff9800;
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 12px;
+      background: var(--yellow-soft);
+      border: 1px solid #fde68a;
+      border-left: 5px solid #f59e0b;
+      padding: 13px;
+      border-radius: 16px;
+      margin-top: 14px;
       font-size: 14px;
-      color: #6b4e00;
+      color: #92400e;
+      line-height: 1.55;
+      text-align: left;
+      font-weight: 700;
     }
 
-    .notice {
-      padding: 12px;
-      border-radius: 8px;
-      margin: 12px 0;
+    .form-note {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--muted);
+      margin-top: 6px;
       display: block;
-      background: #eef6ff;
-      color: #0d47a1;
-      font-weight: 600;
-    }
-
-    .notice.error {
-      background: #ffebee;
-      color: #b71c1c;
-    }
-
-    .notice.success {
-      background: #e8f5e9;
-      color: #1b5e20;
     }
 
     .notice.hidden {
-      display: none;
+      display: none !important;
     }
 
-    @media (max-width: 850px) {
+    @media (max-width: 900px) {
+      .plans-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .payment-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
       .plans-grid {
         grid-template-columns: 1fr;
+      }
+
+      .pay-card {
+        padding: 18px;
+        border-radius: 22px;
+      }
+
+      .plan-card {
+        padding: 18px;
+        border-radius: 22px;
+      }
+
+      .plan-price {
+        font-size: 25px;
+      }
+
+      .trust-strip {
+        gap: 8px;
+      }
+
+      .trust-chip {
+        font-size: 12px;
       }
     }
   </style>
@@ -180,22 +337,33 @@
   </nav>
 
   <main class="container">
-    <h1 class="section-title">Upgrade Math Guru Plan</h1>
-    <p class="muted">
-      Plan select karo, UPI payment karo, UTR + screenshot submit karo. Admin verify karke approve karega.
-    </p>
+    <section class="upgrade-hero">
+      <div>
+        <h1 class="upgrade-title">Upgrade Math Guru Plan</h1>
+        <p class="upgrade-subtitle">
+          Plan select karo, UPI payment karo, UTR + screenshot submit karo.
+          Admin verify karke premium activate karega.
+        </p>
+
+        <div class="trust-strip">
+          <span class="trust-chip">✅ Manual verification</span>
+          <span class="trust-chip">🔐 Login required</span>
+          <span class="trust-chip">📷 Screenshot proof</span>
+          <span class="trust-chip">⚡ Fast approval</span>
+        </div>
+      </div>
+    </section>
 
     <section class="plans-grid">
-
       <div class="plan-card" data-plan="free" data-amount="0" data-title="Free">
         <div class="plan-title">🆓 Free</div>
         <div class="price-line">
           <span class="plan-price">₹0</span>
         </div>
         <div class="plan-features">
-          10 Text Doubts<br>
-          3 Image Doubts<br>
-          3 Tests
+          <span>✅ 10 Text Doubts</span>
+          <span>✅ 3 Image Doubts</span>
+          <span>✅ 3 Tests</span>
         </div>
       </div>
 
@@ -207,9 +375,9 @@
         </div>
         <span class="save-text">Save ₹32</span>
         <div class="plan-features">
-          100 Text Doubts<br>
-          20 Image Doubts<br>
-          15 Tests
+          <span>✅ 100 Text Doubts</span>
+          <span>✅ 20 Image Doubts</span>
+          <span>✅ 15 Tests</span>
         </div>
       </div>
 
@@ -222,9 +390,9 @@
         </div>
         <span class="save-text">Save ₹100</span>
         <div class="plan-features">
-          300 Text Doubts<br>
-          75 Image Doubts<br>
-          40 Tests
+          <span>✅ 300 Text Doubts</span>
+          <span>✅ 75 Image Doubts</span>
+          <span>✅ 40 Tests</span>
         </div>
       </div>
 
@@ -236,9 +404,9 @@
         </div>
         <span class="save-text">Save ₹150</span>
         <div class="plan-features">
-          700 Text Doubts<br>
-          150 Image Doubts<br>
-          100 Tests
+          <span>✅ 700 Text Doubts</span>
+          <span>✅ 150 Image Doubts</span>
+          <span>✅ 100 Tests</span>
         </div>
       </div>
 
@@ -251,9 +419,9 @@
         </div>
         <span class="save-text">Save ₹300</span>
         <div class="plan-features">
-          1500 Text Doubts<br>
-          400 Image Doubts<br>
-          250 Tests
+          <span>✅ 1500 Text Doubts</span>
+          <span>✅ 400 Image Doubts</span>
+          <span>✅ 250 Tests</span>
         </div>
       </div>
 
@@ -266,39 +434,34 @@
         </div>
         <span class="save-text">Save ₹200</span>
         <div class="plan-features">
-          Fair Use Unlimited Text Doubts<br>
-          Fair Use Unlimited Image Doubts<br>
-          Fair Use Unlimited Tests
+          <span>✅ Fair Use Unlimited Text</span>
+          <span>✅ Fair Use Unlimited Image</span>
+          <span>✅ Fair Use Unlimited Tests</span>
         </div>
       </div>
-
-    </section>
-
-    <section class="grid two" style="margin-top:24px">
-      <div class="qr float">
+  </section>
+  <section class="payment-wrap">
+      <div class="pay-card qr-box">
         <h2>Scan QR to Pay</h2>
 
         <img
           src="qr.png"
           id="upiQr"
           alt="UPI QR"
-          style="width:220px; border-radius:12px; margin:15px auto; display:block; border:1px solid #eee;"
-        >
+          class="qr-img"
+        />
 
-        <h3>UPI ID: raos38908@okhdfcbank</h3>
+        <div class="upi-id">
+          UPI ID: raos38908@okhdfcbank
+        </div>
 
         <div class="payment-summary">
-          <strong>Selected Plan:</strong> <span id="selectedPlanText">Most Popular</span><br>
-          <strong>Amount:</strong> <span id="selectedAmountText">₹199</span><br>
+          <strong>Selected Plan:</strong> <span id="selectedPlanText">Most Popular</span><br />
+          <strong>Amount:</strong> <span id="selectedAmountText">₹199</span><br />
           <small id="paymentNote">Payment ke baad UTR aur screenshot submit karo.</small>
         </div>
 
-        <a
-          id="upiPayLink"
-          class="btn"
-          href="#"
-          style="display:block; text-align:center;"
-        >
+        <a id="upiPayLink" class="btn" href="#" style="width:100%;">
           Open UPI App
         </a>
 
@@ -308,15 +471,15 @@
         </div>
       </div>
 
-      <form id="paymentForm" class="card form full" enctype="multipart/form-data">
+      <form id="paymentForm" class="pay-card form" enctype="multipart/form-data">
         <h2>Submit Payment Request</h2>
 
         <div class="notice" id="planNotice">
           Selected Plan: Most Popular | Amount: ₹199
         </div>
 
-        <input type="hidden" name="planId" id="planIdInput" value="popular_3m">
-        <input type="hidden" name="amount" id="amountInput" value="199">
+        <input type="hidden" name="planId" id="planIdInput" value="popular_3m" />
+        <input type="hidden" name="amount" id="amountInput" value="199" />
 
         <div>
           <label class="label">UTR Number <span style="color:red;">*</span></label>
@@ -327,9 +490,10 @@
             minlength="10"
             maxlength="30"
             placeholder="Enter bank/UPI UTR"
-          >
-          <small class="muted">
-            Fake UTR जैसे 1234567890, 0000000000, testutr accept नहीं होगा.
+            autocomplete="off"
+          />
+          <small class="form-note">
+            Fake UTR जैसे 1234567890, 0000000000, testutr accept nahi hoga.
           </small>
         </div>
 
@@ -341,8 +505,8 @@
             type="file"
             accept="image/jpeg,image/png,image/webp"
             required
-          >
-          <small class="muted">
+          />
+          <small class="form-note">
             Screenshot में amount, UTR/payment reference, date/time clear दिखना चाहिए.
           </small>
         </div>
@@ -366,11 +530,70 @@
     const UPI_ID = "raos38908@okhdfcbank";
     const UPI_NAME = "Rao Sahab";
 
+    const API_BASE =
+      location.hostname === "localhost" || location.hostname === "127.0.0.1"
+        ? "http://localhost:3000"
+        : "https://math-guru.onrender.com";
+
     let selectedPlan = {
       id: "popular_3m",
       title: "Most Popular",
       amount: 199
     };
+
+    function getToken() {
+      return localStorage.getItem("mg_token") || "";
+    }
+
+    async function upgradeRequest(path, options = {}) {
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("Login required");
+      }
+
+      const cleanPath = path.startsWith("/api/")
+        ? path
+        : path.startsWith("/")
+          ? "/api" + path
+          : "/api/" + path;
+
+      const headers = {
+        Authorization: "Bearer " + token
+      };
+
+      if (!(options.body instanceof FormData)) {
+        headers["Content-Type"] = "application/json";
+      }
+
+      const res = await fetch(API_BASE + cleanPath, {
+        ...options,
+        headers: {
+          ...headers,
+          ...(options.headers || {})
+        }
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/json")) {
+        throw new Error("Server response JSON nahi hai. API route ya Render issue check karo.");
+      }
+
+      const data = await res.json();
+
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("mg_token");
+        localStorage.removeItem("mg_user");
+        throw new Error(data.message || "Login expired. Please login again.");
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Payment request failed");
+      }
+
+      return data;
+    }
 
     function showPaymentMsg(text, type = "notice") {
       const box = document.querySelector("#paymentMsg");
@@ -383,7 +606,9 @@
     }
 
     function makeUpiLink(amount, planTitle) {
-      return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent("MATH GURU " + planTitle)}`;
+      const note = "MATH GURU " + planTitle;
+
+      return `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(UPI_NAME)}&am=${encodeURIComponent(amount)}&cu=INR&tn=${encodeURIComponent(note)}`;
     }
 
     function isValidUTR(utr) {
@@ -413,7 +638,6 @@
       ];
 
       if (fakeList.includes(clean.toLowerCase())) return false;
-
       if (!/^[a-zA-Z0-9]+$/.test(clean)) return false;
 
       const sameChar = clean.split("").every((ch) => ch === clean[0]);
@@ -472,6 +696,7 @@
         utrInput.required = false;
         screenshotInput.required = false;
         submitBtn.textContent = "Free Plan Selected";
+        submitBtn.disabled = true;
         upiPayLink.href = "#";
         upiPayLink.style.opacity = "0.5";
         paymentNote.textContent = "Free plan ke liye payment ki zaroorat nahi.";
@@ -479,17 +704,14 @@
         utrInput.required = true;
         screenshotInput.required = true;
         submitBtn.textContent = "Submit for Approval";
+        submitBtn.disabled = false;
         upiPayLink.href = makeUpiLink(selectedPlan.amount, selectedPlan.title);
         upiPayLink.style.opacity = "1";
         paymentNote.textContent = "Payment ke baad UTR aur screenshot submit karo.";
       }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      // Important:
-      // Yahan requireStudent() nahi call karna.
-      // Warna upgrade page open hote hi login.html par redirect ho jayega.
-
+    function initPlanSelection() {
       document.querySelectorAll(".plan-card").forEach((card) => {
         card.addEventListener("click", () => {
           updateSelectedPlan(card);
@@ -499,24 +721,24 @@
       const params = new URLSearchParams(window.location.search);
       const planFromUrl = params.get("plan");
 
-      if (planFromUrl) {
-        const targetCard = document.querySelector(`.plan-card[data-plan="${planFromUrl}"]`);
-        if (targetCard) {
-          updateSelectedPlan(targetCard);
-        }
-      } else {
-        const defaultCard = document.querySelector(`.plan-card[data-plan="popular_3m"]`);
-        if (defaultCard) {
-          updateSelectedPlan(defaultCard);
-        }
-      }
+      const targetCard = planFromUrl
+        ? document.querySelector(`.plan-card[data-plan="${planFromUrl}"]`)
+        : document.querySelector(`.plan-card[data-plan="popular_3m"]`);
 
+      if (targetCard) {
+        updateSelectedPlan(targetCard);
+      }
+    }
+
+    function initPaymentForm() {
       const paymentForm = document.querySelector("#paymentForm");
+
+      if (!paymentForm) return;
 
       paymentForm.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const token = localStorage.getItem("mg_token");
+        const token = getToken();
 
         if (!token) {
           showPaymentMsg("Payment request submit karne ke liye pehle login karo.", "error");
@@ -560,7 +782,11 @@
 
           const formData = new FormData(paymentForm);
 
-          const data = await request("/api/payment/request", {
+          formData.set("planId", selectedPlan.id);
+          formData.set("amount", selectedPlan.amount);
+          formData.set("utr", utr);
+
+          const data = await upgradeRequest("/api/payment/request", {
             method: "POST",
             body: formData
           });
@@ -573,15 +799,30 @@
           paymentForm.reset();
 
           const selectedCard = document.querySelector(`.plan-card[data-plan="${selectedPlan.id}"]`);
-          if (selectedCard) updateSelectedPlan(selectedCard);
 
+          if (selectedCard) {
+            updateSelectedPlan(selectedCard);
+          }
         } catch (err) {
           showPaymentMsg(err.message, "error");
+
+          if (String(err.message).toLowerCase().includes("login")) {
+            setTimeout(() => {
+              window.location.href = "login.html";
+            }, 1200);
+          }
         } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Submit for Approval";
+          if (selectedPlan.amount > 0 && selectedPlan.id !== "free") {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit for Approval";
+          }
         }
       });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initPlanSelection();
+      initPaymentForm();
     });
   </script>
 </body>
