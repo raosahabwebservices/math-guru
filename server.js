@@ -6,7 +6,6 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
-const fs = require("fs").promises;
 const fsSync = require("fs");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
@@ -18,50 +17,29 @@ const {
   generateMathTest
 } = require("./ai");
 
+const { connectDB, readJson, writeJson } = require("./db");
+
 const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-const dataDir = path.join(__dirname, "data");
+const PORT = process.env.PORT || 3000;
+
 const uploadDir = path.join(__dirname, "uploads");
 const paymentUploadDir = path.join(uploadDir, "payments");
 
-if (!fsSync.existsSync(dataDir)) fsSync.mkdirSync(dataDir, { recursive: true });
-if (!fsSync.existsSync(uploadDir)) fsSync.mkdirSync(uploadDir, { recursive: true });
-if (!fsSync.existsSync(paymentUploadDir)) fsSync.mkdirSync(paymentUploadDir, { recursive: true });
+if (!fsSync.existsSync(uploadDir)) {
+  fsSync.mkdirSync(uploadDir, { recursive: true });
+}
+
+if (!fsSync.existsSync(paymentUploadDir)) {
+  fsSync.mkdirSync(paymentUploadDir, { recursive: true });
+}
 
 // ==========================================
 // 2. HELPERS
 // ==========================================
-
-async function readJson(file) {
-  try {
-    const filePath = path.join(dataDir, `${file}.json`);
-
-    if (!fsSync.existsSync(filePath)) {
-      await fs.writeFile(filePath, "[]");
-      return [];
-    }
-
-    const data = await fs.readFile(filePath, "utf8");
-    if (!data || data.trim() === "") return [];
-
-    return JSON.parse(data);
-  } catch (err) {
-    console.error(`Read JSON Error ${file}:`, err.message);
-    return [];
-  }
-}
-
-async function writeJson(file, data) {
-  try {
-    const filePath = path.join(dataDir, `${file}.json`);
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
-  } catch (err) {
-    console.error(`Write JSON Error ${file}:`, err.message);
-  }
-}
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
@@ -190,6 +168,7 @@ const publicUser = (u) => ({
   name: u.name,
   email: u.email,
   mobile: u.mobile || "",
+
   planId: isPremiumValid(u) ? u.planId || "free" : "free",
   planExpiry: u.planExpiry || null,
   paymentStatus: u.paymentStatus || "free",
@@ -263,7 +242,6 @@ const requireAuth = async (req, res, next) => {
 
     req.user = user;
     next();
-
   } catch (err) {
     console.error("Auth error:", err);
     res.status(500).json({
@@ -293,7 +271,6 @@ function requireAdmin(req, res, next) {
 
     req.admin = decoded;
     next();
-
   } catch (err) {
     return res.status(401).json({
       message: "Invalid or expired admin token"
@@ -331,7 +308,6 @@ const paymentUpload = multer({
 // 5. AUTH ROUTES
 // ==========================================
 
-// Signup without OTP: 1 email + 1 mobile = 1 account only
 async function signupHandler(req, res) {
   try {
     let { name, email, mobile, password } = req.body;
@@ -378,9 +354,7 @@ async function signupHandler(req, res) {
 
     const users = await readJson("users");
 
-    const emailExists = users.find((u) => {
-      return normalizeEmail(u.email) === email;
-    });
+    const emailExists = users.find((u) => normalizeEmail(u.email) === email);
 
     if (emailExists) {
       return res.status(400).json({
@@ -388,9 +362,7 @@ async function signupHandler(req, res) {
       });
     }
 
-    const mobileExists = users.find((u) => {
-      return normalizeMobile(u.mobile) === mobile;
-    });
+    const mobileExists = users.find((u) => normalizeMobile(u.mobile) === mobile);
 
     if (mobileExists) {
       return res.status(400).json({
@@ -433,11 +405,10 @@ async function signupHandler(req, res) {
       token: signToken({ id: newUser.id }),
       user: publicUser(newUser)
     });
-
   } catch (err) {
     console.error("Signup Error:", err);
     res.status(500).json({
-      message: "Signup Failed"
+      message: "Signup Failed: " + err.message
     });
   }
 }
@@ -445,7 +416,6 @@ async function signupHandler(req, res) {
 app.post("/api/signup", signupHandler);
 app.post("/api/auth/signup", signupHandler);
 
-// Login with email OR mobile
 async function loginHandler(req, res) {
   try {
     const { email, mobile, identifier, password } = req.body;
@@ -505,11 +475,10 @@ async function loginHandler(req, res) {
       token: signToken({ id: user.id }),
       user: publicUser(user)
     });
-
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({
-      message: "Login Failed"
+      message: "Login Failed: " + err.message
     });
   }
 }
@@ -585,7 +554,6 @@ async function textDoubtHandler(req, res) {
       doubt,
       user: publicUser(user)
     });
-
   } catch (err) {
     console.error("Text Doubt Error:", err);
     res.status(500).json({
@@ -655,7 +623,6 @@ app.post("/api/doubt/image", requireAuth, upload.single("image"), async (req, re
       doubt,
       user: publicUser(user)
     });
-
   } catch (err) {
     console.error("Image Doubt Error:", err);
     res.status(500).json({
@@ -675,7 +642,6 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
     res.json({
       doubts: myDoubts
     });
-
   } catch (err) {
     res.status(500).json({
       message: "History Failed"
@@ -757,11 +723,18 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
       classLevel: finalClass,
       subject: finalSubject,
       chapter: finalChapter,
+      topic: finalChapter,
       difficulty: finalDifficulty,
       questionType: finalQuestionType,
       numQuestions: finalNumQuestions,
       language: finalLanguage,
       test,
+      score: 0,
+      scorePercent: 0,
+      attempted: 0,
+      totalQuestions: test?.questions?.length || finalNumQuestions,
+      wrongCount: 0,
+      status: "generated",
       createdAt: new Date().toISOString()
     };
 
@@ -775,7 +748,6 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
       test: testRecord,
       user: publicUser(user)
     });
-
   } catch (err) {
     console.error("Test Generate Error:", err);
     res.status(500).json({
@@ -850,14 +822,34 @@ app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
 
     await writeJson("tests", tests);
 
+    const submissions = await readJson("testSubmissions");
+
+    const submission = {
+      id: Date.now().toString(),
+      testId,
+      userId: req.user.id,
+      userName: req.user.name,
+      userEmail: req.user.email,
+      score: Number(score) || 0,
+      scorePercent: Number(scorePercent) || 0,
+      attempted: Number(attempted) || 0,
+      totalQuestions: questionCount,
+      wrongCount: Number(wrongCount) || 0,
+      answers: answers || {},
+      timeTaken: String(timeTaken || ""),
+      createdAt: new Date().toISOString()
+    };
+
+    submissions.unshift(submission);
+    await writeJson("testSubmissions", submissions);
+
     res.json({
       message: "Test submitted successfully",
-      test: tests[index]
+      test: tests[index],
+      submission
     });
-
   } catch (err) {
     console.error("Test Submit Error:", err);
-
     res.status(500).json({
       message: "Test Submit Failed: " + err.message
     });
@@ -868,35 +860,28 @@ app.get("/api/test/history", requireAuth, async (req, res) => {
   try {
     const tests = await readJson("tests");
 
-    const myTests = tests.filter((t) => {
-      return String(t.userId) === String(req.user.id);
-    });
+    const myTests = tests
+      .filter((t) => String(t.userId) === String(req.user.id))
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
     res.json({
       tests: myTests
     });
-
   } catch (err) {
+    console.error("Test History Error:", err);
     res.status(500).json({
-      message: "Test History Failed"
+      message: "Test History Failed: " + err.message
     });
   }
 });
 
 // ==========================================
-// 8. PAYMENT + CONTACT ROUTES
+// 8. PAYMENT ROUTES
 // ==========================================
 
 app.post("/api/payment/request", requireAuth, paymentUpload.single("screenshot"), async (req, res) => {
   try {
-    const {
-      planId,
-      planName,
-      amount,
-      utr,
-      upiId,
-      mobile
-    } = req.body;
+    const { planId, amount, utr, note } = req.body;
 
     if (!planId || !amount) {
       return res.status(400).json({
@@ -911,13 +896,12 @@ app.post("/api/payment/request", requireAuth, paymentUpload.single("screenshot")
       userId: req.user.id,
       userName: req.user.name,
       userEmail: req.user.email,
-      userMobile: req.user.mobile || mobile || "",
+      userMobile: req.user.mobile || "",
       planId,
-      planName: planName || planId,
-      amount,
-      utr: utr || "",
-      upiId: upiId || "",
-      screenshot: req.file ? `/uploads/payments/${path.basename(req.file.path)}` : "",
+      amount: Number(amount) || 0,
+      utr: String(utr || ""),
+      note: String(note || ""),
+      screenshotPath: req.file ? `/uploads/payments/${path.basename(req.file.path)}` : "",
       status: "pending",
       createdAt: new Date().toISOString()
     };
@@ -925,51 +909,24 @@ app.post("/api/payment/request", requireAuth, paymentUpload.single("screenshot")
     payments.unshift(payment);
     await writeJson("payments", payments);
 
-    res.json({
-      message: "Payment request submitted. Admin will verify soon.",
-      payment
-    });
+    const users = await readJson("users");
+    const user = users.find((u) => String(u.id) === String(req.user.id));
 
+    if (user) {
+      user.paymentStatus = "pending";
+      user.pendingPlanId = planId;
+      await writeJson("users", users);
+    }
+
+    res.json({
+      message: "Payment request submitted successfully",
+      payment,
+      user: user ? publicUser(user) : publicUser(req.user)
+    });
   } catch (err) {
     console.error("Payment Request Error:", err);
     res.status(500).json({
-      message: "Payment request failed"
-    });
-  }
-});
-
-app.post("/api/contact", async (req, res) => {
-  try {
-    const { name, email, mobile, message } = req.body;
-
-    if (!name || !message) {
-      return res.status(400).json({
-        message: "Name and message are required"
-      });
-    }
-
-    const contacts = await readJson("contacts");
-
-    const contact = {
-      id: Date.now().toString(),
-      name: String(name || "").trim(),
-      email: normalizeEmail(email),
-      mobile: normalizeMobile(mobile),
-      message: String(message || "").trim(),
-      createdAt: new Date().toISOString()
-    };
-
-    contacts.unshift(contact);
-    await writeJson("contacts", contacts);
-
-    res.json({
-      message: "Message sent successfully",
-      contact
-    });
-
-  } catch (err) {
-    res.status(500).json({
-      message: "Contact submit failed"
+      message: "Payment request failed: " + err.message
     });
   }
 });
@@ -980,37 +937,25 @@ app.post("/api/contact", async (req, res) => {
 
 app.post("/api/admin/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
 
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@mathsguru.local";
-    const adminPassword = process.env.ADMIN_PASSWORD || "Admin@12345";
+    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
 
-    if (normalizeEmail(email) !== normalizeEmail(adminEmail)) {
+    if (String(password || "") !== String(adminPassword)) {
       return res.status(401).json({
-        message: "Invalid admin credentials"
-      });
-    }
-
-    if (String(password || "") !== String(adminPassword || "")) {
-      return res.status(401).json({
-        message: "Invalid admin credentials"
+        message: "Invalid admin password"
       });
     }
 
     const token = signToken({
-      role: "admin",
-      email: adminEmail
+      id: "admin",
+      role: "admin"
     });
 
     res.json({
       message: "Admin login successful",
-      token,
-      admin: {
-        email: adminEmail,
-        role: "admin"
-      }
+      token
     });
-
   } catch (err) {
     res.status(500).json({
       message: "Admin login failed"
@@ -1024,37 +969,28 @@ app.get("/api/admin/dashboard", requireAdmin, async (req, res) => {
     const doubts = await readJson("doubts");
     const tests = await readJson("tests");
     const payments = await readJson("payments");
-    const contacts = await readJson("contacts");
-
-    const pendingPayments = payments.filter((p) => p.status === "pending");
 
     res.json({
-      stats: {
-        totalUsers: users.length,
-        activeUsers: users.filter((u) => u.status !== "blocked").length,
-        blockedUsers: users.filter((u) => u.status === "blocked").length,
-        premiumUsers: users.filter((u) => isPremiumValid(u)).length,
-        totalDoubts: doubts.length,
-        totalTests: tests.length,
-        totalPayments: payments.length,
-        pendingPayments: pendingPayments.length,
-        totalContacts: contacts.length
-      },
       users: users.map(safeAdminUser),
       doubts,
       tests,
       payments,
-      contacts
+      stats: {
+        totalUsers: users.length,
+        totalDoubts: doubts.length,
+        totalTests: tests.length,
+        pendingPayments: payments.filter((p) => p.status === "pending").length
+      }
     });
-
   } catch (err) {
     console.error("Admin Dashboard Error:", err);
     res.status(500).json({
-      message: "Dashboard failed"
+      message: "Admin dashboard failed: " + err.message
     });
   }
 });
-app.post("/api/admin/payments/:paymentId/approve", requireAdmin, async (req, res) => {
+
+app.post("/api/admin/payment/:paymentId/approve", requireAdmin, async (req, res) => {
   try {
     const { paymentId } = req.params;
 
@@ -1069,52 +1005,44 @@ app.post("/api/admin/payments/:paymentId/approve", requireAdmin, async (req, res
       });
     }
 
-    if (payment.status === "approved") {
-      return res.status(400).json({
-        message: "Payment already approved"
-      });
-    }
-
     const user = users.find((u) => String(u.id) === String(payment.userId));
 
     if (!user) {
       return res.status(404).json({
-        message: "User not found for this payment"
+        message: "User not found"
       });
     }
 
     payment.status = "approved";
     payment.approvedAt = new Date().toISOString();
-    payment.approvedBy = req.admin.email;
 
     user.premiumActive = true;
-    user.planId = payment.planId || "starter";
-    user.planExpiry = getPlanExpiry(user.planId);
+    user.planId = payment.planId;
+    user.planExpiry = getPlanExpiry(payment.planId);
     user.paymentStatus = "approved";
+    user.pendingPlanId = "";
 
     await writeJson("payments", payments);
     await writeJson("users", users);
 
     res.json({
-      message: "Payment approved and premium activated",
+      message: "Payment approved successfully",
       payment,
       user: safeAdminUser(user)
     });
-
   } catch (err) {
-    console.error("Payment Approve Error:", err);
     res.status(500).json({
-      message: "Payment approve failed"
+      message: "Approve payment failed: " + err.message
     });
   }
 });
 
-app.post("/api/admin/payments/:paymentId/reject", requireAdmin, async (req, res) => {
+app.post("/api/admin/payment/:paymentId/reject", requireAdmin, async (req, res) => {
   try {
     const { paymentId } = req.params;
-    const { reason } = req.body;
 
     const payments = await readJson("payments");
+    const users = await readJson("users");
 
     const payment = payments.find((p) => String(p.id) === String(paymentId));
 
@@ -1126,225 +1054,55 @@ app.post("/api/admin/payments/:paymentId/reject", requireAdmin, async (req, res)
 
     payment.status = "rejected";
     payment.rejectedAt = new Date().toISOString();
-    payment.rejectedBy = req.admin.email;
-    payment.rejectReason = reason || "Rejected by admin";
+
+    const user = users.find((u) => String(u.id) === String(payment.userId));
+
+    if (user) {
+      user.paymentStatus = "rejected";
+      user.pendingPlanId = "";
+    }
 
     await writeJson("payments", payments);
+    await writeJson("users", users);
 
     res.json({
-      message: "Payment rejected",
+      message: "Payment rejected successfully",
       payment
     });
-
   } catch (err) {
     res.status(500).json({
-      message: "Payment reject failed"
-    });
-  }
-});
-
-app.put("/api/admin/users/:userId", requireAdmin, async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const {
-      name,
-      email,
-      mobile,
-      status,
-      planId,
-      premiumActive,
-      planExpiry,
-      extraText,
-      extraImage,
-      extraTests
-    } = req.body;
-
-    const users = await readJson("users");
-    const user = users.find((u) => String(u.id) === String(userId));
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
-    }
-
-    if (name !== undefined) user.name = String(name || "").trim();
-
-    if (email !== undefined) {
-      const newEmail = normalizeEmail(email);
-
-      if (!isValidEmail(newEmail)) {
-        return res.status(400).json({
-          message: "Invalid email"
-        });
-      }
-
-      const emailExists = users.find((u) => {
-        return String(u.id) !== String(userId) && normalizeEmail(u.email) === newEmail;
-      });
-
-      if (emailExists) {
-        return res.status(400).json({
-          message: "This email is already used by another user"
-        });
-      }
-
-      user.email = newEmail;
-    }
-
-    if (mobile !== undefined) {
-      const newMobile = normalizeMobile(mobile);
-
-      if (!isValidMobile(newMobile)) {
-        return res.status(400).json({
-          message: "Invalid mobile"
-        });
-      }
-
-      const mobileExists = users.find((u) => {
-        return String(u.id) !== String(userId) && normalizeMobile(u.mobile) === newMobile;
-      });
-
-      if (mobileExists) {
-        return res.status(400).json({
-          message: "This mobile number is already used by another user"
-        });
-      }
-
-      user.mobile = newMobile;
-    }
-
-    if (status !== undefined) user.status = status;
-    if (planId !== undefined) user.planId = planId;
-    if (premiumActive !== undefined) user.premiumActive = Boolean(premiumActive);
-    if (planExpiry !== undefined) user.planExpiry = planExpiry || null;
-
-    if (extraText !== undefined) user.extraText = Number(extraText || 0);
-    if (extraImage !== undefined) user.extraImage = Number(extraImage || 0);
-    if (extraTests !== undefined) user.extraTests = Number(extraTests || 0);
-
-    await writeJson("users", users);
-
-    res.json({
-      message: "User updated successfully",
-      user: safeAdminUser(user)
-    });
-
-  } catch (err) {
-    console.error("User Update Error:", err);
-    res.status(500).json({
-      message: "User update failed"
-    });
-  }
-});
-
-app.post("/api/admin/users/:userId/activate", requireAdmin, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { planId } = req.body;
-
-    const users = await readJson("users");
-    const user = users.find((u) => String(u.id) === String(userId));
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
-    }
-
-    user.premiumActive = true;
-    user.planId = planId || "starter";
-    user.planExpiry = getPlanExpiry(user.planId);
-    user.paymentStatus = "manual_activated";
-
-    await writeJson("users", users);
-
-    res.json({
-      message: "Premium activated successfully",
-      user: safeAdminUser(user)
-    });
-
-  } catch (err) {
-    res.status(500).json({
-      message: "Premium activation failed"
-    });
-  }
-});
-
-app.post("/api/admin/users/:userId/reset-usage", requireAdmin, async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const users = await readJson("users");
-    const user = users.find((u) => String(u.id) === String(userId));
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
-    }
-
-    user.textUsed = 0;
-    user.imageUsed = 0;
-    user.testUsed = 0;
-
-    await writeJson("users", users);
-
-    res.json({
-      message: "User usage reset successfully",
-      user: safeAdminUser(user)
-    });
-
-  } catch (err) {
-    res.status(500).json({
-      message: "Usage reset failed"
-    });
-  }
-});
-
-app.delete("/api/admin/users/:userId", requireAdmin, async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    let users = await readJson("users");
-
-    const exists = users.find((u) => String(u.id) === String(userId));
-
-    if (!exists) {
-      return res.status(404).json({
-        message: "User not found"
-      });
-    }
-
-    users = users.filter((u) => String(u.id) !== String(userId));
-
-    await writeJson("users", users);
-
-    res.json({
-      message: "User deleted successfully"
-    });
-
-  } catch (err) {
-    res.status(500).json({
-      message: "User delete failed"
+      message: "Reject payment failed: " + err.message
     });
   }
 });
 
 // ==========================================
-// 10. STATIC FILES + SERVER START
+// 10. STATIC FILES + START SERVER
 // ==========================================
 
 app.use("/uploads", express.static(uploadDir));
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(__dirname));
 
-app.get("*", (req, res) => {
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is LIVE on port ${PORT}`);
+app.use((req, res) => {
+  res.status(404).json({
+    message: "Route not found"
+  });
 });
+
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log("MongoDB connected and server running on port " + PORT);
+    });
+  })
+  .catch((err) => {
+    console.error("MongoDB connection failed:", err.message);
+    process.exit(1);
+  });
+
+    
