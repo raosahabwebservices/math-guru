@@ -787,31 +787,79 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
 app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
   try {
     const { testId } = req.params;
-    const { answers } = req.body;
 
-    const submissions = await readJson("testSubmissions");
+    const {
+      score = 0,
+      scorePercent = 0,
+      attempted = 0,
+      totalQuestions = 0,
+      wrongCount = 0,
+      mcqCount = 0,
+      mcqAttempted = 0,
+      mcqWrong = 0,
+      writtenCount = 0,
+      writtenAttempted = 0,
+      writtenCorrect = 0,
+      answers = {},
+      timeTaken = ""
+    } = req.body || {};
 
-    const submission = {
-      id: Date.now().toString(),
-      testId,
-      userId: req.user.id,
-      userName: req.user.name,
-      userEmail: req.user.email,
+    const tests = await readJson("tests");
+
+    const index = tests.findIndex((t) => {
+      return (
+        String(t.id) === String(testId) &&
+        String(t.userId) === String(req.user.id)
+      );
+    });
+
+    if (index === -1) {
+      return res.status(404).json({
+        message: "Test not found"
+      });
+    }
+
+    const questionCount =
+      Number(totalQuestions) ||
+      tests[index]?.test?.questions?.length ||
+      tests[index]?.questions?.length ||
+      0;
+
+    tests[index] = {
+      ...tests[index],
+
+      score: Number(score) || 0,
+      scorePercent: Number(scorePercent) || 0,
+      attempted: Number(attempted) || 0,
+      totalQuestions: questionCount,
+      wrongCount: Number(wrongCount) || 0,
+
+      mcqCount: Number(mcqCount) || 0,
+      mcqAttempted: Number(mcqAttempted) || 0,
+      mcqWrong: Number(mcqWrong) || 0,
+
+      writtenCount: Number(writtenCount) || 0,
+      writtenAttempted: Number(writtenAttempted) || 0,
+      writtenCorrect: Number(writtenCorrect) || 0,
+
       answers: answers || {},
-      createdAt: new Date().toISOString()
+      timeTaken: String(timeTaken || ""),
+      submittedAt: new Date().toISOString(),
+      status: "submitted"
     };
 
-    submissions.unshift(submission);
-    await writeJson("testSubmissions", submissions);
+    await writeJson("tests", tests);
 
     res.json({
       message: "Test submitted successfully",
-      submission
+      test: tests[index]
     });
 
   } catch (err) {
+    console.error("Test Submit Error:", err);
+
     res.status(500).json({
-      message: "Test Submit Failed"
+      message: "Test Submit Failed: " + err.message
     });
   }
 });
