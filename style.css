@@ -1,22 +1,19 @@
 :root {
   --blue: #1455d9;
   --blue-dark: #0f3fa8;
-  --blue-light: #eff6ff;
+  --blue-soft: #eff6ff;
   --dark: #071735;
   --muted: #64748b;
   --line: #dbeafe;
   --bg: #f7fbff;
   --soft: #eaf2ff;
   --green: #16a34a;
-  --green-dark: #047857;
   --green-soft: #ecfdf5;
   --red: #dc2626;
   --red-soft: #fef2f2;
-  --yellow: #f59e0b;
   --yellow-soft: #fffbeb;
   --purple: #7c3aed;
   --purple-soft: #f5f3ff;
-  --orange-soft: #fff7ed;
   --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
   --shadow-strong: 0 24px 70px rgba(15, 23, 42, 0.14);
   --radius: 24px;
@@ -64,7 +61,7 @@ select {
 
 /* =============================
    NAVIGATION
-   ============================= */
+============================= */
 
 .nav {
   position: sticky;
@@ -113,7 +110,7 @@ select {
 
 /* =============================
    HERO & CONTAINER
-   ============================= */
+============================= */
 
 .container {
   max-width: 1120px;
@@ -126,7 +123,7 @@ select {
   display: grid;
   align-items: center;
   background:
-    linear-gradient(115deg, rgba(7, 23, 53, 0.90), rgba(20, 85, 217, 0.70)),
+    linear-gradient(115deg, rgba(7, 23, 53, 0.9), rgba(20, 85, 217, 0.7)),
     url("https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=1800&q=80") center/cover;
   color: white;
 }
@@ -159,7 +156,7 @@ select {
 
 /* =============================
    BUTTONS & FORMS
-   ============================= */
+============================= */
 
 .btn,
 .btn-secondary {
@@ -182,7 +179,7 @@ select {
 }
 
 .btn-secondary {
-  background: #ffffff;
+  background: white;
   color: var(--blue);
   border: 1px solid var(--line);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
@@ -190,7 +187,7 @@ select {
 
 .btn:hover,
 .btn-secondary:hover {
-  box-shadow: 0 14px 30px rgba(20, 85, 217, 0.18);
+  box-shadow: 0 14px 30px rgba(20, 85, 217, 0.2);
 }
 
 .btn:active,
@@ -263,7 +260,7 @@ label,
 
 /* =============================
    CARDS & GRID
-   ============================= */
+============================= */
 
 .grid {
   display: grid;
@@ -283,9 +280,16 @@ label,
   box-shadow: var(--shadow);
 }
 
+.kpi {
+  font-size: 36px;
+  font-weight: 950;
+  letter-spacing: -0.05em;
+  color: var(--blue);
+}
+
 /* =============================
-   AI SOLUTION — PREMIUM BOX UI
-   ============================= */
+   AI SOLUTION BOX
+============================= */
 
 #solutionPanel {
   max-width: 920px;
@@ -333,12 +337,13 @@ label,
   font-size: 14px;
 }
 
-.sol-text {
+.sol-text,
+.solution {
   color: #334155;
   margin: 0 0 16px 0 !important;
   white-space: pre-line;
   line-height: 1.72;
-  background: #ffffff;
+  background: white;
   border: 1px solid #e0ecff;
   border-left: 5px solid var(--blue);
   padding: 14px 16px;
@@ -404,12 +409,12 @@ label,
 }
 
 .exp-box.hindi {
-  background: linear-gradient(180deg, #f5f3ff, #ffffff);
+  background: linear-gradient(180deg, var(--purple-soft), white);
   border-left: 5px solid var(--purple);
 }
 
 .exp-box.english {
-  background: linear-gradient(180deg, #eff6ff, #ffffff);
+  background: linear-gradient(180deg, var(--blue-soft), white);
   border-left: 5px solid var(--blue);
 }
 
@@ -420,14 +425,17 @@ label,
   font-weight: 900;
 }
 
-.sol-divider {
-  border: 0;
-  border-top: 1px dashed #bfdbfe;
-  margin: 26px 0;
+.sol-box h3 {
+  margin: 18px 0 8px 0 !important;
+  font-size: 1.1rem;
+}
+
+.sol-box p {
+  margin-bottom: 12px;
 }
 /* =============================
-   GENERIC AI TEXT OUTPUT
-   ============================= */
+   GENERIC OUTPUT
+============================= */
 
 .ai-output,
 .solution-output,
@@ -453,7 +461,7 @@ label,
 
 /* =============================
    HISTORY
-   ============================= */
+============================= */
 
 .history-item {
   border-top: 1px solid var(--line);
@@ -470,8 +478,8 @@ label,
 }
 
 /* =============================
-   TABS
-   ============================= */
+   TABS & UTILS
+============================= */
 
 .tabs {
   display: flex;
@@ -499,10 +507,6 @@ label,
   color: white;
 }
 
-/* =============================
-   NOTICE / STATUS
-   ============================= */
-
 .notice {
   padding: 13px 15px;
   border-radius: 16px;
@@ -514,13 +518,13 @@ label,
 }
 
 .error {
-  background: #fef2f2;
+  background: var(--red-soft);
   color: #b91c1c;
   border-color: #fecaca;
 }
 
 .success {
-  background: #f0fdf4;
+  background: var(--green-soft);
   color: #15803d;
   border-color: #bbf7d0;
 }
@@ -540,8 +544,8 @@ label,
 }
 
 /* =============================
-   TEST GENERATOR UI
-   ============================= */
+   TEST GENERATOR
+============================= */
 
 #test-container {
   display: none;
@@ -614,7 +618,7 @@ label,
 .option-btn {
   width: 100%;
   border: 1px solid #cfe0ff;
-  background: #ffffff;
+  background: white;
   color: #1e293b;
   border-radius: 16px;
   padding: 13px 15px;
@@ -676,7 +680,7 @@ label,
 
 /* =============================
    SCORE BOX
-   ============================= */
+============================= */
 
 #scoreBox {
   display: none;
@@ -684,7 +688,7 @@ label,
 }
 
 .score-content {
-  background: linear-gradient(135deg, #ffffff, #eff6ff);
+  background: linear-gradient(135deg, white, #eff6ff);
   border: 1px solid var(--line);
   border-radius: 28px;
   padding: 22px;
@@ -777,7 +781,7 @@ label,
 
 /* =============================
    ADMIN TABLE
-   ============================= */
+============================= */
 
 #adminPanel {
   overflow-x: auto;
@@ -816,7 +820,7 @@ label,
 
 /* =============================
    MOBILE RESPONSIVE
-   ============================= */
+============================= */
 
 @media (max-width: 900px) {
   .container {
@@ -861,15 +865,6 @@ label,
   .final-ans-box,
   .exp-box {
     border-radius: 15px;
-  }
-
-  .score-top {
-    align-items: flex-start;
-  }
-
-  .score-circle {
-    min-width: 105px;
-    min-height: 105px;
   }
 }
 
@@ -1044,5 +1039,33 @@ label,
 
   .score-percent {
     font-size: 25px;
+  }
+}
+
+/* =============================
+   ANIMATIONS
+============================= */
+
+.fade-in {
+  animation: fade 0.7s ease both;
+}
+
+.rise {
+  animation: rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
   }
