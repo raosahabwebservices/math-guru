@@ -1,42 +1,804 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | MATHS GURU</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Login | MATHS GURU</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --accent: #22c55e;
+      --dark: #07152f;
+      --muted: #64748b;
+      --card: rgba(255, 255, 255, 0.92);
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.22), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.18), transparent 34%),
+        linear-gradient(135deg, #eef6ff 0%, #f8fbff 45%, #ecfdf5 100%);
+      overflow-x: hidden;
+    }
+
+    .login-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .math-symbol {
+      position: absolute;
+      font-weight: 900;
+      color: rgba(37, 99, 235, 0.12);
+      animation: floatSymbol 9s ease-in-out infinite;
+      user-select: none;
+    }
+
+    .math-symbol:nth-child(1) {
+      top: 14%;
+      left: 8%;
+      font-size: 54px;
+      animation-delay: 0s;
+    }
+
+    .math-symbol:nth-child(2) {
+      top: 28%;
+      right: 12%;
+      font-size: 44px;
+      animation-delay: 1.3s;
+    }
+
+    .math-symbol:nth-child(3) {
+      bottom: 18%;
+      left: 14%;
+      font-size: 48px;
+      animation-delay: 2.2s;
+    }
+
+    .math-symbol:nth-child(4) {
+      bottom: 12%;
+      right: 10%;
+      font-size: 58px;
+      animation-delay: 3s;
+    }
+
+    @keyframes floatSymbol {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-22px) rotate(8deg);
+      }
+    }
+
+    .login-shell {
+      width: min(1120px, calc(100% - 28px));
+      margin: 40px auto;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .hero-card {
+      padding: 34px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(7, 21, 47, 0.96), rgba(30, 64, 175, 0.93));
+      color: white;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.7s ease both;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.11);
+      right: -80px;
+      top: -80px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .hero-title {
+      font-size: clamp(34px, 5vw, 58px);
+      font-weight: 950;
+      line-height: 1.02;
+      margin: 0 0 16px;
+      letter-spacing: -1px;
+    }
+
+    .hero-text {
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 16px;
+      line-height: 1.7;
+      max-width: 560px;
+    }
+
+    .student-stage {
+      margin: 28px 0 6px;
+      min-height: 180px;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .dance-floor {
+      position: absolute;
+      bottom: 22px;
+      width: 210px;
+      height: 20px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      filter: blur(1px);
+      animation: floorPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes floorPulse {
+      0%, 100% {
+        transform: scaleX(1);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scaleX(1.12);
+        opacity: 1;
+      }
+    }
+
+    .dance-boy {
+      position: relative;
+      width: 115px;
+      height: 150px;
+      animation: boyBounce 0.75s ease-in-out infinite;
+      z-index: 2;
+    }
+
+    @keyframes boyBounce {
+      0%, 100% {
+        transform: translateY(0) rotate(-1deg);
+      }
+
+      50% {
+        transform: translateY(-10px) rotate(1deg);
+      }
+    }
+
+    .head {
+      width: 46px;
+      height: 46px;
+      background: #ffd7a8;
+      border-radius: 50%;
+      position: absolute;
+      left: 34px;
+      top: 4px;
+      box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    .hair {
+      width: 48px;
+      height: 22px;
+      background: #111827;
+      border-radius: 22px 22px 8px 8px;
+      position: absolute;
+      left: 33px;
+      top: 0;
+      transform: rotate(-4deg);
+    }
+
+    .eye {
+      width: 5px;
+      height: 5px;
+      background: #111827;
+      border-radius: 50%;
+      position: absolute;
+      top: 24px;
+    }
+
+    .eye.left {
+      left: 47px;
+    }
+
+    .eye.right {
+      right: 47px;
+    }
+
+    .smile {
+      width: 16px;
+      height: 8px;
+      border-bottom: 3px solid #111827;
+      border-radius: 0 0 999px 999px;
+      position: absolute;
+      left: 50px;
+      top: 32px;
+    }
+
+    .body-shirt {
+      width: 54px;
+      height: 58px;
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      border-radius: 18px 18px 12px 12px;
+      position: absolute;
+      left: 31px;
+      top: 52px;
+      box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    .arm {
+      width: 18px;
+      height: 58px;
+      background: #ffd7a8;
+      border-radius: 999px;
+      position: absolute;
+      top: 56px;
+      transform-origin: top center;
+    }
+
+    .arm.left {
+      left: 18px;
+      animation: leftArmDance 0.75s ease-in-out infinite;
+    }
+
+    .arm.right {
+      right: 18px;
+      animation: rightArmDance 0.75s ease-in-out infinite;
+    }
+
+    @keyframes leftArmDance {
+      0%, 100% {
+        transform: rotate(34deg);
+      }
+
+      50% {
+        transform: rotate(-55deg);
+      }
+    }
+
+    @keyframes rightArmDance {
+      0%, 100% {
+        transform: rotate(-40deg);
+      }
+
+      50% {
+        transform: rotate(55deg);
+      }
+    }
+
+    .leg {
+      width: 18px;
+      height: 55px;
+      background: #0f172a;
+      border-radius: 999px;
+      position: absolute;
+      top: 105px;
+      transform-origin: top center;
+    }
+
+    .leg.left {
+      left: 36px;
+      animation: leftLegDance 0.75s ease-in-out infinite;
+    }
+
+    .leg.right {
+      right: 36px;
+      animation: rightLegDance 0.75s ease-in-out infinite;
+    }
+
+    @keyframes leftLegDance {
+      0%, 100% {
+        transform: rotate(-12deg);
+      }
+
+      50% {
+        transform: rotate(20deg);
+      }
+    }
+
+    @keyframes rightLegDance {
+      0%, 100% {
+        transform: rotate(14deg);
+      }
+
+      50% {
+        transform: rotate(-22deg);
+      }
+    }
+
+    .music-note {
+      position: absolute;
+      font-size: 24px;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.8);
+      animation: noteFloat 2s ease-in-out infinite;
+    }
+
+    .music-note.n1 {
+      left: 18%;
+      top: 38%;
+      animation-delay: 0s;
+    }
+
+    .music-note.n2 {
+      right: 20%;
+      top: 26%;
+      animation-delay: 0.6s;
+    }
+
+    .music-note.n3 {
+      right: 34%;
+      top: 54%;
+      animation-delay: 1.1s;
+    }
+
+    @keyframes noteFloat {
+      0% {
+        transform: translateY(10px) scale(0.8);
+        opacity: 0;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(-22px) scale(1.08);
+        opacity: 0;
+      }
+    }
+
+    .feature-grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .feature-box {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 14px;
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .feature-box strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .feature-box span {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+    }
+
+    .login-card {
+      background: var(--card);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
+      border-radius: 28px;
+      padding: 28px;
+      backdrop-filter: blur(18px);
+      animation: slideUp 0.85s ease both;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-title {
+      font-size: 28px;
+      font-weight: 950;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+
+    .form-subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+
+    .input-group {
+      margin-bottom: 14px;
+    }
+
+    .input-group label {
+      display: block;
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+
+    .input-group input {
+      width: 100%;
+      border: 1px solid #dbe3ef;
+      background: white;
+      padding: 13px 14px;
+      border-radius: 15px;
+      outline: none;
+      transition: 0.18s ease;
+      font-size: 15px;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .btn-main {
+      width: 100%;
+      padding: 14px 18px;
+      color: white;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.25);
+      margin-top: 8px;
+      border: none;
+      border-radius: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .btn-main:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-main:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .msg {
+      margin-top: 14px;
+      padding: 12px 13px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      display: none;
+    }
+
+    .msg.success {
+      display: block;
+      color: #065f46;
+      background: #d1fae5;
+      border: 1px solid #a7f3d0;
+    }
+
+    .msg.error {
+      display: block;
+      color: #991b1b;
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+    }
+
+    .small-link {
+      margin-top: 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .small-link a {
+      color: var(--primary);
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .trust-line {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    @media (max-width: 860px) {
+      .login-shell {
+        grid-template-columns: 1fr;
+        margin-top: 20px;
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-card {
+        padding: 26px;
+      }
+
+      .login-card {
+        padding: 22px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <nav class="nav">
-        <div class="nav-inner">
-            <a class="brand" href="index.html">MATHS GURU</a>
-            <div class="links">
-                <a href="signup.html">Signup</a>
-                <a href="contact.html">Contact</a>
-            </div>
+  <div class="login-bg">
+    <div class="math-symbol">π</div>
+    <div class="math-symbol">√</div>
+    <div class="math-symbol">x²</div>
+    <div class="math-symbol">+</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">MATHS GURU</a>
+      <div class="links">
+        <a href="signup.html">Signup</a>
+        <a href="pricing.html">Pricing</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="login-shell">
+    <section class="hero-card">
+      <div class="badge">📚 Welcome Back Student</div>
+
+      <h1 class="hero-title">Continue your maths journey.</h1>
+
+      <p class="hero-text">
+        Login karke apne maths doubts solve karo, image se question pucho aur chapter wise test generate karo.
+        Email ya mobile number dono se login kar sakte ho.
+      </p>
+
+      <div class="student-stage">
+        <div class="music-note n1">♪</div>
+        <div class="music-note n2">♫</div>
+        <div class="music-note n3">✦</div>
+
+        <div class="dance-floor"></div>
+
+        <div class="dance-boy">
+          <div class="hair"></div>
+          <div class="head"></div>
+          <div class="eye left"></div>
+          <div class="eye right"></div>
+          <div class="smile"></div>
+          <div class="arm left"></div>
+          <div class="arm right"></div>
+          <div class="body-shirt"></div>
+          <div class="leg left"></div>
+          <div class="leg right"></div>
         </div>
-    </nav>
-    <main class="container">
-        <div class="grid two">
-            <section><h1 class="section-title">Login</h1><p class="muted">Continue your maths learning journey.</p></section>
-            <section class="card">
-                <form id="loginForm" class="form">
-                    <div>
-                        <label class="label">Email or Mobile Number</label>
-                        <input name="identifier" type="text" placeholder="Enter Email or Mobile" required>
-                    </div>
-                    <div>
-                        <label class="label">Password</label>
-                        <input name="password" type="password" placeholder="Enter Password" required>
-                    </div>
-                    <button class="btn" type="submit">Login</button>
-                    <p>New student? <a class="brand" href="signup.html">Create account</a></p>
-                    <div id="formMsg" class="hidden"></div>
-                </form>
-            </section>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-box">
+          <strong>🔐 Secure login</strong>
+          <span>Email ya mobile se direct login.</span>
         </div>
-    </main>
-    <script src="script.js"></script>
+
+        <div class="feature-box">
+          <strong>🧠 Doubt history</strong>
+          <span>Apne solved doubts dobara dekh sakte ho.</span>
+        </div>
+
+        <div class="feature-box">
+          <strong>📸 Image solver</strong>
+          <span>Photo se maths question solve karo.</span>
+        </div>
+
+        <div class="feature-box">
+          <strong>📝 Test generator</strong>
+          <span>Practice test instantly banao.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-card">
+      <h2 class="form-title">Login</h2>
+      <p class="form-subtitle">Email ya mobile number aur password se login karo.</p>
+
+      <form id="loginForm" autocomplete="on">
+        <div class="input-group">
+          <label>Email or Mobile Number</label>
+          <input
+            id="loginIdentifier"
+            name="identifier"
+            type="text"
+            placeholder="Enter email or mobile number"
+            required
+          />
+        </div>
+
+        <div class="input-group">
+          <label>Password</label>
+          <input
+            id="loginPassword"
+            name="password"
+            type="password"
+            placeholder="Enter password"
+            required
+          />
+        </div>
+
+        <button id="loginBtn" class="btn-main" type="submit">Login</button>
+
+        <div class="trust-line">🔐 Email/mobile login supported</div>
+
+        <p class="small-link">
+          New student?
+          <a href="signup.html">Create account</a>
+        </p>
+
+        <div id="formMsg" class="msg"></div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+        ? "http://localhost:3000"
+        : "https://math-guru.onrender.com";
+
+    const loginForm = document.getElementById("loginForm");
+    const loginBtn = document.getElementById("loginBtn");
+    const formMsg = document.getElementById("formMsg");
+
+    const identifierInput = document.getElementById("loginIdentifier");
+    const passwordInput = document.getElementById("loginPassword");
+
+    function showMsg(message, type = "error") {
+      formMsg.textContent = message;
+      formMsg.className = "msg " + type;
+    }
+
+    function clearMsg() {
+      formMsg.textContent = "";
+      formMsg.className = "msg";
+    }
+
+    function cleanMobile(value) {
+      return String(value || "").replace(/\D/g, "").slice(0, 10);
+    }
+
+    function isEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    }
+
+    function isMobile(value) {
+      return /^[6-9]\d{9}$/.test(value);
+    }
+
+    function getLoginPayload() {
+      const rawIdentifier = identifierInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!rawIdentifier || !password) {
+        showMsg("Email/mobile aur password required hai.");
+        return null;
+      }
+
+      if (password.length < 6) {
+        showMsg("Password kam se kam 6 characters ka hona chahiye.");
+        return null;
+      }
+
+      let identifier = rawIdentifier;
+
+      if (/^\d/.test(rawIdentifier)) {
+        identifier = cleanMobile(rawIdentifier);
+
+        if (!isMobile(identifier)) {
+          showMsg("Valid 10 digit Indian mobile number enter karo.");
+          return null;
+        }
+      } else {
+        identifier = rawIdentifier.toLowerCase();
+
+        if (!isEmail(identifier)) {
+          showMsg("Valid email address ya mobile number enter karo.");
+          return null;
+        }
+      }
+
+      return {
+        identifier,
+        password
+      };
+    }
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearMsg();
+
+      const payload = getLoginPayload();
+      if (!payload) return;
+
+      try {
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Logging in...";
+
+        const res = await fetch(`${API_BASE}/api/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          loginBtn.disabled = false;
+          loginBtn.textContent = "Login";
+
+          if (
+            data.message === "Invalid Credentials" ||
+            data.message === "Invalid credentials"
+          ) {
+            showMsg("Email/mobile ya password galat hai. Dobara check karo.");
+          } else {
+            showMsg(data.message || "Login failed. Please try again.");
+          }
+
+          return;
+        }
+
+        localStorage.setItem("mg_token", data.token);
+        localStorage.setItem("mg_user", JSON.stringify(data.user));
+
+        showMsg("Login successful. Redirecting...", "success");
+
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 700);
+
+      } catch (err) {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Login";
+        showMsg("Network error. Internet ya server check karo.");
+      }
+    });
+  </script>
 </body>
-</html>
+                                    </html>
