@@ -1,66 +1,672 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup | MATHS GURU</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Signup | MATHS GURU</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --accent: #22c55e;
+      --dark: #07152f;
+      --muted: #64748b;
+      --card: rgba(255, 255, 255, 0.92);
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.22), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.18), transparent 34%),
+        linear-gradient(135deg, #eef6ff 0%, #f8fbff 45%, #ecfdf5 100%);
+      overflow-x: hidden;
+    }
+
+    .signup-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .math-symbol {
+      position: absolute;
+      font-weight: 900;
+      color: rgba(37, 99, 235, 0.12);
+      animation: floatSymbol 9s ease-in-out infinite;
+      user-select: none;
+    }
+
+    .math-symbol:nth-child(1) {
+      top: 14%;
+      left: 8%;
+      font-size: 54px;
+      animation-delay: 0s;
+    }
+
+    .math-symbol:nth-child(2) {
+      top: 28%;
+      right: 12%;
+      font-size: 44px;
+      animation-delay: 1.3s;
+    }
+
+    .math-symbol:nth-child(3) {
+      bottom: 18%;
+      left: 14%;
+      font-size: 48px;
+      animation-delay: 2.2s;
+    }
+
+    .math-symbol:nth-child(4) {
+      bottom: 12%;
+      right: 10%;
+      font-size: 58px;
+      animation-delay: 3s;
+    }
+
+    @keyframes floatSymbol {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-22px) rotate(8deg);
+      }
+    }
+
+    .signup-shell {
+      width: min(1120px, calc(100% - 28px));
+      margin: 40px auto;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .hero-card {
+      padding: 34px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(7, 21, 47, 0.96), rgba(30, 64, 175, 0.93));
+      color: white;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.7s ease both;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.11);
+      right: -80px;
+      top: -80px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 9px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .hero-title {
+      font-size: clamp(34px, 5vw, 58px);
+      font-weight: 950;
+      line-height: 1.02;
+      margin: 0 0 16px;
+      letter-spacing: -1px;
+    }
+
+    .hero-text {
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 16px;
+      line-height: 1.7;
+      max-width: 560px;
+    }
+
+    .feature-grid {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .feature-box {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 14px;
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .feature-box strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .feature-box span {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+    }
+
+    .signup-card {
+      background: var(--card);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.16);
+      border-radius: 28px;
+      padding: 28px;
+      backdrop-filter: blur(18px);
+      animation: slideUp 0.85s ease both;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-title {
+      font-size: 28px;
+      font-weight: 950;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+
+    .form-subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+
+    .input-group {
+      margin-bottom: 14px;
+    }
+
+    .input-group label {
+      display: block;
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+
+    .input-group input {
+      width: 100%;
+      border: 1px solid #dbe3ef;
+      background: white;
+      padding: 13px 14px;
+      border-radius: 15px;
+      outline: none;
+      transition: 0.18s ease;
+      font-size: 15px;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .otp-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .btn-main,
+    .btn-otp {
+      border: none;
+      border-radius: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .btn-main {
+      width: 100%;
+      padding: 14px 18px;
+      color: white;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.25);
+      margin-top: 8px;
+    }
+
+    .btn-main:hover,
+    .btn-otp:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-main:disabled,
+    .btn-otp:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-otp {
+      padding: 13px 15px;
+      color: #064e3b;
+      background: linear-gradient(135deg, #bbf7d0, #86efac);
+      border: 1px solid #86efac;
+    }
+
+    .msg {
+      margin-top: 14px;
+      padding: 12px 13px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      display: none;
+    }
+
+    .msg.success {
+      display: block;
+      color: #065f46;
+      background: #d1fae5;
+      border: 1px solid #a7f3d0;
+    }
+
+    .msg.error {
+      display: block;
+      color: #991b1b;
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+    }
+
+    .small-link {
+      margin-top: 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .small-link a {
+      color: var(--primary);
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .trust-line {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 860px) {
+      .signup-shell {
+        grid-template-columns: 1fr;
+        margin-top: 20px;
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-card {
+        padding: 26px;
+      }
+
+      .signup-card {
+        padding: 22px;
+      }
+
+      .otp-row {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-otp {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <nav class="nav">
-        <div class="nav-inner">
-            <a class="brand" href="index.html">MATHS GURU</a>
-            <div class="links">
-                <a href="login.html">Login</a>
-                <a href="pricing.html">Pricing</a>
-            </div>
+  <div class="signup-bg">
+    <div class="math-symbol">π</div>
+    <div class="math-symbol">√</div>
+    <div class="math-symbol">x²</div>
+    <div class="math-symbol">+</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">MATHS GURU</a>
+      <div class="links">
+        <a href="login.html">Login</a>
+        <a href="pricing.html">Pricing</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="signup-shell">
+    <section class="hero-card">
+      <div class="badge">🚀 Free Plan Activated After Signup</div>
+
+      <h1 class="hero-title">
+        Maths doubts ka smart solution.
+      </h1>
+
+      <p class="hero-text">
+        Text ya image se maths question bhejo aur simple Hindi + English explanation me step-by-step solution pao.
+        Class 1 to 12 students ke liye fast, clean aur exam-friendly learning.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-box">
+          <strong>🧠 Step-by-step answers</strong>
+          <span>Formula, calculation aur final answer clearly.</span>
         </div>
-    </nav>
-    <main class="container">
-        <div class="grid two">
-            <section>
-                <h1 class="section-title">Start free</h1>
-                <p class="muted">Get 10 text doubts and 3 image doubts on the free plan.</p>
-            </section>
-            <section class="card">
-                <form id="signupForm" class="form">
-                    
-                    <!-- 🎁 ✅ NEW: Dynamic Referrer Banner (Dost ka naam yahan dikhega) -->
-                    <div id="referrer-banner" class="hidden" style="background: #d4edda; color: #155724; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; text-align: center; border: 1px solid #c3e6cb; display: none;">
-                        🎁 You are invited by: <span id="referrer-name">...</span>
-                    </div>
 
-                    <div>
-                        <label class="label">Name</label>
-                        <input name="name" required minlength="2">
-                    </div>
-                    <div>
-                        <label class="label">Email</label>
-                        <input name="email" type="email" required>
-                    </div>
-                    
-                    <!-- 📱 ✅ NEW: Mobile Number Input Field -->
-                    <div>
-                        <label class="label">Mobile Number</label>
-                        <input name="mobile" type="tel" placeholder="Enter 10 digit mobile number" required pattern="[0-9]{10}">
-                    </div>
-
-                    <div>
-                        <label class="label">Password</label>
-                        <input name="password" type="password" minlength="6" required>
-                    </div>
-
-                    <!-- 🎁 ✅ NEW: Hidden Input Box to capture Referral Code -->
-                    <input type="hidden" name="referralCode" id="hidden-ref-code">
-
-                    <button class="btn" type="submit">Create Account</button>
-                    <p>Already registered? <a class="brand" href="login.html">Login</a></p>
-                    <div id="formMsg" class="hidden"></div>
-                </form>
-            </section>
+        <div class="feature-box">
+          <strong>📸 Image doubt solver</strong>
+          <span>Question photo upload karo aur solution pao.</span>
         </div>
-    </main>
-    <script src="script.js"></script>
+
+        <div class="feature-box">
+          <strong>📝 Test generator</strong>
+          <span>Chapter wise practice test banao.</span>
+        </div>
+
+        <div class="feature-box">
+          <strong>🎁 Free credits</strong>
+          <span>10 text doubts + 3 image doubts free.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="signup-card">
+      <h2 class="form-title">Create Account</h2>
+      <p class="form-subtitle">Email OTP verify karke secure signup complete karo.</p>
+
+      <form id="signupForm" autocomplete="on">
+        <div class="input-group">
+          <label>Name</label>
+          <input id="signupName" name="name" type="text" placeholder="Enter your name" required minlength="2" />
+        </div>
+
+        <div class="input-group">
+          <label>Email</label>
+          <input id="signupEmail" name="email" type="email" placeholder="Enter your email" required />
+        </div>
+
+        <div class="input-group">
+          <label>Mobile Number</label>
+          <input
+            id="signupMobile"
+            name="mobile"
+            type="tel"
+            placeholder="Enter 10 digit mobile number"
+            required
+            maxlength="10"
+            pattern="[0-9]{10}"
+          />
+        </div>
+
+        <div class="input-group">
+          <label>Password</label>
+          <input
+            id="signupPassword"
+            name="password"
+            type="password"
+            placeholder="Create password"
+            minlength="6"
+            required
+          />
+        </div>
+
+        <div class="otp-row">
+          <div class="input-group">
+            <label>Email OTP</label>
+            <input
+              id="signupOtp"
+              name="otp"
+              type="text"
+              placeholder="Enter 6 digit OTP"
+              maxlength="6"
+              inputmode="numeric"
+            />
+          </div>
+
+          <button id="sendOtpBtn" class="btn-otp" type="button">
+            Send OTP
+          </button>
+        </div>
+
+        <button id="signupBtn" class="btn-main" type="submit">
+          Create Account
+        </button>
+
+        <div class="trust-line">
+          🔐 Secure signup with email verification
+        </div>
+
+        <p class="small-link">
+          Already registered?
+          <a href="login.html">Login</a>
+        </p>
+
+        <div id="formMsg" class="msg"></div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+        ? "http://localhost:3000"
+        : "https://math-guru.onrender.com";
+
+    const signupForm = document.getElementById("signupForm");
+    const sendOtpBtn = document.getElementById("sendOtpBtn");
+    const signupBtn = document.getElementById("signupBtn");
+    const formMsg = document.getElementById("formMsg");
+
+    const nameInput = document.getElementById("signupName");
+    const emailInput = document.getElementById("signupEmail");
+    const mobileInput = document.getElementById("signupMobile");
+    const passwordInput = document.getElementById("signupPassword");
+    const otpInput = document.getElementById("signupOtp");
+
+    let otpTimer = null;
+    let otpSeconds = 0;
+
+    function showMsg(message, type = "error") {
+      formMsg.textContent = message;
+      formMsg.className = "msg " + type;
+    }
+
+    function clearMsg() {
+      formMsg.textContent = "";
+      formMsg.className = "msg";
+    }
+
+    function getCleanMobile() {
+      return mobileInput.value.replace(/\D/g, "").slice(0, 10);
+    }
+
+    mobileInput.addEventListener("input", () => {
+      mobileInput.value = getCleanMobile();
+    });
+
+    otpInput.addEventListener("input", () => {
+      otpInput.value = otpInput.value.replace(/\D/g, "").slice(0, 6);
+    });
+
+    function validateBasicFields() {
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      const mobile = getCleanMobile();
+      const password = passwordInput.value.trim();
+
+      if (!name || !email || !mobile || !password) {
+        showMsg("Name, email, mobile number and password required.");
+        return null;
+      }
+
+      if (name.length < 2) {
+        showMsg("Name kam se kam 2 characters ka hona chahiye.");
+        return null;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showMsg("Valid email address enter karo.");
+        return null;
+      }
+
+      if (!/^[6-9]\d{9}$/.test(mobile)) {
+        showMsg("Valid 10 digit Indian mobile number enter karo.");
+        return null;
+      }
+
+      if (password.length < 6) {
+        showMsg("Password kam se kam 6 characters ka hona chahiye.");
+        return null;
+      }
+
+      return { name, email, mobile, password };
+    }
+
+    function startOtpTimer() {
+      otpSeconds = 60;
+      sendOtpBtn.disabled = true;
+
+      clearInterval(otpTimer);
+
+      otpTimer = setInterval(() => {
+        otpSeconds--;
+
+        if (otpSeconds > 0) {
+          sendOtpBtn.textContent = `Resend in ${otpSeconds}s`;
+        } else {
+          clearInterval(otpTimer);
+          sendOtpBtn.disabled = false;
+          sendOtpBtn.textContent = "Resend OTP";
+        }
+      }, 1000);
+    }
+
+    sendOtpBtn.addEventListener("click", async () => {
+      clearMsg();
+
+      const payload = validateBasicFields();
+      if (!payload) return;
+
+      try {
+        sendOtpBtn.disabled = true;
+        sendOtpBtn.textContent = "Sending...";
+
+        const res = await fetch(`${API_BASE}/api/auth/send-signup-otp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          sendOtpBtn.disabled = false;
+          sendOtpBtn.textContent = "Send OTP";
+          showMsg(data.message || "OTP send failed.");
+          return;
+        }
+
+        showMsg("OTP email par bhej diya gaya hai. Inbox/Spam check karo.", "success");
+        otpInput.focus();
+        startOtpTimer();
+
+      } catch (err) {
+        sendOtpBtn.disabled = false;
+        sendOtpBtn.textContent = "Send OTP";
+        showMsg("Network error. Please try again.");
+      }
+    });
+
+    signupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearMsg();
+
+      const payload = validateBasicFields();
+      if (!payload) return;
+
+      const otp = otpInput.value.trim();
+
+      if (!otp || otp.length !== 6) {
+        showMsg("Please email par aaya hua 6 digit OTP enter karo.");
+        otpInput.focus();
+        return;
+      }
+
+      try {
+        signupBtn.disabled = true;
+        signupBtn.textContent = "Creating account...";
+
+        const res = await fetch(`${API_BASE}/api/signup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            ...payload,
+            otp
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          signupBtn.disabled = false;
+          signupBtn.textContent = "Create Account";
+          showMsg(data.message || "Signup failed.");
+          return;
+        }
+
+        localStorage.setItem("mg_token", data.token);
+        localStorage.setItem("mg_user", JSON.stringify(data.user));
+
+        showMsg("Signup successful. Redirecting...", "success");
+
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 800);
+
+      } catch (err) {
+        signupBtn.disabled = false;
+        signupBtn.textContent = "Create Account";
+        showMsg("Network error. Please try again.");
+      }
+    });
+  </script>
 </body>
 </html>
