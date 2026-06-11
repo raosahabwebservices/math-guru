@@ -67,7 +67,7 @@ select {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(247, 251, 255, 0.92);
+  background: rgba(247, 251, 255, 0.94);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);
@@ -93,19 +93,22 @@ select {
 
 .links {
   display: flex;
-  gap: 18px;
+  gap: 12px;
   align-items: center;
   color: #334155;
-  font-weight: 800;
+  font-weight: 850;
 }
 
 .links a {
-  padding: 8px 4px;
+  padding: 8px 10px;
+  border-radius: 999px;
   transition: 0.18s ease;
+  white-space: nowrap;
 }
 
 .links a:hover {
   color: var(--blue);
+  background: white;
 }
 
 /* =============================
@@ -123,7 +126,7 @@ select {
   display: grid;
   align-items: center;
   background:
-    linear-gradient(115deg, rgba(7, 23, 53, 0.9), rgba(20, 85, 217, 0.7)),
+    linear-gradient(115deg, rgba(7, 23, 53, 0.90), rgba(20, 85, 217, 0.70)),
     url("https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=1800&q=80") center/cover;
   color: white;
 }
@@ -187,7 +190,7 @@ select {
 
 .btn:hover,
 .btn-secondary:hover {
-  box-shadow: 0 14px 30px rgba(20, 85, 217, 0.2);
+  box-shadow: 0 14px 30px rgba(20, 85, 217, 0.20);
 }
 
 .btn:active,
@@ -296,8 +299,7 @@ label,
   margin: 34px auto;
   border: 1px solid rgba(20, 85, 217, 0.22);
   border-radius: 28px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.88));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.88));
   box-shadow: var(--shadow-strong);
   overflow: hidden;
 }
@@ -423,15 +425,6 @@ label,
   font-size: 1rem;
   color: var(--dark);
   font-weight: 900;
-}
-
-.sol-box h3 {
-  margin: 18px 0 8px 0 !important;
-  font-size: 1.1rem;
-}
-
-.sol-box p {
-  margin-bottom: 12px;
 }
 /* =============================
    GENERIC OUTPUT
@@ -679,7 +672,7 @@ label,
 }
 
 /* =============================
-   SCORE BOX
+   SCORE BOX — FIXED VISIBLE
 ============================= */
 
 #scoreBox {
@@ -688,95 +681,112 @@ label,
 }
 
 .score-content {
-  background: linear-gradient(135deg, white, #eff6ff);
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  padding: 22px;
-  box-shadow: var(--shadow-strong);
+  background: #ffffff !important;
+  border: 1px solid #dbeafe !important;
+  border-radius: 28px !important;
+  padding: 22px !important;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12) !important;
+  color: #071735 !important;
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .score-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 18px;
-  flex-wrap: wrap;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 18px !important;
+  flex-wrap: wrap !important;
 }
 
 .score-title {
-  margin: 0;
-  font-size: clamp(24px, 4vw, 38px);
-  letter-spacing: -0.04em;
-  color: var(--dark);
+  margin: 0 !important;
+  font-size: clamp(24px, 4vw, 38px) !important;
+  letter-spacing: -0.04em !important;
+  color: #071735 !important;
+  font-weight: 950 !important;
 }
 
 .score-subtitle {
-  color: var(--muted);
-  line-height: 1.55;
-  margin: 8px 0 0;
+  color: #475569 !important;
+  line-height: 1.55 !important;
+  margin: 8px 0 0 !important;
+  font-weight: 650 !important;
 }
 
 .score-circle {
-  min-width: 120px;
-  min-height: 120px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--blue), var(--green));
-  color: white;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 16px 34px rgba(20, 85, 217, 0.22);
+  min-width: 120px !important;
+  min-height: 120px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #1455d9, #16a34a) !important;
+  color: white !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 16px 34px rgba(20, 85, 217, 0.28) !important;
+  border: 6px solid #ffffff !important;
 }
 
 .score-percent {
-  font-size: 30px;
-  font-weight: 950;
-  line-height: 1;
+  font-size: 30px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  color: #ffffff !important;
 }
 
 .score-label {
-  font-size: 12px;
-  font-weight: 900;
-  opacity: 0.9;
-  margin-top: -36px;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  opacity: 0.95 !important;
+  margin-top: 6px !important;
+  color: #ffffff !important;
+  letter-spacing: 0.06em !important;
 }
 
 .score-main-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-top: 18px;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 12px !important;
+  margin-top: 18px !important;
 }
 
 .score-mini-card {
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 14px;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+  background: #f8fbff !important;
+  border: 1px solid #dbeafe !important;
+  border-radius: 18px !important;
+  padding: 14px !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05) !important;
+  color: #071735 !important;
+  opacity: 1 !important;
 }
 
 .score-mini-label {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 850;
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  display: block !important;
+  opacity: 1 !important;
 }
 
 .score-mini-value {
-  color: var(--dark);
-  font-size: 22px;
-  font-weight: 950;
-  margin-top: 6px;
+  color: #1455d9 !important;
+  font-size: 22px !important;
+  font-weight: 950 !important;
+  margin-top: 6px !important;
+  display: block !important;
+  opacity: 1 !important;
 }
 
 .score-note {
-  margin-top: 16px;
-  padding: 13px 15px;
-  border-radius: 16px;
-  background: var(--yellow-soft);
-  border: 1px solid #fde68a;
-  color: #92400e;
-  font-weight: 750;
-  line-height: 1.5;
+  margin-top: 16px !important;
+  padding: 13px 15px !important;
+  border-radius: 16px !important;
+  background: #fffbeb !important;
+  border: 1px solid #fde68a !important;
+  color: #92400e !important;
+  font-weight: 750 !important;
+  line-height: 1.5 !important;
 }
 
 /* =============================
@@ -846,9 +856,12 @@ label,
     font-size: 24px;
   }
 
-  .explanation-grid,
-  .score-main-grid {
+  .explanation-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  .score-main-grid {
+    grid-template-columns: 1fr 1fr !important;
   }
 
   #solutionPanel {
@@ -858,13 +871,6 @@ label,
 
   .sol-card {
     padding: 16px;
-  }
-
-  .sol-text,
-  .sol-steps-box,
-  .final-ans-box,
-  .exp-box {
-    border-radius: 15px;
   }
 }
 
@@ -881,8 +887,11 @@ label,
   .links {
     gap: 8px;
     font-size: 13px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 6px;
   }
 
   .links a {
@@ -890,6 +899,7 @@ label,
     border: 1px solid var(--line);
     border-radius: 999px;
     padding: 7px 10px;
+    white-space: nowrap;
   }
 
   .card,
@@ -948,23 +958,9 @@ label,
     font-size: 1.25rem;
   }
 
-  #test-status-bar {
-    align-items: stretch;
-  }
-
   .option-btn {
     padding: 12px 13px;
     border-radius: 14px;
-  }
-
-  #adminPanel {
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    background: white;
-  }
-
-  #adminPanel table {
-    min-width: 720px;
   }
 }
 
@@ -973,17 +969,6 @@ label,
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
-  }
-
-  .links {
-    justify-content: flex-start;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 2px;
-  }
-
-  .links a {
-    white-space: nowrap;
   }
 
   .container {
@@ -1028,17 +1013,17 @@ label,
   }
 
   .score-content {
-    padding: 16px;
-    border-radius: 22px;
+    padding: 16px !important;
+    border-radius: 22px !important;
   }
 
   .score-circle {
-    min-width: 96px;
-    min-height: 96px;
+    min-width: 96px !important;
+    min-height: 96px !important;
   }
 
   .score-percent {
-    font-size: 25px;
+    font-size: 25px !important;
   }
 }
 
