@@ -1,246 +1,561 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Test History | Math Guru</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f9;
-      margin: 0;
-      padding: 20px;
-      color: #222;
+      min-height: 100vh;
     }
 
-    .container {
-      max-width: 900px;
+    .history-page {
+      max-width: 1050px;
       margin: 0 auto;
+      padding: 28px 16px 50px;
+    }
+
+    .history-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .history-title {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 58px);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+      color: var(--dark);
+    }
+
+    .history-subtitle {
+      color: var(--muted);
+      margin: 12px 0 0;
+      line-height: 1.55;
+      max-width: 680px;
     }
 
     .top-links {
       display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
     .top-links a {
-      color: #0056b3;
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .card {
       background: white;
-      border-radius: 12px;
-      padding: 18px;
-      margin-bottom: 18px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
-    }
-
-    .muted {
-      color: #666;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
+      border: 1px solid var(--line);
+      color: var(--blue);
+      font-weight: 850;
+      padding: 10px 14px;
       border-radius: 999px;
-      background: #e3f2fd;
-      color: #0056b3;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .history-box {
+      display: grid;
+      gap: 18px;
+    }
+
+    .test-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .test-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .test-card h2 {
+      margin: 10px 0 6px;
+      font-size: clamp(22px, 4vw, 34px);
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      color: var(--dark);
+    }
+
+    .test-meta {
+      color: var(--muted);
+      line-height: 1.55;
+      margin: 0;
+      font-weight: 650;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 999px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status-submitted {
+      background: var(--green-soft);
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status-pending {
+      background: var(--yellow-soft);
+      color: #92400e;
+      border: 1px solid #fde68a;
     }
 
     .score-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 14px;
+      gap: 12px;
+      margin-top: 18px;
     }
 
     .score-item {
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 8px;
-      text-align: center;
+      background: linear-gradient(180deg, #ffffff, #eff6ff);
+      border: 1px solid var(--line);
+      padding: 15px;
+      border-radius: 18px;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .score-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      margin-bottom: 6px;
     }
 
     .score-item strong {
       display: block;
-      font-size: 20px;
-      color: #0056b3;
-    }
-
-    .btn {
-      background: #0056b3;
-      color: white;
-      border: none;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      margin-top: 10px;
-    }
-
-    .btn.secondary {
-      background: #6c757d;
+      font-size: 24px;
+      color: var(--blue);
+      font-weight: 950;
+      letter-spacing: -0.03em;
     }
 
     .details {
       display: none;
-      margin-top: 15px;
-      background: #fff8e1;
-      padding: 12px;
-      border-radius: 8px;
+      margin-top: 18px;
+      background: linear-gradient(180deg, #f8fafc, #eef6ff);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
     }
 
     .question-review {
-      border-bottom: 1px solid #eee;
-      padding: 10px 0;
+      background: white;
+      border: 1px solid #e0ecff;
+      border-left: 5px solid var(--blue);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      line-height: 1.55;
     }
 
     .question-review:last-child {
-      border-bottom: none;
+      margin-bottom: 0;
     }
 
-    @media (max-width: 700px) {
+    .qa-label {
+      font-weight: 900;
+      color: var(--dark);
+    }
+
+    .user-answer {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin-top: 8px;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
+    .correct-answer {
+      background: var(--green-soft);
+      border: 1px solid #bbf7d0;
+      color: #065f46;
+      padding: 10px 12px;
+      border-radius: 12px;
+      margin-top: 8px;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px 18px;
+      border-radius: 26px;
+      background: white;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .empty-state h2 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      letter-spacing: -0.04em;
+    }
+
+    .loading-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    @media (max-width: 800px) {
+      .history-page {
+        padding: 22px 12px 42px;
+      }
+
+      .history-top {
+        gap: 14px;
+      }
+
+      .top-links {
+        width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+      }
+
+      .top-links a {
+        white-space: nowrap;
+      }
+
       .score-grid {
         grid-template-columns: 1fr 1fr;
+      }
+
+      .test-card {
+        padding: 18px;
+        border-radius: 22px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .score-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .score-item {
+        padding: 13px;
+      }
+
+      .details {
+        padding: 12px;
+      }
+
+      .question-review {
+        padding: 12px;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
+  <main class="history-page">
+    <div class="history-top">
+      <div>
+        <h1 class="history-title">📊 Test History</h1>
+        <p class="history-subtitle">
+          Yahan tumhare generated tests, score, attempted questions aur final answers dikhenge.
+        </p>
+      </div>
 
-    <div class="top-links">
-      <a href="dashboard.html">← Dashboard</a>
-      <a href="test-generator.html">Apna Test Banao</a>
-      <a href="ask-doubt.html">Ask Doubt</a>
+      <div class="top-links">
+        <a href="dashboard.html">← Dashboard</a>
+        <a href="test-generator.html">Apna Test Banao</a>
+        <a href="ask-doubt.html">Ask Doubt</a>
+      </div>
     </div>
 
-    <h1>📊 Test History</h1>
-    <p class="muted">Yahan tumhare generated tests, score, attempted questions aur answers dikhenge.</p>
-
-    <div id="historyBox" class="card">
-      Loading test history...
+    <div id="historyBox" class="history-box">
+      <div class="loading-card">Loading test history...</div>
     </div>
-
-  </div>
+  </main>
 
   <script src="script.js"></script>
 
   <script>
-    function safeText(value) {
+    const TH_API =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+        ? "http://localhost:3000"
+        : "https://math-guru.onrender.com";
+
+    function thToken() {
+      return localStorage.getItem("mg_token") || "";
+    }
+
+    async function thRequest(path, options = {}) {
+      if (typeof window.request === "function") {
+        return await window.request(path, options);
+      }
+
+      const cleanPath = path.startsWith("/api/")
+        ? path
+        : path.startsWith("/")
+          ? "/api" + path
+          : "/api/" + path;
+
+      const headers = {};
+
+      if (!(options.body instanceof FormData)) {
+        headers["Content-Type"] = "application/json";
+      }
+
+      const token = thToken();
+
+      if (token) {
+        headers["Authorization"] = "Bearer " + token;
+      }
+
+      const res = await fetch(TH_API + cleanPath, {
+        ...options,
+        headers: {
+          ...headers,
+          ...(options.headers || {})
+        }
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/json")) {
+        throw new Error("Server Error: API route not found or Render issue");
+      }
+
+      const data = await res.json();
+
+      if (res.status === 401) {
+        localStorage.removeItem("mg_token");
+        localStorage.removeItem("mg_user");
+        window.location.href = "login.html";
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Request failed");
+      }
+
+      return data;
+    }
+
+    function thSafe(value) {
       return String(value || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
     }
 
-    function formatDate(value) {
+    function thFormatDate(value) {
       if (!value) return "-";
 
       try {
         return new Date(value).toLocaleString();
-      } catch {
+      } catch (err) {
         return "-";
       }
+    }
+
+    function thNormalizeTest(test) {
+      const inner = test?.test || test || {};
+      const questions = Array.isArray(inner.questions)
+        ? inner.questions
+        : Array.isArray(test.questions)
+          ? test.questions
+          : [];
+
+      const answers = test.answers || test.userAnswers || {};
+
+      const totalQuestions =
+        test.totalQuestions ||
+        inner.totalQuestions ||
+        questions.length ||
+        0;
+
+      const attempted =
+        test.attempted ??
+        test.attemptedCount ??
+        0;
+
+      const score =
+        test.score ??
+        test.correctCount ??
+        0;
+
+      const wrongCount =
+        test.wrongCount ??
+        Math.max(0, attempted - score);
+
+      const mcqCount =
+        test.mcqCount ??
+        questions.filter((q) => Array.isArray(q.options) && q.options.length > 0).length;
+
+      const writtenCount =
+        test.writtenCount ??
+        Math.max(0, totalQuestions - mcqCount);
+
+      const mcqAttempted =
+        test.mcqAttempted ??
+        0;
+
+      const writtenAttempted =
+        test.writtenAttempted ??
+        0;
+
+      const percent =
+        test.scorePercent ??
+        (totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0);
+
+      return {
+        id: test.id || "",
+        title: inner.title || test.title || "Math Test",
+        classLevel: inner.classLevel || test.classLevel || "-",
+        topic: inner.topic || test.topic || test.chapter || "-",
+        difficulty: inner.difficulty || test.difficulty || "Test",
+        createdAt: test.createdAt || inner.createdAt || "",
+        submittedAt: test.submittedAt || "",
+        timeTaken: test.timeTaken || "Not submitted",
+        questions,
+        answers,
+        totalQuestions,
+        attempted,
+        score,
+        wrongCount,
+        mcqCount,
+        writtenCount,
+        mcqAttempted,
+        writtenAttempted,
+        percent
+      };
     }
 
     async function loadTestHistory() {
       const box = document.querySelector("#historyBox");
 
       try {
-        if (typeof requireStudent === "function") {
-          await requireStudent();
+        if (typeof window.requireStudent === "function") {
+          await window.requireStudent();
         }
 
-        const data = await request("/api/test/history");
+        const data = await thRequest("/api/test/history");
         const tests = Array.isArray(data.tests) ? data.tests : [];
 
         if (tests.length === 0) {
           box.innerHTML = `
-            <p class="muted">Abhi koi test history nahi hai.</p>
-            <a class="btn" href="test-generator.html">Pehla Test Banao</a>
+            <div class="empty-state">
+              <h2>Abhi koi test history nahi hai</h2>
+              <p class="muted">Pehla AI test banao aur score yahan dikhega.</p>
+              <a class="btn" href="test-generator.html">⚡ Pehla Test Banao</a>
+            </div>
           `;
           return;
         }
 
-        box.innerHTML = tests.map((test, index) => {
-          const totalQuestions = test.totalQuestions || test.questions?.length || 0;
-          const attempted = test.attempted ?? 0;
-          const score = test.score ?? 0;
-          const mcqCount = test.mcqCount ?? 0;
-          const mcqAttempted = test.mcqAttempted ?? 0;
-          const writtenCount = test.writtenCount ?? 0;
-          const writtenAttempted = test.writtenAttempted ?? 0;
-          const timeTaken = test.timeTaken || "Not submitted";
+        box.innerHTML = tests
+          .map((rawTest, index) => {
+            const test = thNormalizeTest(rawTest);
+            const submitted = Boolean(test.submittedAt);
 
-          const submittedText = test.submittedAt
-            ? formatDate(test.submittedAt)
-            : "Not submitted";
+            return `
+              <article class="test-card">
+                <div class="test-head">
+                  <div>
+                    <span class="badge">${thSafe(test.difficulty)}</span>
+                    <h2>${thSafe(test.title)}</h2>
+                    <p class="test-meta">
+                      Class ${thSafe(test.classLevel)} · ${thSafe(test.topic)}<br>
+                      Created: ${thSafe(thFormatDate(test.createdAt))}
+                    </p>
+                  </div>
 
-          return `
-            <div class="card">
-              <span class="badge">${safeText(test.difficulty || "Test")}</span>
-
-              <h2 style="margin-bottom:5px;">
-                ${safeText(test.title || "Math Test")}
-              </h2>
-
-              <p class="muted">
-                Class ${safeText(test.classLevel)} · ${safeText(test.topic)} · ${safeText(test.createdAt ? formatDate(test.createdAt) : "")}
-              </p>
-
-              <div class="score-grid">
-                <div class="score-item">
-                  <strong>${attempted}/${totalQuestions}</strong>
-                  Attempted
+                  <span class="status-pill ${submitted ? "status-submitted" : "status-pending"}">
+                    ${submitted ? "✅ Submitted" : "⏳ Not Submitted"}
+                  </span>
                 </div>
 
-                <div class="score-item">
-                  <strong>${score}/${mcqCount}</strong>
-                  MCQ Correct
+                <div class="score-grid">
+                  <div class="score-item">
+                    <span>Score</span>
+                    <strong>${thSafe(test.score)}/${thSafe(test.totalQuestions)}</strong>
+                  </div>
+
+                  <div class="score-item">
+                    <span>Percentage</span>
+                    <strong>${thSafe(test.percent)}%</strong>
+                  </div>
+
+                  <div class="score-item">
+                    <span>Attempted</span>
+                    <strong>${thSafe(test.attempted)}/${thSafe(test.totalQuestions)}</strong>
+                  </div>
+
+                  <div class="score-item">
+                    <span>Wrong</span>
+                    <strong>${thSafe(test.wrongCount)}</strong>
+                  </div>
+
+                  <div class="score-item">
+                    <span>MCQ</span>
+                    <strong>${thSafe(test.mcqAttempted)}/${thSafe(test.mcqCount)}</strong>
+                  </div>
+
+                  <div class="score-item">
+                    <span>Written</span>
+                    <strong>${thSafe(test.writtenAttempted)}/${thSafe(test.writtenCount)}</strong>
+                  </div>
+
+                  <div class="score-item">
+                    <span>Time</span>
+                    <strong>${thSafe(test.timeTaken)}</strong>
+                  </div>
+
+                  <div class="score-item">
+                    <span>Submitted</span>
+                    <strong style="font-size:14px;">${thSafe(test.submittedAt ? thFormatDate(test.submittedAt) : "-")}</strong>
+                  </div>
                 </div>
 
-                <div class="score-item">
-                  <strong>${mcqAttempted}/${mcqCount}</strong>
-                  MCQ Attempted
+                <button class="btn-secondary" type="button" onclick="toggleDetails(${index})">
+                  View Answers
+                </button>
+
+                <div class="details" id="details-${index}">
+                  ${renderQuestionReview(test)}
                 </div>
-
-                <div class="score-item">
-                  <strong>${writtenAttempted}/${writtenCount}</strong>
-                  Written Attempted
-                </div>
-              </div>
-
-              <p class="muted" style="margin-top:12px;">
-                Time Taken: <strong>${safeText(timeTaken)}</strong><br>
-                Submitted: <strong>${safeText(submittedText)}</strong>
-              </p>
-
-              <button class="btn secondary" type="button" onclick="toggleDetails(${index})">
-                View Answers
-              </button>
-
-              <div class="details" id="details-${index}">
-                ${renderQuestionReview(test)}
-              </div>
-            </div>
-          `;
-        }).join("");
-
+              </article>
+            `;
+          })
+          .join("");
       } catch (err) {
         box.innerHTML = `
-          <p style="color:red;">Failed to load test history: ${safeText(err.message)}</p>
+          <div class="empty-state">
+            <h2>History load nahi hui</h2>
+            <p class="notice error">${thSafe(err.message)}</p>
+            <button class="btn" type="button" onclick="loadTestHistory()">Retry</button>
+          </div>
         `;
       }
     }
@@ -253,29 +568,35 @@
         return `<p class="muted">Questions not found.</p>`;
       }
 
-      return questions.map((q, idx) => {
-        const userAnswer = answers[idx] || "";
-        const correctAnswer = q.correctAnswer || "Answer not available";
+      return questions
+        .map((q, idx) => {
+          const userAnswer =
+            answers[idx] ||
+            answers[String(idx)] ||
+            "";
 
-        return `
-          <div class="question-review">
-            <p>
-              <strong>Q${idx + 1}:</strong>
-              ${safeText(q.question)}
-            </p>
+          const correctAnswer = q.correctAnswer || "Answer not available";
 
-            <p>
-              <strong>Your Answer:</strong>
-              ${safeText(userAnswer || "Not attempted")}
-            </p>
+          return `
+            <div class="question-review">
+              <p>
+                <span class="qa-label">Q${idx + 1}:</span>
+                ${thSafe(q.question)}
+              </p>
 
-            <p>
-              <strong>Correct Final Answer:</strong>
-              ${safeText(correctAnswer)}
-            </p>
-          </div>
-        `;
-      }).join("");
+              <div class="user-answer">
+                <span class="qa-label">Your Answer:</span><br>
+                ${thSafe(userAnswer || "Not attempted")}
+              </div>
+
+              <div class="correct-answer">
+                <span class="qa-label">Correct Final Answer:</span><br>
+                ${thSafe(correctAnswer)}
+              </div>
+            </div>
+          `;
+        })
+        .join("");
     }
 
     function toggleDetails(index) {
