@@ -76,6 +76,7 @@
       0%, 100% {
         transform: translateY(0) rotate(0deg);
       }
+
       50% {
         transform: translateY(-22px) rotate(8deg);
       }
@@ -140,8 +141,244 @@
       max-width: 560px;
     }
 
+    .student-stage {
+      margin: 28px 0 6px;
+      min-height: 180px;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .dance-floor {
+      position: absolute;
+      bottom: 22px;
+      width: 210px;
+      height: 20px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      filter: blur(1px);
+      animation: floorPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes floorPulse {
+      0%, 100% {
+        transform: scaleX(1);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scaleX(1.12);
+        opacity: 1;
+      }
+    }
+
+    .dance-boy {
+      position: relative;
+      width: 115px;
+      height: 150px;
+      animation: boyBounce 0.75s ease-in-out infinite;
+      z-index: 2;
+    }
+
+    @keyframes boyBounce {
+      0%, 100% {
+        transform: translateY(0) rotate(-1deg);
+      }
+
+      50% {
+        transform: translateY(-10px) rotate(1deg);
+      }
+    }
+
+    .head {
+      width: 46px;
+      height: 46px;
+      background: #ffd7a8;
+      border-radius: 50%;
+      position: absolute;
+      left: 34px;
+      top: 4px;
+      box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    .hair {
+      width: 48px;
+      height: 22px;
+      background: #111827;
+      border-radius: 22px 22px 8px 8px;
+      position: absolute;
+      left: 33px;
+      top: 0;
+      transform: rotate(-4deg);
+    }
+
+    .eye {
+      width: 5px;
+      height: 5px;
+      background: #111827;
+      border-radius: 50%;
+      position: absolute;
+      top: 24px;
+    }
+
+    .eye.left {
+      left: 47px;
+    }
+
+    .eye.right {
+      right: 47px;
+    }
+
+    .smile {
+      width: 16px;
+      height: 8px;
+      border-bottom: 3px solid #111827;
+      border-radius: 0 0 999px 999px;
+      position: absolute;
+      left: 50px;
+      top: 32px;
+    }
+
+    .body-shirt {
+      width: 54px;
+      height: 58px;
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      border-radius: 18px 18px 12px 12px;
+      position: absolute;
+      left: 31px;
+      top: 52px;
+      box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    .arm {
+      width: 18px;
+      height: 58px;
+      background: #ffd7a8;
+      border-radius: 999px;
+      position: absolute;
+      top: 56px;
+      transform-origin: top center;
+    }
+
+    .arm.left {
+      left: 18px;
+      animation: leftArmDance 0.75s ease-in-out infinite;
+    }
+
+    .arm.right {
+      right: 18px;
+      animation: rightArmDance 0.75s ease-in-out infinite;
+    }
+
+    @keyframes leftArmDance {
+      0%, 100% {
+        transform: rotate(34deg);
+      }
+
+      50% {
+        transform: rotate(-55deg);
+      }
+    }
+
+    @keyframes rightArmDance {
+      0%, 100% {
+        transform: rotate(-40deg);
+      }
+
+      50% {
+        transform: rotate(55deg);
+      }
+    }
+
+    .leg {
+      width: 18px;
+      height: 55px;
+      background: #0f172a;
+      border-radius: 999px;
+      position: absolute;
+      top: 105px;
+      transform-origin: top center;
+    }
+
+    .leg.left {
+      left: 36px;
+      animation: leftLegDance 0.75s ease-in-out infinite;
+    }
+
+    .leg.right {
+      right: 36px;
+      animation: rightLegDance 0.75s ease-in-out infinite;
+    }
+
+    @keyframes leftLegDance {
+      0%, 100% {
+        transform: rotate(-12deg);
+      }
+
+      50% {
+        transform: rotate(20deg);
+      }
+    }
+
+    @keyframes rightLegDance {
+      0%, 100% {
+        transform: rotate(14deg);
+      }
+
+      50% {
+        transform: rotate(-22deg);
+      }
+    }
+
+    .music-note {
+      position: absolute;
+      font-size: 24px;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.8);
+      animation: noteFloat 2s ease-in-out infinite;
+    }
+
+    .music-note.n1 {
+      left: 18%;
+      top: 38%;
+      animation-delay: 0s;
+    }
+
+    .music-note.n2 {
+      right: 20%;
+      top: 26%;
+      animation-delay: 0.6s;
+    }
+
+    .music-note.n3 {
+      right: 34%;
+      top: 54%;
+      animation-delay: 1.1s;
+    }
+
+    @keyframes noteFloat {
+      0% {
+        transform: translateY(10px) scale(0.8);
+        opacity: 0;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(-22px) scale(1.08);
+        opacity: 0;
+      }
+    }
+
     .feature-grid {
-      margin-top: 26px;
+      margin-top: 20px;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
@@ -181,6 +418,7 @@
         opacity: 0;
         transform: translateY(24px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -228,23 +466,6 @@
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
     }
 
-    .otp-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: end;
-    }
-
-    .btn-main,
-    .btn-otp {
-      border: none;
-      border-radius: 15px;
-      font-weight: 900;
-      cursor: pointer;
-      transition: 0.18s ease;
-      white-space: nowrap;
-    }
-
     .btn-main {
       width: 100%;
       padding: 14px 18px;
@@ -252,25 +473,21 @@
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       box-shadow: 0 12px 28px rgba(37, 99, 235, 0.25);
       margin-top: 8px;
+      border: none;
+      border-radius: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.18s ease;
     }
 
-    .btn-main:hover,
-    .btn-otp:hover {
+    .btn-main:hover {
       transform: translateY(-1px);
     }
 
-    .btn-main:disabled,
-    .btn-otp:disabled {
+    .btn-main:disabled {
       opacity: 0.65;
       cursor: not-allowed;
       transform: none;
-    }
-
-    .btn-otp {
-      padding: 13px 15px;
-      color: #064e3b;
-      background: linear-gradient(135deg, #bbf7d0, #86efac);
-      border: 1px solid #86efac;
     }
 
     .msg {
@@ -318,6 +535,7 @@
       color: #64748b;
       font-size: 12px;
       font-weight: 700;
+      text-align: center;
     }
 
     @media (max-width: 860px) {
@@ -336,14 +554,6 @@
 
       .signup-card {
         padding: 22px;
-      }
-
-      .otp-row {
-        grid-template-columns: 1fr;
-      }
-
-      .btn-otp {
-        width: 100%;
       }
     }
   </style>
@@ -371,14 +581,33 @@
     <section class="hero-card">
       <div class="badge">🚀 Free Plan Activated After Signup</div>
 
-      <h1 class="hero-title">
-        Maths doubts ka smart solution.
-      </h1>
+      <h1 class="hero-title">Maths doubts ka smart solution.</h1>
 
       <p class="hero-text">
         Text ya image se maths question bhejo aur simple Hindi + English explanation me step-by-step solution pao.
         Class 1 to 12 students ke liye fast, clean aur exam-friendly learning.
       </p>
+
+      <div class="student-stage">
+        <div class="music-note n1">♪</div>
+        <div class="music-note n2">♫</div>
+        <div class="music-note n3">✦</div>
+
+        <div class="dance-floor"></div>
+
+        <div class="dance-boy">
+          <div class="hair"></div>
+          <div class="head"></div>
+          <div class="eye left"></div>
+          <div class="eye right"></div>
+          <div class="smile"></div>
+          <div class="arm left"></div>
+          <div class="arm right"></div>
+          <div class="body-shirt"></div>
+          <div class="leg left"></div>
+          <div class="leg right"></div>
+        </div>
+      </div>
 
       <div class="feature-grid">
         <div class="feature-box">
@@ -405,7 +634,7 @@
 
     <section class="signup-card">
       <h2 class="form-title">Create Account</h2>
-      <p class="form-subtitle">Email OTP verify karke secure signup complete karo.</p>
+      <p class="form-subtitle">1 email aur 1 mobile number se sirf 1 account banega.</p>
 
       <form id="signupForm" autocomplete="on">
         <div class="input-group">
@@ -443,31 +672,9 @@
           />
         </div>
 
-        <div class="otp-row">
-          <div class="input-group">
-            <label>Email OTP</label>
-            <input
-              id="signupOtp"
-              name="otp"
-              type="text"
-              placeholder="Enter 6 digit OTP"
-              maxlength="6"
-              inputmode="numeric"
-            />
-          </div>
+        <button id="signupBtn" class="btn-main" type="submit">Create Account</button>
 
-          <button id="sendOtpBtn" class="btn-otp" type="button">
-            Send OTP
-          </button>
-        </div>
-
-        <button id="signupBtn" class="btn-main" type="submit">
-          Create Account
-        </button>
-
-        <div class="trust-line">
-          🔐 Secure signup with email verification
-        </div>
+        <div class="trust-line">🔐 Duplicate email/mobile signup blocked</div>
 
         <p class="small-link">
           Already registered?
@@ -487,7 +694,6 @@
         : "https://math-guru.onrender.com";
 
     const signupForm = document.getElementById("signupForm");
-    const sendOtpBtn = document.getElementById("sendOtpBtn");
     const signupBtn = document.getElementById("signupBtn");
     const formMsg = document.getElementById("formMsg");
 
@@ -495,10 +701,6 @@
     const emailInput = document.getElementById("signupEmail");
     const mobileInput = document.getElementById("signupMobile");
     const passwordInput = document.getElementById("signupPassword");
-    const otpInput = document.getElementById("signupOtp");
-
-    let otpTimer = null;
-    let otpSeconds = 0;
 
     function showMsg(message, type = "error") {
       formMsg.textContent = message;
@@ -516,10 +718,6 @@
 
     mobileInput.addEventListener("input", () => {
       mobileInput.value = getCleanMobile();
-    });
-
-    otpInput.addEventListener("input", () => {
-      otpInput.value = otpInput.value.replace(/\D/g, "").slice(0, 6);
     });
 
     function validateBasicFields() {
@@ -553,65 +751,13 @@
         return null;
       }
 
-      return { name, email, mobile, password };
+      return {
+        name,
+        email,
+        mobile,
+        password
+      };
     }
-
-    function startOtpTimer() {
-      otpSeconds = 60;
-      sendOtpBtn.disabled = true;
-
-      clearInterval(otpTimer);
-
-      otpTimer = setInterval(() => {
-        otpSeconds--;
-
-        if (otpSeconds > 0) {
-          sendOtpBtn.textContent = `Resend in ${otpSeconds}s`;
-        } else {
-          clearInterval(otpTimer);
-          sendOtpBtn.disabled = false;
-          sendOtpBtn.textContent = "Resend OTP";
-        }
-      }, 1000);
-    }
-
-    sendOtpBtn.addEventListener("click", async () => {
-      clearMsg();
-
-      const payload = validateBasicFields();
-      if (!payload) return;
-
-      try {
-        sendOtpBtn.disabled = true;
-        sendOtpBtn.textContent = "Sending...";
-
-        const res = await fetch(`${API_BASE}/api/auth/send-signup-otp`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          sendOtpBtn.disabled = false;
-          sendOtpBtn.textContent = "Send OTP";
-          showMsg(data.message || "OTP send failed.");
-          return;
-        }
-
-        showMsg("OTP email par bhej diya gaya hai. Inbox/Spam check karo.", "success");
-        otpInput.focus();
-        startOtpTimer();
-
-      } catch (err) {
-        sendOtpBtn.disabled = false;
-        sendOtpBtn.textContent = "Send OTP";
-        showMsg("Network error. Please try again.");
-      }
-    });
 
     signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -619,14 +765,6 @@
 
       const payload = validateBasicFields();
       if (!payload) return;
-
-      const otp = otpInput.value.trim();
-
-      if (!otp || otp.length !== 6) {
-        showMsg("Please email par aaya hua 6 digit OTP enter karo.");
-        otpInput.focus();
-        return;
-      }
 
       try {
         signupBtn.disabled = true;
@@ -637,10 +775,7 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({
-            ...payload,
-            otp
-          })
+          body: JSON.stringify(payload)
         });
 
         const data = await res.json();
