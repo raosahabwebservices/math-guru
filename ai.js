@@ -13,15 +13,12 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
 const SAMBANOVA_API_KEY = process.env.SAMBANOVA_API_KEY;
-const SAMBANOVA_MODEL = process.env.SAMBANOVA_MODEL || "Meta-Llama-3.1-8B-Instruct";
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const SAMBANOVA_MODEL =
+  process.env.SAMBANOVA_MODEL || "Meta-Llama-3.1-8B-Instruct";
 
 if (!OPENROUTER_API_KEY) console.warn("Warning: OPENROUTER_API_KEY missing");
 if (!GROQ_API_KEY) console.warn("Warning: GROQ_API_KEY missing");
 if (!SAMBANOVA_API_KEY) console.warn("Warning: SAMBANOVA_API_KEY missing");
-if (!GEMINI_API_KEY) console.warn("Warning: GEMINI_API_KEY missing");
 
 // ==========================================
 // STRONG SYSTEM PROMPT FOR HIGH ACCURACY
@@ -110,39 +107,29 @@ No comments inside JSON.
 async function callAI(prompt, imageDataOptional = null) {
   const errors = [];
 
-  // Image doubt: OpenRouter first, Gemini last.
-  // Groq and SambaNova usually do not support image input.
+  // Image doubt: only OpenRouter, because Groq/SambaNova usually do not support image input.
   if (imageDataOptional) {
-    if (OPENROUTER_API_KEY) {
-      try {
-        const answer = await callOpenRouter(prompt, imageDataOptional);
-        if (answer && String(answer).trim()) return answer;
-      } catch (err) {
-        errors.push("OpenRouter: " + err.message);
-      }
-    } else {
-      errors.push("OpenRouter: API key missing");
+    if (!OPENROUTER_API_KEY) {
+      throw new Error("Image AI failed: OPENROUTER_API_KEY missing");
     }
 
-    if (GEMINI_API_KEY) {
-      try {
-        const answer = await callGemini(prompt, imageDataOptional);
-        if (answer && String(answer).trim()) return answer;
-      } catch (err) {
-        errors.push("Gemini: " + err.message);
-      }
-    } else {
-      errors.push("Gemini: API key missing");
-    }
+    try {
+      const answer = await callOpenRouter(prompt, imageDataOptional);
 
-    throw new Error("All image AI providers failed: " + errors.join(" | "));
+      if (answer && String(answer).trim()) {
+        return answer;
+      }
+
+      throw new Error("OpenRouter returned empty image response");
+    } catch (err) {
+      throw new Error("Image AI failed: OpenRouter: " + err.message);
+    }
   }
 
   // Text/Test fallback order:
   // 1. OpenRouter
   // 2. Groq
   // 3. SambaNova
-  // 4. Gemini last
   const providers = [
     {
       name: "OpenRouter",
@@ -158,11 +145,6 @@ async function callAI(prompt, imageDataOptional = null) {
       name: "SambaNova",
       enabled: Boolean(SAMBANOVA_API_KEY),
       fn: () => callSambaNova(prompt)
-    },
-    {
-      name: "Gemini",
-      enabled: Boolean(GEMINI_API_KEY),
-      fn: () => callGemini(prompt)
     }
   ];
 
@@ -187,15 +169,16 @@ async function callAI(prompt, imageDataOptional = null) {
 
   throw new Error("All AI providers failed: " + errors.join(" | "));
 }
+
 // ==========================================
 // OPENROUTER
 // ==========================================
 
 async function callOpenRouter(prompt, imageDataOptional = null) {
-  const content = [{ type: "text", text: prompt }];
+  const userContent = [{ type: "text", text: prompt }];
 
   if (imageDataOptional) {
-    content.push({
+    userContent.push({
       type: "image_url",
       image_url: {
         url: imageDataOptional
@@ -220,7 +203,7 @@ async function callOpenRouter(prompt, imageDataOptional = null) {
         },
         {
           role: "user",
-          content
+          content: userContent
         }
       ],
       temperature: 0.1
@@ -270,8 +253,7 @@ async function callGroq(prompt) {
   }
 
   return data?.choices?.[0]?.message?.content || "";
-}
-
+        }
 // ==========================================
 // SAMBANOVA
 // ==========================================
@@ -309,61 +291,6 @@ async function callSambaNova(prompt) {
 }
 
 // ==========================================
-// GEMINI — LAST FALLBACK
-// ==========================================
-
-async function callGemini(prompt, imageDataOptional = null) {
-  const parts = [
-    {
-      text: SYSTEM_PROMPT + "\n\nUser task:\n" + prompt
-    }
-  ];
-
-  if (imageDataOptional) {
-    const parsedImage = parseDataUrl(imageDataOptional);
-
-    parts.push({
-      inline_data: {
-        mime_type: parsedImage.mimeType,
-        data: parsedImage.base64
-      }
-    });
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts
-        }
-      ],
-      generationConfig: {
-        temperature: 0.1
-      }
-    })
-  });
-
-  const data = await safeResponseJson(response, "Gemini");
-
-  if (!response.ok) {
-    throw new Error(data?.error?.message || "Gemini request failed");
-  }
-
-  return (
-    data?.candidates?.[0]?.content?.parts
-      ?.map((p) => p.text || "")
-      .join("\n") || ""
-  );
-}
-
-// ==========================================
 // IMAGE HELPERS
 // ==========================================
 
@@ -373,18 +300,6 @@ async function imageFileToDataUrl(imagePath, mimeType) {
   return `data:${mimeType};base64,${base64}`;
 }
 
-function parseDataUrl(dataUrl) {
-  const match = String(dataUrl || "").match(/^data:(.+);base64,(.+)$/);
-
-  if (!match) {
-    throw new Error("Invalid image data URL");
-  }
-
-  return {
-    mimeType: match[1],
-    base64: match[2]
-  };
-}
 // ==========================================
 // DOUBT SOLVER — HIGH ACCURACY PLAIN TEXT OUTPUT
 // ==========================================
@@ -574,7 +489,7 @@ JSON format must be exactly:
 
 {
   "title": "Test title",
-  "classLevel": ${classLevel},
+  "classLevel": "${classLevel}",
   "subject": "${subject}",
   "topic": "${topic}",
   "difficulty": "${difficulty}",
@@ -673,7 +588,8 @@ QUALITY RULES:
 
         options = [];
       }
-                              }
+    }
+
     return {
       type: finalType,
       question: String(q.question || `Question ${index + 1}`).trim(),
@@ -682,7 +598,6 @@ QUALITY RULES:
       stepByStepSolution: ""
     };
   });
-
   while (questions.length < finalNumQuestions) {
     const n = questions.length + 1;
 
@@ -739,10 +654,10 @@ function normalizeMcqOptions(options, correctAnswer) {
     cleanOptions.unshift(cleanCorrect);
   }
 
-  cleanOptions = [...new Set(cleanOptions)].slice(0, 4);
+  cleanOptions = [...new Set(cleanOptions)];
 
   while (cleanOptions.length < 4) {
-    cleanOptions.push(`Option ${String.fromCharCode(65 + cleanOptions.length)}`);
+    cleanOptions.push(`Option ${cleanOptions.length + 1}`);
   }
 
   return cleanOptions.slice(0, 4);
@@ -750,29 +665,63 @@ function normalizeMcqOptions(options, correctAnswer) {
 
 function safeJsonParse(text) {
   try {
-    return JSON.parse(text);
-  } catch {
-    const match = String(text || "").match(/\{[\s\S]*\}/);
+    let clean = String(text || "").trim();
 
-    if (!match) {
-      throw new Error("AI response was not valid JSON");
+    clean = clean
+      .replace(/^```json/i, "")
+      .replace(/^```/i, "")
+      .replace(/```$/i, "")
+      .trim();
+
+    const firstBrace = clean.indexOf("{");
+    const lastBrace = clean.lastIndexOf("}");
+
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      clean = clean.slice(firstBrace, lastBrace + 1);
     }
 
-    try {
-      return JSON.parse(match[0]);
-    } catch {
-      throw new Error("AI JSON parse failed");
-    }
+    return JSON.parse(clean);
+  } catch (err) {
+    console.error("JSON Parse Error:", err.message);
+    console.error("AI Raw Text:", text);
+
+    return {
+      title: "Generated Test",
+      questions: [],
+      answerKey: []
+    };
   }
 }
 
 async function safeResponseJson(response, providerName) {
   try {
-    return await response.json();
-  } catch {
-    throw new Error(`${providerName} returned invalid JSON response`);
+    const text = await response.text();
+
+    if (!text) {
+      return {};
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (err) {
+      return {
+        error: {
+          message: `${providerName} returned non-JSON response: ${text.slice(0, 300)}`
+        }
+      };
+    }
+  } catch (err) {
+    return {
+      error: {
+        message: `${providerName} response read failed: ${err.message}`
+      }
+    };
   }
 }
+
+// ==========================================
+// EXPORTS
+// ==========================================
 
 module.exports = {
   callAI,
