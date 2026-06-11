@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Upgrade | MATHS GURU</title>
 
   <link rel="stylesheet" href="style.css" />
@@ -10,14 +11,13 @@
   <style>
     body {
       min-height: 100vh;
+      background:
+        radial-gradient(circle at 8% 10%, rgba(20, 85, 217, 0.10), transparent 35%),
+        radial-gradient(circle at 88% 72%, rgba(22, 163, 74, 0.10), transparent 35%),
+        #f8fbff;
     }
 
     .upgrade-hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 18px;
-      flex-wrap: wrap;
       margin-bottom: 24px;
     }
 
@@ -26,13 +26,14 @@
       font-size: clamp(34px, 6vw, 58px);
       line-height: 0.95;
       letter-spacing: -0.06em;
-      color: var(--dark);
+      color: #071735;
+      font-weight: 950;
     }
 
     .upgrade-subtitle {
       max-width: 760px;
       margin: 12px 0 0;
-      color: var(--muted);
+      color: #64748b;
       line-height: 1.6;
       font-weight: 650;
     }
@@ -45,8 +46,8 @@
     }
 
     .trust-chip {
-      background: white;
-      border: 1px solid var(--line);
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
       border-radius: 999px;
       padding: 8px 12px;
       color: #334155;
@@ -55,154 +56,177 @@
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
     }
 
-    .plans-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-top: 24px;
-      margin-bottom: 28px;
+    .upgrade-plans-grid {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 18px !important;
+      margin-top: 24px !important;
+      margin-bottom: 28px !important;
     }
 
-    .plan-card {
-      background: #ffffff;
-      border: 2px solid #e5e7eb;
-      border-radius: 24px;
-      padding: 20px;
-      cursor: pointer;
-      transition: 0.22s ease;
-      position: relative;
-      box-shadow: var(--shadow);
-      overflow: hidden;
+    .upgrade-plan-card {
+      position: relative !important;
+      background: #ffffff !important;
+      border: 2px solid #e5e7eb !important;
+      border-radius: 18px !important;
+      padding: 24px 22px !important;
+      min-height: 340px !important;
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08) !important;
+      cursor: pointer !important;
+      transition: 0.25s ease !important;
+      color: #0f172a !important;
+      overflow: visible !important;
     }
 
-    .plan-card::after {
-      content: "";
-      position: absolute;
-      inset: auto -30px -40px auto;
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      background: rgba(20, 85, 217, 0.08);
+    .upgrade-plan-card:hover {
+      transform: translateY(-4px) !important;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12) !important;
     }
 
-    .plan-card:hover {
-      transform: translateY(-3px);
-      border-color: var(--blue);
-      box-shadow: 0 18px 44px rgba(20, 85, 217, 0.12);
+    .upgrade-plan-card.selected {
+      border-color: #0056b3 !important;
+      background: #eef6ff !important;
     }
 
-    .plan-card.selected {
-      border-color: var(--blue);
-      background: linear-gradient(180deg, #ffffff, #eff6ff);
-      box-shadow: 0 16px 42px rgba(20, 85, 217, 0.18);
+    .upgrade-plan-card.selected::after {
+      content: "✓ Selected" !important;
+      position: absolute !important;
+      top: 12px !important;
+      right: 12px !important;
+      background: #0056b3 !important;
+      color: white !important;
+      padding: 5px 10px !important;
+      border-radius: 999px !important;
+      font-size: 11px !important;
+      font-weight: 900 !important;
+      z-index: 6 !important;
     }
 
-    .plan-card.selected::before {
-      content: "✓ Selected";
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      z-index: 2;
-      background: var(--blue);
-      color: white;
-      padding: 5px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 950;
+    .upgrade-plan-card.border-blue {
+      border-color: #0056b3 !important;
     }
 
-    .plan-card.highlight-unlimited {
-      border-color: #c4b5fd;
-      background: linear-gradient(135deg, #f5f3ff, #ffffff);
+    .upgrade-plan-card.border-green {
+      border-color: #16a34a !important;
+      background: #f0fdf4 !important;
     }
 
-    .plan-card.highlight-unlimited.selected {
-      border-color: var(--purple);
-      box-shadow: 0 16px 42px rgba(124, 58, 237, 0.20);
+    .upgrade-plan-card.border-green.selected {
+      border-color: #16a34a !important;
+      background: #ecfdf5 !important;
     }
 
-    .plan-card.highlight-unlimited.selected::before {
-      background: var(--purple);
+    .upgrade-plan-card.border-green.selected::after {
+      background: #16a34a !important;
     }
 
-    .plan-title {
-      font-size: 20px;
-      font-weight: 950;
-      margin-bottom: 10px;
-      color: var(--dark);
-      padding-right: 80px;
-      position: relative;
-      z-index: 1;
+    .upgrade-plan-card.border-purple {
+      border-color: #7c3aed !important;
+      background: #faf5ff !important;
     }
 
-    .price-line {
-      margin-bottom: 8px;
-      position: relative;
-      z-index: 1;
+    .upgrade-plan-card.border-purple.selected {
+      border-color: #7c3aed !important;
+      background: #f5f3ff !important;
     }
 
-    .old-price {
-      font-size: 16px;
-      color: #94a3b8;
-      text-decoration: line-through;
-      margin-right: 8px;
-      font-weight: 800;
+    .upgrade-plan-card.border-purple.selected::after {
+      background: #7c3aed !important;
     }
 
-    .plan-price {
-      font-size: 28px;
-      font-weight: 950;
-      color: var(--blue);
-      letter-spacing: -0.04em;
+    .upgrade-plan-title {
+      font-size: 22px !important;
+      font-weight: 950 !important;
+      color: #0f172a !important;
+      margin-bottom: 18px !important;
+      padding-right: 88px !important;
+      line-height: 1.2 !important;
     }
 
-    .save-text {
-      display: inline-block;
-      margin-top: 6px;
-      background: var(--green-soft);
-      color: #15803d;
-      padding: 4px 9px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      position: relative;
-      z-index: 1;
+    .upgrade-old-price {
+      color: #777 !important;
+      font-size: 17px !important;
+      font-weight: 800 !important;
+      text-decoration: line-through !important;
+      margin-right: 8px !important;
     }
 
-    .plan-features {
-      color: #334155;
-      font-size: 14px;
-      line-height: 1.7;
-      margin-top: 12px;
-      font-weight: 700;
-      position: relative;
-      z-index: 1;
+    .upgrade-price {
+      display: inline-block !important;
+      font-size: 34px !important;
+      font-weight: 950 !important;
+      color: #0056b3 !important;
+      margin-bottom: 12px !important;
+      letter-spacing: -0.04em !important;
+      line-height: 1 !important;
     }
 
-    .plan-features span {
-      display: block;
-      margin: 4px 0;
+    .upgrade-valid {
+      color: #333 !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      margin: 6px 0 12px !important;
     }
 
-    .tag {
-      position: absolute;
-      top: -10px;
-      left: 16px;
-      background: #f97316;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 950;
-      z-index: 3;
-      box-shadow: 0 10px 22px rgba(249, 115, 22, 0.25);
+    .upgrade-save {
+      display: inline-block !important;
+      background: #dcfce7 !important;
+      color: #166534 !important;
+      padding: 5px 9px !important;
+      border-radius: 999px !important;
+      font-size: 12px !important;
+      font-weight: 900 !important;
+      margin-bottom: 18px !important;
     }
 
-    .tag-purple {
-      background: var(--purple);
-      box-shadow: 0 10px 22px rgba(124, 58, 237, 0.25);
+    .upgrade-features {
+      margin-top: 16px !important;
+      margin-bottom: 18px !important;
     }
 
+    .upgrade-features p {
+      margin: 8px 0 !important;
+      color: #334155 !important;
+      font-size: 15px !important;
+      font-weight: 700 !important;
+      line-height: 1.35 !important;
+    }
+
+    .upgrade-plan-btn {
+      border: none !important;
+      background: #0056b3 !important;
+      color: white !important;
+      border-radius: 999px !important;
+      padding: 12px 20px !important;
+      font-size: 14px !important;
+      font-weight: 900 !important;
+      box-shadow: 0 12px 22px rgba(0, 86, 179, 0.25) !important;
+      cursor: pointer !important;
+    }
+
+    .upgrade-badge {
+      position: absolute !important;
+      top: -11px !important;
+      right: 12px !important;
+      color: white !important;
+      padding: 5px 11px !important;
+      border-radius: 999px !important;
+      font-size: 11px !important;
+      font-weight: 950 !important;
+      z-index: 5 !important;
+    }
+
+    .upgrade-badge.orange {
+      background: #ff5722 !important;
+    }
+
+    .upgrade-badge.green {
+      background: #16a34a !important;
+    }
+
+    .upgrade-badge.purple {
+      background: #7c3aed !important;
+    }
     .payment-wrap {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -213,10 +237,10 @@
 
     .pay-card {
       background: white;
-      border: 1px solid var(--line);
+      border: 1px solid #e5e7eb;
       border-radius: 28px;
       padding: 24px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
     }
 
     .qr-box {
@@ -229,14 +253,14 @@
       border-radius: 18px;
       margin: 15px auto;
       display: block;
-      border: 1px solid var(--line);
+      border: 1px solid #e5e7eb;
       box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
     }
 
     .upi-id {
       background: #f8fbff;
       border: 1px dashed #bfdbfe;
-      color: var(--blue);
+      color: #0056b3;
       padding: 11px 12px;
       border-radius: 16px;
       font-weight: 950;
@@ -246,8 +270,8 @@
 
     .payment-summary {
       background: linear-gradient(180deg, #f8fafc, #eef6ff);
-      border: 1px solid var(--line);
-      border-left: 5px solid var(--blue);
+      border: 1px solid #e5e7eb;
+      border-left: 5px solid #0056b3;
       padding: 15px;
       border-radius: 16px;
       margin: 16px 0;
@@ -257,7 +281,7 @@
     }
 
     .fake-warning {
-      background: var(--yellow-soft);
+      background: #fffbeb;
       border: 1px solid #fde68a;
       border-left: 5px solid #f59e0b;
       padding: 13px;
@@ -273,9 +297,32 @@
     .form-note {
       font-size: 13px;
       line-height: 1.5;
-      color: var(--muted);
+      color: #64748b;
       margin-top: 6px;
       display: block;
+    }
+
+    .notice {
+      padding: 12px;
+      border-radius: 12px;
+      margin: 12px 0;
+      display: block;
+      background: #eef6ff;
+      color: #0d47a1;
+      font-weight: 700;
+      border: 1px solid #bfdbfe;
+    }
+
+    .notice.error {
+      background: #ffebee;
+      color: #b71c1c;
+      border-color: #fecaca;
+    }
+
+    .notice.success {
+      background: #e8f5e9;
+      color: #1b5e20;
+      border-color: #bbf7d0;
     }
 
     .notice.hidden {
@@ -283,8 +330,8 @@
     }
 
     @media (max-width: 900px) {
-      .plans-grid {
-        grid-template-columns: 1fr 1fr;
+      .upgrade-plans-grid {
+        grid-template-columns: 1fr 1fr !important;
       }
 
       .payment-wrap {
@@ -293,26 +340,26 @@
     }
 
     @media (max-width: 640px) {
-      .plans-grid {
-        grid-template-columns: 1fr;
+      .upgrade-title {
+        font-size: 40px;
+      }
+
+      .upgrade-plans-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .upgrade-plan-card {
+        min-height: auto !important;
+        padding: 20px !important;
+      }
+
+      .upgrade-price {
+        font-size: 31px !important;
       }
 
       .pay-card {
         padding: 18px;
         border-radius: 22px;
-      }
-
-      .plan-card {
-        padding: 18px;
-        border-radius: 22px;
-      }
-
-      .plan-price {
-        font-size: 25px;
-      }
-
-      .trust-strip {
-        gap: 8px;
       }
 
       .trust-chip {
@@ -338,109 +385,126 @@
 
   <main class="container">
     <section class="upgrade-hero">
-      <div>
-        <h1 class="upgrade-title">Upgrade Math Guru Plan</h1>
-        <p class="upgrade-subtitle">
-          Plan select karo, UPI payment karo, UTR + screenshot submit karo.
-          Admin verify karke premium activate karega.
-        </p>
+      <h1 class="upgrade-title">Upgrade Math Guru Plan</h1>
+      <p class="upgrade-subtitle">
+        Plan select karo, UPI payment karo, UTR + screenshot submit karo.
+        Admin verify karke premium activate karega.
+      </p>
 
-        <div class="trust-strip">
-          <span class="trust-chip">✅ Manual verification</span>
-          <span class="trust-chip">🔐 Login required</span>
-          <span class="trust-chip">📷 Screenshot proof</span>
-          <span class="trust-chip">⚡ Fast approval</span>
-        </div>
+      <div class="trust-strip">
+        <span class="trust-chip">✅ Manual verification</span>
+        <span class="trust-chip">🔐 Login required</span>
+        <span class="trust-chip">📷 Screenshot proof</span>
+        <span class="trust-chip">⚡ Fast approval</span>
       </div>
     </section>
 
-    <section class="plans-grid">
-      <div class="plan-card" data-plan="free" data-amount="0" data-title="Free">
-        <div class="plan-title">🆓 Free</div>
-        <div class="price-line">
-          <span class="plan-price">₹0</span>
+    <section class="upgrade-plans-grid">
+
+      <div class="upgrade-plan-card" data-plan="free" data-amount="0" data-title="Free">
+        <div class="upgrade-plan-title">🆓 Free</div>
+        <div class="upgrade-price">₹0</div>
+        <div class="upgrade-valid">Free Forever</div>
+        <div class="upgrade-features">
+          <p>✅ 10 Text Doubts</p>
+          <p>✅ 3 Image Doubts</p>
+          <p>✅ 3 AI Tests</p>
+          <p>✅ Hindi + English / Hinglish</p>
         </div>
-        <div class="plan-features">
-          <span>✅ 10 Text Doubts</span>
-          <span>✅ 3 Image Doubts</span>
-          <span>✅ 3 Tests</span>
-        </div>
+        <button type="button" class="upgrade-plan-btn">Start Free</button>
       </div>
 
-      <div class="plan-card" data-plan="starter" data-amount="79" data-title="Starter">
-        <div class="plan-title">⭐ Starter</div>
-        <div class="price-line">
-          <span class="old-price">₹111</span>
-          <span class="plan-price">₹79 / Month</span>
+      <div class="upgrade-plan-card" data-plan="starter" data-amount="79" data-title="Starter">
+        <div class="upgrade-plan-title">⭐ Starter</div>
+        <div>
+          <span class="upgrade-old-price">₹111</span>
+          <span class="upgrade-price">₹79</span>
         </div>
-        <span class="save-text">Save ₹32</span>
-        <div class="plan-features">
-          <span>✅ 100 Text Doubts</span>
-          <span>✅ 20 Image Doubts</span>
-          <span>✅ 15 Tests</span>
+        <div class="upgrade-valid">Valid for 1 Month</div>
+        <span class="upgrade-save">Save ₹32</span>
+        <div class="upgrade-features">
+          <p>✅ 100 Text Doubts</p>
+          <p>✅ 20 Image Doubts</p>
+          <p>✅ 15 AI Tests</p>
+          <p>✅ Best for trial users</p>
         </div>
+        <button type="button" class="upgrade-plan-btn">Get Starter Plan</button>
       </div>
 
-      <div class="plan-card" data-plan="popular_3m" data-amount="199" data-title="Most Popular">
-        <span class="tag">Most Popular</span>
-        <div class="plan-title">🔥 Most Popular</div>
-        <div class="price-line">
-          <span class="old-price">₹299</span>
-          <span class="plan-price">₹199 / 3 Months</span>
+      <div class="upgrade-plan-card border-blue" data-plan="popular_3m" data-amount="199" data-title="3 Months Plan">
+        <span class="upgrade-badge orange">Most Popular</span>
+        <div class="upgrade-plan-title">🔥 3 Months Plan</div>
+        <div>
+          <span class="upgrade-old-price">₹299</span>
+          <span class="upgrade-price">₹199</span>
         </div>
-        <span class="save-text">Save ₹100</span>
-        <div class="plan-features">
-          <span>✅ 300 Text Doubts</span>
-          <span>✅ 75 Image Doubts</span>
-          <span>✅ 40 Tests</span>
+        <div class="upgrade-valid">Valid for 3 Months</div>
+        <span class="upgrade-save">Save ₹100</span>
+        <div class="upgrade-features">
+          <p>✅ 300 Text Doubts</p>
+          <p>✅ 75 Image Doubts</p>
+          <p>✅ 40 AI Tests</p>
+          <p>✅ Best for regular students</p>
         </div>
+        <button type="button" class="upgrade-plan-btn">Get ₹199 Plan</button>
       </div>
 
-      <div class="plan-card" data-plan="half_year" data-amount="349" data-title="Half Year">
-        <div class="plan-title">💎 Half Year</div>
-        <div class="price-line">
-          <span class="old-price">₹499</span>
-          <span class="plan-price">₹349 / 6 Months</span>
+      <div class="upgrade-plan-card border-green" data-plan="half_year" data-amount="349" data-title="Half Year Plan">
+        <span class="upgrade-badge green">Recommended</span>
+        <div class="upgrade-plan-title">💎 Half Year Plan</div>
+        <div>
+          <span class="upgrade-old-price">₹499</span>
+          <span class="upgrade-price">₹349</span>
         </div>
-        <span class="save-text">Save ₹150</span>
-        <div class="plan-features">
-          <span>✅ 700 Text Doubts</span>
-          <span>✅ 150 Image Doubts</span>
-          <span>✅ 100 Tests</span>
+        <div class="upgrade-valid">Valid for 6 Months</div>
+        <span class="upgrade-save">Save ₹150</span>
+        <div class="upgrade-features">
+          <p>✅ 700 Text Doubts</p>
+          <p>✅ 150 Image Doubts</p>
+          <p>✅ 100 AI Tests</p>
+          <p>✅ Best for exam preparation</p>
         </div>
+        <button type="button" class="upgrade-plan-btn">Get Half Year Plan</button>
+      </div>
+      <div class="upgrade-plan-card" data-plan="yearly" data-amount="699" data-title="Yearly Plan">
+        <span class="upgrade-badge green">Best Value</span>
+        <div class="upgrade-plan-title">🏆 Yearly Plan</div>
+        <div>
+          <span class="upgrade-old-price">₹999</span>
+          <span class="upgrade-price">₹699</span>
+        </div>
+        <div class="upgrade-valid">Valid for 1 Year</div>
+        <span class="upgrade-save">Save ₹300</span>
+        <div class="upgrade-features">
+          <p>✅ 1500 Text Doubts</p>
+          <p>✅ 400 Image Doubts</p>
+          <p>✅ 250 AI Tests</p>
+          <p>✅ Best for full-year study</p>
+        </div>
+        <button type="button" class="upgrade-plan-btn">Get Yearly Plan</button>
       </div>
 
-      <div class="plan-card" data-plan="yearly" data-amount="699" data-title="Best Value">
-        <span class="tag">Best Value</span>
-        <div class="plan-title">🏆 Best Value</div>
-        <div class="price-line">
-          <span class="old-price">₹999</span>
-          <span class="plan-price">₹699 / Year</span>
+      <div class="upgrade-plan-card border-purple" data-plan="unlimited" data-amount="299" data-title="Unlimited">
+        <span class="upgrade-badge purple">Unlimited</span>
+        <div class="upgrade-plan-title">🚀 Unlimited*</div>
+        <div>
+          <span class="upgrade-old-price">₹499</span>
+          <span class="upgrade-price">₹299</span>
         </div>
-        <span class="save-text">Save ₹300</span>
-        <div class="plan-features">
-          <span>✅ 1500 Text Doubts</span>
-          <span>✅ 400 Image Doubts</span>
-          <span>✅ 250 Tests</span>
+        <div class="upgrade-valid">Valid for 1 Month</div>
+        <span class="upgrade-save">Save ₹200</span>
+        <div class="upgrade-features">
+          <p>✅ Fair Use Unlimited Text Doubts</p>
+          <p>✅ Fair Use Unlimited Image Doubts</p>
+          <p>✅ Fair Use Unlimited AI Tests</p>
+          <p>✅ Best for heavy users</p>
         </div>
+        <button type="button" class="upgrade-plan-btn">Get Unlimited Plan</button>
       </div>
 
-      <div class="plan-card highlight-unlimited" data-plan="unlimited" data-amount="299" data-title="Unlimited">
-        <span class="tag tag-purple">Unlimited</span>
-        <div class="plan-title">🚀 Unlimited*</div>
-        <div class="price-line">
-          <span class="old-price">₹499</span>
-          <span class="plan-price">₹299 / Month</span>
-        </div>
-        <span class="save-text">Save ₹200</span>
-        <div class="plan-features">
-          <span>✅ Fair Use Unlimited Text</span>
-          <span>✅ Fair Use Unlimited Image</span>
-          <span>✅ Fair Use Unlimited Tests</span>
-        </div>
-      </div>
-  </section>
-  <section class="payment-wrap">
+    </section>
+
+    <section class="payment-wrap">
       <div class="pay-card qr-box">
         <h2>Scan QR to Pay</h2>
 
@@ -456,7 +520,7 @@
         </div>
 
         <div class="payment-summary">
-          <strong>Selected Plan:</strong> <span id="selectedPlanText">Most Popular</span><br />
+          <strong>Selected Plan:</strong> <span id="selectedPlanText">3 Months Plan</span><br />
           <strong>Amount:</strong> <span id="selectedAmountText">₹199</span><br />
           <small id="paymentNote">Payment ke baad UTR aur screenshot submit karo.</small>
         </div>
@@ -475,7 +539,7 @@
         <h2>Submit Payment Request</h2>
 
         <div class="notice" id="planNotice">
-          Selected Plan: Most Popular | Amount: ₹199
+          Selected Plan: 3 Months Plan | Amount: ₹199
         </div>
 
         <input type="hidden" name="planId" id="planIdInput" value="popular_3m" />
@@ -537,7 +601,7 @@
 
     let selectedPlan = {
       id: "popular_3m",
-      title: "Most Popular",
+      title: "3 Months Plan",
       amount: 199
     };
 
@@ -671,7 +735,7 @@
         amount: Number(card.dataset.amount || 0)
       };
 
-      document.querySelectorAll(".plan-card").forEach((c) => {
+      document.querySelectorAll(".upgrade-plan-card").forEach((c) => {
         c.classList.remove("selected");
       });
 
@@ -712,18 +776,34 @@
     }
 
     function initPlanSelection() {
-      document.querySelectorAll(".plan-card").forEach((card) => {
+      document.querySelectorAll(".upgrade-plan-card").forEach((card) => {
         card.addEventListener("click", () => {
           updateSelectedPlan(card);
         });
+
+        const btn = card.querySelector(".upgrade-plan-btn");
+        if (btn) {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            updateSelectedPlan(card);
+
+            const paymentSection = document.querySelector(".payment-wrap");
+            if (paymentSection) {
+              paymentSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+              });
+            }
+          });
+        }
       });
 
       const params = new URLSearchParams(window.location.search);
       const planFromUrl = params.get("plan");
 
       const targetCard = planFromUrl
-        ? document.querySelector(`.plan-card[data-plan="${planFromUrl}"]`)
-        : document.querySelector(`.plan-card[data-plan="popular_3m"]`);
+        ? document.querySelector(`.upgrade-plan-card[data-plan="${planFromUrl}"]`)
+        : document.querySelector(`.upgrade-plan-card[data-plan="popular_3m"]`);
 
       if (targetCard) {
         updateSelectedPlan(targetCard);
@@ -798,7 +878,7 @@
 
           paymentForm.reset();
 
-          const selectedCard = document.querySelector(`.plan-card[data-plan="${selectedPlan.id}"]`);
+          const selectedCard = document.querySelector(`.upgrade-plan-card[data-plan="${selectedPlan.id}"]`);
 
           if (selectedCard) {
             updateSelectedPlan(selectedCard);
@@ -826,4 +906,4 @@
     });
   </script>
 </body>
-</html>
+  </html>
