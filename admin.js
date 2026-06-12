@@ -64,6 +64,14 @@ function planName(planId) {
   return plans[planId] || planId || "Free";
 }
 
+function getUserClass(user) {
+  return user.classLevel || user.className || user.class || "";
+}
+
+function getTestLeft(user) {
+  return user.testLeft ?? user.remainingTest ?? user.remainingTests ?? "-";
+}
+
 function getScreenshotUrl(filePath) {
   if (!filePath) return "";
 
@@ -115,14 +123,6 @@ function openModal(id) {
 function closeModal(id) {
   const modal = document.getElementById(id);
   if (modal) modal.style.display = "none";
-}
-
-function getUserClass(user) {
-  return user.classLevel || user.className || user.class || "";
-}
-
-function getTestLeft(user) {
-  return user.testLeft ?? user.remainingTest ?? user.remainingTests ?? "-";
 }
 
 // =========================
@@ -182,22 +182,39 @@ function setupAdminLogin() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    e.stopPropagation();
 
-    const formData = Object.fromEntries(new FormData(form));
+    const email = form.querySelector('input[name="email"]')?.value.trim() || "";
+    const password = form.querySelector('input[name="password"]')?.value.trim() || "";
+
+    if (!password) {
+      showBox("adminLoginMsg", "Password enter karo.", "error");
+      return false;
+    }
 
     try {
+      showBox("adminLoginMsg", "Admin login ho raha hai...", "notice");
+
       const data = await adminReq("/api/admin/login", {
         method: "POST",
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          email,
+          password
+        })
       });
 
       localStorage.setItem("mg_admin_token", data.token);
       localStorage.setItem("mg_admin", JSON.stringify(data.admin || {}));
 
+      showBox("adminLoginMsg", "Login successful. Dashboard open ho raha hai...", "success");
+
       setAdminView(true);
       await loadAdminDashboard();
+
+      return false;
     } catch (err) {
       showBox("adminLoginMsg", err.message || "Admin login failed", "error");
+      return false;
     }
   });
 }
@@ -319,7 +336,347 @@ function renderStats(data) {
   if (statPendingPayments) statPendingPayments.textContent = pendingPayments;
   if (statPremiumUsers) statPremiumUsers.textContent = premiumUsers;
   if (statDoubts) statDoubts.textContent = totalDoubts;
+    }
+// =========================
+// RENDER PAYMENTS
+// =========================
+
+function renderPayments(payments) {
+  const tbody = document.getElementById("paymentsTable");
+  if (!tbody) return;
+
+  if (!payments || !payments.length) {
+    tbody.innerHTML = `<tr><td colspan="7">No payments found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = payments.map((p) => {
+    const status = p.status || "pending";
+    const userName = p.userName || p.user?.name || "-";
+    const userEmail = p.userEmail || p.user?.email || "-";
+    const screenshot = p.screenshotPath || p.screenshot || "";
+
+    return `
+      <tr>
+        <td>
+          <strong>${esc(userName)}</strong><br>
+          <small>${esc(userEmail)}</small><br>
+          <small>ID: ${esc(p.userId || "-")}</small>
+        </td>
+
+        <td>
+          <strong>${esc(planName(p.planId || "free"))}</strong><br>
+          ₹${esc(p.amount || 0)}
+        </td>
+
+        <td>${esc(p.utr || "-")}</td>
+
+        <td>
+          <span class="status ${esc(status)}">${esc(status)}</span>
+        </td>
+
+        <td>
+          ${
+            screenshot
+              ? `<button class="mini-btn blue" type="button" onclick="openPaymentReview('${p.id}')">View</button>`
+              : "-"
+          }
+        </td>
+
+        <td>${formatDate(p.createdAt)}</td>
+
+        <td>
+          <div class="admin-actions">
+            <button class="mini-btn blue" type="button" onclick="openPaymentReview('${p.id}')">Review</button>
+            <button class="mini-btn green" type="button" onclick="approvePayment('${p.id}')">Approve</button>
+            <button class="mini-btn red" type="button" onclick="rejectPayment('${p.id}')">Reject</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
 }
+
+// =========================
+// RENDER USERS
+// =========================
+
+function renderUsers(users) {
+  const tbody = document.getElementById("usersTable");
+  if (!tbody) return;
+
+  if (!users || !users.length) {
+    tbody.innerHTML = `<tr><td colspan="7">No users found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = users.map((u) => {
+    const premium = u.premiumActive || (u.planId && u.planId !== "free");
+
+    return `
+      <tr>
+        <td>
+          <strong>${esc(u.name || "-")}</strong><br>
+          <small>${esc(u.email || "-")}</small><br>
+          <small>Mobile: ${esc(u.mobile || "-")}</small>
+        </td>
+
+        <td>
+          Class: ${esc(getUserClass(u) || "-")}<br>
+          Signup: ${formatShortDate(u.createdAt)}<br>
+          ID: ${esc(u.id || "-")}
+        </td>
+
+        <td>
+          <strong>${esc(planName(u.planId || "free"))}</strong><br>
+          Expiry: ${esc(u.planExpiry || "-")}
+        </td>
+
+        <td>
+          Text: ${esc(u.textLeft ?? u.remainingText ?? "-")}<br>
+          Image: ${esc(u.imageLeft ?? u.remainingImage ?? "-")}<br>
+          Tests: ${esc(getTestLeft(u))}
+        </td>
+
+        <td>
+          Text Used: ${esc(u.textUsed || 0)}<br>
+          Image Used: ${esc(u.imageUsed || 0)}<br>
+          Tests Used: ${esc(u.testUsed || 0)}
+        </td>
+
+        <td>
+          <span class="status ${premium ? "approved" : "pending"}">${premium ? "Premium" : "Free"}</span><br>
+          <small>${esc(u.status || "active")}</small>
+        </td>
+
+        <td>
+          <div class="admin-actions">
+            <button class="mini-btn blue" type="button" onclick="openUserDetails('${u.id}')">View</button>
+            <button class="mini-btn purple" type="button" onclick="openUserEdit('${u.id}')">Edit</button>
+            <button class="mini-btn green" type="button" onclick="manualActivate('${u.id}')">Premium</button>
+            <button class="mini-btn red" type="button" onclick="deleteUserById('${u.id}')">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// =========================
+// RENDER DOUBTS / TESTS / CONTACTS
+// =========================
+
+function renderDoubts(doubts) {
+  const box = document.getElementById("adminDoubts");
+  if (!box) return;
+
+  if (!doubts || !doubts.length) {
+    box.innerHTML = "No doubts found.";
+    return;
+  }
+
+  box.innerHTML = doubts.map((d) => `
+    <div class="admin-section">
+      <strong>${esc(d.userName || d.userEmail || d.userId || "User")}</strong>
+      <p>${esc(d.question || "Image doubt")}</p>
+      <p class="muted">Type: ${esc(d.type || "-")} | ${formatDate(d.createdAt)}</p>
+    </div>
+  `).join("");
+}
+
+function renderTests(tests) {
+  const box = document.getElementById("adminTests");
+  if (!box) return;
+
+  if (!tests || !tests.length) {
+    box.innerHTML = "No tests found.";
+    return;
+  }
+
+  box.innerHTML = tests.map((t) => `
+    <div class="admin-section">
+      <strong>${esc(t.chapter || t.title || "Math Test")}</strong>
+      <p>
+        User: ${esc(t.userName || t.userEmail || t.userId || "-")}<br>
+        Score: ${esc(t.score ?? "-")} / ${esc(t.totalQuestions ?? "-")}<br>
+        Attempted: ${esc(t.attempted ?? "-")} | Time: ${esc(t.timeTaken || "-")}
+      </p>
+      <p class="muted">${formatDate(t.createdAt)}</p>
+    </div>
+  `).join("");
+}
+
+function renderContacts(contacts) {
+  const box = document.getElementById("contactsList");
+  if (!box) return;
+
+  if (!contacts || !contacts.length) {
+    box.innerHTML = "No contact messages found.";
+    return;
+  }
+
+  box.innerHTML = contacts.map((c) => `
+    <div class="admin-section">
+      <strong>${esc(c.name || "-")}</strong> — ${esc(c.email || "-")}
+      <p>${esc(c.message || "-")}</p>
+      <p class="muted">${formatDate(c.createdAt)}</p>
+    </div>
+  `).join("");
+}
+
+// =========================
+// PAYMENT ACTIONS
+// =========================
+
+function openPaymentReview(paymentId) {
+  const payment = adminCache.payments.find((p) => String(p.id) === String(paymentId));
+
+  if (!payment) {
+    alert("Payment not found");
+    return;
+  }
+
+  const userName = payment.userName || payment.user?.name || "-";
+  const userEmail = payment.userEmail || payment.user?.email || "-";
+  const screenshot = payment.screenshotPath || payment.screenshot || "";
+
+  const paymentIdInput = document.getElementById("paymentId");
+  const paymentUser = document.getElementById("paymentUser");
+  const paymentPlan = document.getElementById("paymentPlan");
+  const paymentAmount = document.getElementById("paymentAmount");
+  const paymentUtr = document.getElementById("paymentUtr");
+  const paymentAdminNote = document.getElementById("paymentAdminNote");
+
+  if (paymentIdInput) paymentIdInput.value = payment.id;
+  if (paymentUser) paymentUser.value = `${userName} (${userEmail})`;
+  if (paymentPlan) paymentPlan.value = planName(payment.planId);
+  if (paymentAmount) paymentAmount.value = `₹${payment.amount || 0}`;
+  if (paymentUtr) paymentUtr.value = payment.utr || "";
+  if (paymentAdminNote) paymentAdminNote.value = payment.adminNote || "";
+
+  const box = document.getElementById("paymentScreenshotBox");
+
+  if (box) {
+    if (screenshot) {
+      const url = getScreenshotUrl(screenshot);
+
+      box.innerHTML = `
+        <a href="${url}" target="_blank">
+          <img src="${url}" alt="Payment Screenshot">
+        </a>
+      `;
+    } else {
+      box.innerHTML = "No screenshot uploaded.";
+    }
+  }
+
+  openModal("paymentModal");
+}
+
+async function approvePayment(paymentId) {
+  if (!confirm("Payment approve karke premium activate karna hai?")) return;
+
+  try {
+    await adminReq(`/api/admin/payment/${paymentId}/approve`, {
+      method: "POST",
+      body: JSON.stringify({
+        adminNote: document.getElementById("paymentAdminNote")?.value || ""
+      })
+    });
+
+    closeModal("paymentModal");
+    alert("Payment approved. Premium activated.");
+    await loadAdminDashboard();
+  } catch (err) {
+    alert("Approve error: " + err.message);
+  }
+}
+
+async function rejectPayment(paymentId) {
+  if (!confirm("Payment reject karna hai?")) return;
+
+  try {
+    await adminReq(`/api/admin/payment/${paymentId}/reject`, {
+      method: "POST",
+      body: JSON.stringify({
+        adminNote: document.getElementById("paymentAdminNote")?.value || ""
+      })
+    });
+
+    closeModal("paymentModal");
+    alert("Payment rejected.");
+    await loadAdminDashboard();
+  } catch (err) {
+    alert("Reject error: " + err.message);
+  }
+}
+
+function setupPaymentModalButtons() {
+  const approveBtn = document.getElementById("approvePaymentBtn");
+  const rejectBtn = document.getElementById("rejectPaymentBtn");
+
+  if (approveBtn) {
+    approveBtn.addEventListener("click", () => {
+      const id = document.getElementById("paymentId")?.value;
+      if (id) approvePayment(id);
+    });
+  }
+
+  if (rejectBtn) {
+    rejectBtn.addEventListener("click", () => {
+      const id = document.getElementById("paymentId")?.value;
+      if (id) rejectPayment(id);
+    });
+  }
+                           }
+// =========================
+// USER DETAILS / EDIT
+// =========================
+
+function openUserDetails(userId) {
+  const user = adminCache.users.find((u) => String(u.id) === String(userId));
+
+  if (!user) {
+    alert("User not found");
+    return;
+  }
+
+  const box = document.getElementById("userDetailsContent");
+  if (!box) return;
+
+  box.innerHTML = `
+    <div class="admin-section">
+      <h3>Basic Details</h3>
+      <p><strong>Name:</strong> ${esc(user.name || "-")}</p>
+      <p><strong>Email:</strong> ${esc(user.email || "-")}</p>
+      <p><strong>Mobile:</strong> ${esc(user.mobile || "-")}</p>
+      <p><strong>Class:</strong> ${esc(getUserClass(user) || "-")}</p>
+      <p><strong>User ID:</strong> ${esc(user.id || "-")}</p>
+      <p><strong>Created:</strong> ${formatDate(user.createdAt)}</p>
+    </div>
+
+    <div class="admin-section">
+      <h3>Plan Details</h3>
+      <p><strong>Plan:</strong> ${esc(planName(user.planId || "free"))}</p>
+      <p><strong>Premium Active:</strong> ${user.premiumActive ? "Yes" : "No"}</p>
+      <p><strong>Plan Expiry:</strong> ${esc(user.planExpiry || "-")}</p>
+      <p><strong>Payment Status:</strong> ${esc(user.paymentStatus || "-")}</p>
+    </div>
+
+    <div class="admin-section">
+      <h3>Usage Details</h3>
+      <p><strong>Text Used:</strong> ${esc(user.textUsed || 0)}</p>
+      <p><strong>Image Used:</strong> ${esc(user.imageUsed || 0)}</p>
+      <p><strong>Tests Used:</strong> ${esc(user.testUsed || 0)}</p>
+      <p><strong>Extra Text:</strong> ${esc(user.extraText || 0)}</p>
+      <p><strong>Extra Image:</strong> ${esc(user.extraImage || 0)}</p>
+      <p><strong>Extra Tests:</strong> ${esc(user.extraTests || 0)}</p>
+    </div>
+  `;
+
+  openModal("userDetailsModal");
+}
+
 function openUserEdit(userId) {
   const user = adminCache.users.find((u) => String(u.id) === String(userId));
 
@@ -357,6 +714,7 @@ function setupEditUserForm() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    e.stopPropagation();
 
     const userId = document.getElementById("editUserId").value;
 
@@ -519,17 +877,9 @@ function setupUserSearch() {
     renderUsers(filtered);
   }
 
-  if (input) {
-    input.addEventListener("input", applySearch);
-  }
-
-  if (btn) {
-    btn.addEventListener("click", applySearch);
-  }
-
-  if (refreshBtn) {
-    refreshBtn.addEventListener("click", loadAdminDashboard);
-  }
+  if (input) input.addEventListener("input", applySearch);
+  if (btn) btn.addEventListener("click", applySearch);
+  if (refreshBtn) refreshBtn.addEventListener("click", loadAdminDashboard);
 }
 
 function setupPaymentFilters() {
@@ -551,17 +901,12 @@ function setupPaymentFilters() {
     renderPayments(filtered);
   }
 
-  if (statusSelect) {
-    statusSelect.addEventListener("change", applyFilter);
-  }
-
-  if (refreshBtn) {
-    refreshBtn.addEventListener("click", loadAdminDashboard);
-  }
+  if (statusSelect) statusSelect.addEventListener("change", applyFilter);
+  if (refreshBtn) refreshBtn.addEventListener("click", loadAdminDashboard);
 }
 
 // =========================
-// GLOBAL FUNCTIONS FOR HTML onclick
+// GLOBAL FUNCTIONS
 // =========================
 
 window.openPaymentReview = openPaymentReview;
