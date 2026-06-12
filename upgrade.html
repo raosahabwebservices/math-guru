@@ -62,6 +62,7 @@
       gap: 18px !important;
       margin-top: 24px !important;
       margin-bottom: 28px !important;
+      width: 100% !important;
     }
 
     .upgrade-plan-card {
@@ -70,12 +71,17 @@
       border: 2px solid #e5e7eb !important;
       border-radius: 18px !important;
       padding: 24px 22px !important;
-      min-height: 340px !important;
+      min-height: 345px !important;
       box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08) !important;
       cursor: pointer !important;
       transition: 0.25s ease !important;
       color: #0f172a !important;
       overflow: visible !important;
+    }
+
+    .upgrade-plan-card * {
+      visibility: visible !important;
+      opacity: 1 !important;
     }
 
     .upgrade-plan-card:hover {
@@ -135,6 +141,7 @@
     }
 
     .upgrade-plan-title {
+      display: block !important;
       font-size: 22px !important;
       font-weight: 950 !important;
       color: #0f172a !important;
@@ -144,6 +151,7 @@
     }
 
     .upgrade-old-price {
+      display: inline-block !important;
       color: #777 !important;
       font-size: 17px !important;
       font-weight: 800 !important;
@@ -162,6 +170,7 @@
     }
 
     .upgrade-valid {
+      display: block !important;
       color: #333 !important;
       font-size: 14px !important;
       font-weight: 700 !important;
@@ -180,11 +189,13 @@
     }
 
     .upgrade-features {
+      display: block !important;
       margin-top: 16px !important;
       margin-bottom: 18px !important;
     }
 
     .upgrade-features p {
+      display: block !important;
       margin: 8px 0 !important;
       color: #334155 !important;
       font-size: 15px !important;
@@ -193,6 +204,7 @@
     }
 
     .upgrade-plan-btn {
+      display: inline-block !important;
       border: none !important;
       background: #0056b3 !important;
       color: white !important;
@@ -205,6 +217,7 @@
     }
 
     .upgrade-badge {
+      display: inline-block !important;
       position: absolute !important;
       top: -11px !important;
       right: 12px !important;
@@ -227,7 +240,8 @@
     .upgrade-badge.purple {
       background: #7c3aed !important;
     }
-    .payment-wrap {
+    
+.payment-wrap {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 18px;
@@ -400,108 +414,12 @@
     </section>
 
     <section class="upgrade-plans-grid">
-
-      <div class="upgrade-plan-card" data-plan="free" data-amount="0" data-title="Free">
-        <div class="upgrade-plan-title">🆓 Free</div>
-        <div class="upgrade-price">₹0</div>
-        <div class="upgrade-valid">Free Forever</div>
-        <div class="upgrade-features">
-          <p>✅ 10 Text Doubts</p>
-          <p>✅ 3 Image Doubts</p>
-          <p>✅ 3 AI Tests</p>
-          <p>✅ Hindi + English / Hinglish</p>
-        </div>
-        <button type="button" class="upgrade-plan-btn">Start Free</button>
-      </div>
-
-      <div class="upgrade-plan-card" data-plan="starter" data-amount="79" data-title="Starter">
-        <div class="upgrade-plan-title">⭐ Starter</div>
-        <div>
-          <span class="upgrade-old-price">₹111</span>
-          <span class="upgrade-price">₹79</span>
-        </div>
-        <div class="upgrade-valid">Valid for 1 Month</div>
-        <span class="upgrade-save">Save ₹32</span>
-        <div class="upgrade-features">
-          <p>✅ 100 Text Doubts</p>
-          <p>✅ 20 Image Doubts</p>
-          <p>✅ 15 AI Tests</p>
-          <p>✅ Best for trial users</p>
-        </div>
-        <button type="button" class="upgrade-plan-btn">Get Starter Plan</button>
-      </div>
-
-      <div class="upgrade-plan-card border-blue" data-plan="popular_3m" data-amount="199" data-title="3 Months Plan">
-        <span class="upgrade-badge orange">Most Popular</span>
-        <div class="upgrade-plan-title">🔥 3 Months Plan</div>
-        <div>
-          <span class="upgrade-old-price">₹299</span>
-          <span class="upgrade-price">₹199</span>
-        </div>
-        <div class="upgrade-valid">Valid for 3 Months</div>
-        <span class="upgrade-save">Save ₹100</span>
-        <div class="upgrade-features">
-          <p>✅ 300 Text Doubts</p>
-          <p>✅ 75 Image Doubts</p>
-          <p>✅ 40 AI Tests</p>
-          <p>✅ Best for regular students</p>
-        </div>
-        <button type="button" class="upgrade-plan-btn">Get ₹199 Plan</button>
-      </div>
-
-      <div class="upgrade-plan-card border-green" data-plan="half_year" data-amount="349" data-title="Half Year Plan">
-        <span class="upgrade-badge green">Recommended</span>
-        <div class="upgrade-plan-title">💎 Half Year Plan</div>
-        <div>
-          <span class="upgrade-old-price">₹499</span>
-          <span class="upgrade-price">₹349</span>
-        </div>
-        <div class="upgrade-valid">Valid for 6 Months</div>
-        <span class="upgrade-save">Save ₹150</span>
-        <div class="upgrade-features">
-          <p>✅ 700 Text Doubts</p>
-          <p>✅ 150 Image Doubts</p>
-          <p>✅ 100 AI Tests</p>
-          <p>✅ Best for exam preparation</p>
-        </div>
-        <button type="button" class="upgrade-plan-btn">Get Half Year Plan</button>
-      </div>
-      <div class="upgrade-plan-card" data-plan="yearly" data-amount="699" data-title="Yearly Plan">
-        <span class="upgrade-badge green">Best Value</span>
-        <div class="upgrade-plan-title">🏆 Yearly Plan</div>
-        <div>
-          <span class="upgrade-old-price">₹999</span>
-          <span class="upgrade-price">₹699</span>
-        </div>
-        <div class="upgrade-valid">Valid for 1 Year</div>
-        <span class="upgrade-save">Save ₹300</span>
-        <div class="upgrade-features">
-          <p>✅ 1500 Text Doubts</p>
-          <p>✅ 400 Image Doubts</p>
-          <p>✅ 250 AI Tests</p>
-          <p>✅ Best for full-year study</p>
-        </div>
-        <button type="button" class="upgrade-plan-btn">Get Yearly Plan</button>
-      </div>
-
-      <div class="upgrade-plan-card border-purple" data-plan="unlimited" data-amount="299" data-title="Unlimited">
-        <span class="upgrade-badge purple">Unlimited</span>
-        <div class="upgrade-plan-title">🚀 Unlimited*</div>
-        <div>
-          <span class="upgrade-old-price">₹499</span>
-          <span class="upgrade-price">₹299</span>
-        </div>
-        <div class="upgrade-valid">Valid for 1 Month</div>
-        <span class="upgrade-save">Save ₹200</span>
-        <div class="upgrade-features">
-          <p>✅ Fair Use Unlimited Text Doubts</p>
-          <p>✅ Fair Use Unlimited Image Doubts</p>
-          <p>✅ Fair Use Unlimited AI Tests</p>
-          <p>✅ Best for heavy users</p>
-        </div>
-        <button type="button" class="upgrade-plan-btn">Get Unlimited Plan</button>
-      </div>
-
+      <div class="upgrade-plan-card" data-plan="free" data-amount="0" data-title="Free"></div>
+      <div class="upgrade-plan-card" data-plan="starter" data-amount="79" data-title="Starter"></div>
+      <div class="upgrade-plan-card border-blue" data-plan="popular_3m" data-amount="199" data-title="3 Months Plan"></div>
+      <div class="upgrade-plan-card border-green" data-plan="half_year" data-amount="349" data-title="Half Year Plan"></div>
+      <div class="upgrade-plan-card" data-plan="yearly" data-amount="699" data-title="Yearly Plan"></div>
+      <div class="upgrade-plan-card border-purple" data-plan="unlimited" data-amount="299" data-title="Unlimited"></div>
     </section>
 
     <section class="payment-wrap">
@@ -557,7 +475,7 @@
             autocomplete="off"
           />
           <small class="form-note">
-            Fake UTR जैसे 1234567890, 0000000000, testutr accept nahi hoga.
+            Fake UTR jaise 1234567890, 0000000000, testutr accept nahi hoga.
           </small>
         </div>
 
@@ -571,7 +489,7 @@
             required
           />
           <small class="form-note">
-            Screenshot में amount, UTR/payment reference, date/time clear दिखना चाहिए.
+            Screenshot me amount, UTR/payment reference, date/time clear dikhna chahiye.
           </small>
         </div>
 
@@ -589,7 +507,6 @@
   </main>
 
   <script src="script.js"></script>
-
   <script>
     const UPI_ID = "raos38908@okhdfcbank";
     const UPI_NAME = "Rao Sahab";
@@ -599,11 +516,150 @@
         ? "http://localhost:3000"
         : "https://math-guru.onrender.com";
 
+    const PLAN_DATA = {
+      free: {
+        title: "🆓 Free",
+        price: "₹0",
+        oldPrice: "",
+        valid: "Free Forever",
+        save: "",
+        badge: "",
+        badgeClass: "",
+        button: "Start Free",
+        features: [
+          "✅ 10 Text Doubts",
+          "✅ 3 Image Doubts",
+          "✅ 3 AI Tests",
+          "✅ Hindi + English / Hinglish"
+        ]
+      },
+      starter: {
+        title: "⭐ Starter",
+        price: "₹79",
+        oldPrice: "₹111",
+        valid: "Valid for 1 Month",
+        save: "Save ₹32",
+        badge: "",
+        badgeClass: "",
+        button: "Get Starter Plan",
+        features: [
+          "✅ 100 Text Doubts",
+          "✅ 20 Image Doubts",
+          "✅ 15 AI Tests",
+          "✅ Best for trial users"
+        ]
+      },
+      popular_3m: {
+        title: "🔥 3 Months Plan",
+        price: "₹199",
+        oldPrice: "₹299",
+        valid: "Valid for 3 Months",
+        save: "Save ₹100",
+        badge: "Most Popular",
+        badgeClass: "orange",
+        button: "Get ₹199 Plan",
+        features: [
+          "✅ 300 Text Doubts",
+          "✅ 75 Image Doubts",
+          "✅ 40 AI Tests",
+          "✅ Best for regular students"
+        ]
+      },
+      half_year: {
+        title: "💎 Half Year Plan",
+        price: "₹349",
+        oldPrice: "₹499",
+        valid: "Valid for 6 Months",
+        save: "Save ₹150",
+        badge: "Recommended",
+        badgeClass: "green",
+        button: "Get Half Year Plan",
+        features: [
+          "✅ 700 Text Doubts",
+          "✅ 150 Image Doubts",
+          "✅ 100 AI Tests",
+          "✅ Best for exam preparation"
+        ]
+      },
+      yearly: {
+        title: "🏆 Yearly Plan",
+        price: "₹699",
+        oldPrice: "₹999",
+        valid: "Valid for 1 Year",
+        save: "Save ₹300",
+        badge: "Best Value",
+        badgeClass: "green",
+        button: "Get Yearly Plan",
+        features: [
+          "✅ 1500 Text Doubts",
+          "✅ 400 Image Doubts",
+          "✅ 250 AI Tests",
+          "✅ Best for full-year study"
+        ]
+      },
+      unlimited: {
+        title: "🚀 Unlimited*",
+        price: "₹299",
+        oldPrice: "₹499",
+        valid: "Valid for 1 Month",
+        save: "Save ₹200",
+        badge: "Unlimited",
+        badgeClass: "purple",
+        button: "Get Unlimited Plan",
+        features: [
+          "✅ Fair Use Unlimited Text Doubts",
+          "✅ Fair Use Unlimited Image Doubts",
+          "✅ Fair Use Unlimited AI Tests",
+          "✅ Best for heavy users"
+        ]
+      }
+    };
+
     let selectedPlan = {
       id: "popular_3m",
       title: "3 Months Plan",
       amount: 199
     };
+
+    function renderUpgradeCards() {
+      document.querySelectorAll(".upgrade-plan-card").forEach((card) => {
+        const planId = card.dataset.plan;
+        const plan = PLAN_DATA[planId];
+
+        if (!plan) return;
+
+        const oldPriceHtml = plan.oldPrice
+          ? `<span class="upgrade-old-price">${plan.oldPrice}</span>`
+          : "";
+
+        const saveHtml = plan.save
+          ? `<span class="upgrade-save">${plan.save}</span>`
+          : "";
+
+        const badgeHtml = plan.badge
+          ? `<span class="upgrade-badge ${plan.badgeClass}">${plan.badge}</span>`
+          : "";
+
+        const featuresHtml = plan.features
+          .map((item) => `<p>${item}</p>`)
+          .join("");
+
+        card.innerHTML = `
+          ${badgeHtml}
+          <div class="upgrade-plan-title">${plan.title}</div>
+          <div>
+            ${oldPriceHtml}
+            <span class="upgrade-price">${plan.price}</span>
+          </div>
+          <div class="upgrade-valid">${plan.valid}</div>
+          ${saveHtml}
+          <div class="upgrade-features">
+            ${featuresHtml}
+          </div>
+          <button type="button" class="upgrade-plan-btn">${plan.button}</button>
+        `;
+      });
+    }
 
     function getToken() {
       return localStorage.getItem("mg_token") || "";
@@ -671,7 +727,6 @@
 
     function makeUpiLink(amount, planTitle) {
       const note = "MATH GURU " + planTitle;
-
       return `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(UPI_NAME)}&am=${encodeURIComponent(amount)}&cu=INR&tn=${encodeURIComponent(note)}`;
     }
 
@@ -782,12 +837,14 @@
         });
 
         const btn = card.querySelector(".upgrade-plan-btn");
+
         if (btn) {
           btn.addEventListener("click", (e) => {
             e.stopPropagation();
             updateSelectedPlan(card);
 
             const paymentSection = document.querySelector(".payment-wrap");
+
             if (paymentSection) {
               paymentSection.scrollIntoView({
                 behavior: "smooth",
@@ -884,9 +941,9 @@
             updateSelectedPlan(selectedCard);
           }
         } catch (err) {
-          showPaymentMsg(err.message, "error");
+          showPaymentMsg(err.message || "Payment request failed", "error");
 
-          if (String(err.message).toLowerCase().includes("login")) {
+          if (String(err.message || "").toLowerCase().includes("login")) {
             setTimeout(() => {
               window.location.href = "login.html";
             }, 1200);
@@ -901,9 +958,10 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      renderUpgradeCards();
       initPlanSelection();
       initPaymentForm();
     });
   </script>
 </body>
-  </html>
+</html>
