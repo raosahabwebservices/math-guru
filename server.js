@@ -168,6 +168,7 @@ const publicUser = (u) => ({
   name: u.name,
   email: u.email,
   mobile: u.mobile || "",
+  classLevel: u.classLevel || "",
 
   planId: isPremiumValid(u) ? u.planId || "free" : "free",
   planExpiry: u.planExpiry || null,
@@ -177,6 +178,10 @@ const publicUser = (u) => ({
   textUsed: u.textUsed || 0,
   imageUsed: u.imageUsed || 0,
   testUsed: u.testUsed || 0,
+
+  extraText: Number(u.extraText || 0),
+  extraImage: Number(u.extraImage || 0),
+  extraTests: Number(u.extraTests || 0),
 
   textLeft: Math.max(0, textLimit(u) - (u.textUsed || 0)),
   imageLeft: Math.max(0, imageLimit(u) - (u.imageUsed || 0)),
@@ -311,11 +316,12 @@ const paymentUpload = multer({
 
 async function signupHandler(req, res) {
   try {
-    let { name, email, mobile, password } = req.body;
+    let { name, email, mobile, password, classLevel } = req.body;
 
     name = String(name || "").trim();
     email = normalizeEmail(email);
     mobile = normalizeMobile(mobile);
+    classLevel = String(classLevel || "").trim();
 
     if (!name || !email || !mobile || !password) {
       return res.status(400).json({
@@ -378,6 +384,7 @@ async function signupHandler(req, res) {
       name,
       email,
       mobile,
+      classLevel,
       password: hashedPassword,
 
       premiumActive: false,
@@ -766,6 +773,7 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
     });
   }
 });
+
 app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
   try {
     const { testId } = req.params;
@@ -865,7 +873,6 @@ app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
     });
   }
 });
-
 app.get("/api/test/history", requireAuth, async (req, res) => {
   try {
     const tests = await readJson("tests");
@@ -1024,6 +1031,156 @@ app.get("/api/admin/dashboard", requireAdmin, async (req, res) => {
   }
 });
 
+// ==========================================
+// ADMIN USER MANAGEMENT ROUTES
+// ==========================================
+
+app.post("/api/admin/user/:userId/update", requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const {
+      name,
+      email,
+      mobile,
+      classLevel,
+      planId,
+      planExpiry,
+      premiumActive,
+      paymentStatus,
+      extraText,
+      extraImage,
+      extraTests,
+      status,
+      adminNote
+    } = req.body || {};
+
+    const users = await readJson("users");
+    const user = users.find((u) => String(u.id) === String(userId));
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    if (name !== undefined) user.name = String(name || "").trim();
+    if (email !== undefined) user.email = normalizeEmail(email);
+    if (mobile !== undefined) user.mobile = normalizeMobile(mobile);
+    if (classLevel !== undefined) user.classLevel = String(classLevel || "").trim();
+
+    if (planId !== undefined) {
+      user.planId = String(planId || "free");
+    }
+
+    if (planExpiry !== undefined) {
+      user.planExpiry = planExpiry ? new Date(planExpiry).toISOString() : null;
+    }
+
+    if (premiumActive !== undefined) {
+      user.premiumActive = Boolean(premiumActive);
+    } else {
+      user.premiumActive = Boolean(user.planId && user.planId !== "free");
+    }
+
+    if (paymentStatus !== undefined) {
+      user.paymentStatus = String(paymentStatus || "free");
+    } else if (user.premiumActive) {
+      user.paymentStatus = "approved";
+    } else {
+      user.paymentStatus = "free";
+    }
+
+    user.extraText = Number(extraText || 0);
+    user.extraImage = Number(extraImage || 0);
+    user.extraTests = Number(extraTests || 0);
+
+    if (status !== undefined) {
+      user.status = String(status || "active");
+    }
+
+    if (adminNote !== undefined) {
+      user.adminNote = String(adminNote || "");
+    }
+
+    user.updatedAt = new Date().toISOString();
+
+    await writeJson("users", users);
+
+    res.json({
+      message: "User updated successfully",
+      user: safeAdminUser(user)
+    });
+  } catch (err) {
+    console.error("Admin User Update Error:", err);
+    res.status(500).json({
+      message: "User update failed: " + err.message
+    });
+  }
+});
+
+app.post("/api/admin/user/:userId/reset-usage", requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const users = await readJson("users");
+    const user = users.find((u) => String(u.id) === String(userId));
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    user.textUsed = 0;
+    user.imageUsed = 0;
+    user.testUsed = 0;
+    user.usageResetAt = new Date().toISOString();
+
+    await writeJson("users", users);
+
+    res.json({
+      message: "User usage reset successfully",
+      user: safeAdminUser(user)
+    });
+  } catch (err) {
+    console.error("Admin Reset Usage Error:", err);
+    res.status(500).json({
+      message: "Reset usage failed: " + err.message
+    });
+  }
+});
+
+app.delete("/api/admin/user/:userId/delete", requireAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const users = await readJson("users");
+    const filteredUsers = users.filter((u) => String(u.id) !== String(userId));
+
+    if (filteredUsers.length === users.length) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    await writeJson("users", filteredUsers);
+
+    res.json({
+      message: "User deleted successfully"
+    });
+  } catch (err) {
+    console.error("Admin Delete User Error:", err);
+    res.status(500).json({
+      message: "Delete user failed: " + err.message
+    });
+  }
+});
+
+// ==========================================
+// ADMIN PAYMENT APPROVE / REJECT
+// ==========================================
+
 app.post("/api/admin/payment/:paymentId/approve", requireAdmin, async (req, res) => {
   try {
     const { paymentId } = req.params;
@@ -1140,4 +1297,3 @@ connectDB()
     console.error("MongoDB connection failed:", err.message);
     process.exit(1);
   });
-        
