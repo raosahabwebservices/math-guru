@@ -21,7 +21,7 @@ let adminCache = {
 // =========================
 
 function esc(value) {
-  return String(value || "")
+  return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
@@ -64,10 +64,12 @@ function planName(planId) {
   return plans[planId] || planId || "Free";
 }
 
-function getScreenshotUrl(path) {
-  if (!path) return "";
+function getScreenshotUrl(filePath) {
+  if (!filePath) return "";
 
-  if (path.startsWith("http")) return path;
+  if (String(filePath).startsWith("http")) {
+    return filePath;
+  }
 
   const base =
     window.location.hostname === "localhost" ||
@@ -75,7 +77,7 @@ function getScreenshotUrl(path) {
       ? "http://localhost:3000"
       : "https://math-guru.onrender.com";
 
-  return `${base}${path}`;
+  return `${base}${filePath}`;
 }
 
 function showBox(id, text, type = "notice") {
@@ -86,6 +88,15 @@ function showBox(id, text, type = "notice") {
   box.className = `notice ${type}`;
   box.classList.remove("hidden");
   box.style.display = "block";
+}
+
+function hideBox(id) {
+  const box = document.getElementById(id);
+  if (!box) return;
+
+  box.textContent = "";
+  box.classList.add("hidden");
+  box.style.display = "none";
 }
 
 function setAdminView(loggedIn) {
@@ -106,6 +117,14 @@ function closeModal(id) {
   if (modal) modal.style.display = "none";
 }
 
+function getUserClass(user) {
+  return user.classLevel || user.className || user.class || "";
+}
+
+function getTestLeft(user) {
+  return user.testLeft ?? user.remainingTest ?? user.remainingTests ?? "-";
+}
+
 // =========================
 // ADMIN REQUEST
 // =========================
@@ -117,13 +136,18 @@ async function adminReq(path, options = {}) {
     ? path.replace("/api", "")
     : path;
 
+  const headers = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {})
+  };
+
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const res = await fetch(`${ADMIN_API_BASE}${finalPath}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {})
-    }
+    headers
   });
 
   const contentType = res.headers.get("content-type") || "";
@@ -133,6 +157,12 @@ async function adminReq(path, options = {}) {
   }
 
   const data = await res.json();
+
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem("mg_admin_token");
+    localStorage.removeItem("mg_admin");
+    throw new Error(data.message || "Admin login expired. Login again.");
+  }
 
   if (!res.ok) {
     throw new Error(data.message || "Admin request failed");
@@ -166,7 +196,6 @@ function setupAdminLogin() {
 
       setAdminView(true);
       await loadAdminDashboard();
-
     } catch (err) {
       showBox("adminLoginMsg", err.message || "Admin login failed", "error");
     }
@@ -205,6 +234,7 @@ function setupAdminTabs() {
       });
 
       const activeSection = document.getElementById(`tab-${target}`);
+
       if (activeSection) {
         activeSection.classList.remove("hidden");
       }
@@ -248,7 +278,6 @@ async function loadAdminDashboard() {
     renderDoubts(adminCache.doubts);
     renderTests(adminCache.tests);
     renderContacts(adminCache.contacts);
-
   } catch (err) {
     console.error("Admin dashboard error:", err);
 
@@ -291,341 +320,6 @@ function renderStats(data) {
   if (statPremiumUsers) statPremiumUsers.textContent = premiumUsers;
   if (statDoubts) statDoubts.textContent = totalDoubts;
 }
-
-// =========================
-// RENDER PAYMENTS
-// =========================
-
-function renderPayments(payments) {
-  const tbody = document.getElementById("paymentsTable");
-  if (!tbody) return;
-
-  if (!payments.length) {
-    tbody.innerHTML = `<tr><td colspan="7">No payments found.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = payments.map((p) => {
-    const status = p.status || "pending";
-    const userName = p.userName || p.user?.name || "-";
-    const userEmail = p.userEmail || p.user?.email || "-";
-    const screenshot = p.screenshotPath || p.screenshot || "";
-
-    return `
-      <tr>
-        <td>
-          <strong>${esc(userName)}</strong><br>
-          <small>${esc(userEmail)}</small><br>
-          <small>ID: ${esc(p.userId || "-")}</small>
-        </td>
-
-        <td>
-          <strong>${esc(planName(p.planId))}</strong><br>
-          ₹${esc(p.amount || 0)}
-        </td>
-
-        <td>${esc(p.utr || "-")}</td>
-
-        <td>
-          <span class="status ${esc(status)}">${esc(status)}</span>
-        </td>
-
-        <td>
-          ${
-            screenshot
-              ? `<button class="mini-btn blue" type="button" onclick="openPaymentReview('${p.id}')">View</button>`
-              : "-"
-          }
-        </td>
-
-        <td>${formatDate(p.createdAt)}</td>
-
-        <td>
-          <div class="admin-actions">
-            <button class="mini-btn blue" type="button" onclick="openPaymentReview('${p.id}')">Review</button>
-            <button class="mini-btn green" type="button" onclick="approvePayment('${p.id}')">Approve</button>
-            <button class="mini-btn red" type="button" onclick="rejectPayment('${p.id}')">Reject</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-}
-
-// =========================
-// RENDER USERS
-// =========================
-
-function renderUsers(users) {
-  const tbody = document.getElementById("usersTable");
-  if (!tbody) return;
-
-  if (!users.length) {
-    tbody.innerHTML = `<tr><td colspan="7">No users found.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = users.map((u) => {
-    const status = u.status || "active";
-    const premium = u.premiumActive || (u.planId && u.planId !== "free");
-
-    return `
-      <tr>
-        <td>
-          <strong>${esc(u.name || "-")}</strong><br>
-          <small>${esc(u.email || "-")}</small><br>
-          <small>Mobile: ${esc(u.mobile || "-")}</small>
-        </td>
-
-        <td>
-          Class: ${esc(u.className || u.class || "-")}<br>
-          Signup: ${formatShortDate(u.createdAt)}<br>
-          ID: ${esc(u.id || "-")}
-        </td>
-
-        <td>
-          <strong>${esc(planName(u.planId || "free"))}</strong><br>
-          Expiry: ${esc(u.planExpiry || "-")}
-        </td>
-
-        <td>
-          Text: ${esc(u.textLeft ?? u.remainingText ?? "-")}<br>
-          Image: ${esc(u.imageLeft ?? u.remainingImage ?? "-")}<br>
-          Tests: ${esc(u.testLeft ?? u.remainingTests ?? "-")}
-        </td>
-
-        <td>
-          Text Used: ${esc(u.textUsed || 0)}<br>
-          Image Used: ${esc(u.imageUsed || 0)}<br>
-          Tests Used: ${esc(u.testUsed || 0)}
-        </td>
-
-        <td>
-          <span class="status ${premium ? "approved" : "pending"}">${premium ? "Premium" : "Free"}</span><br>
-          <small>${esc(status)}</small>
-        </td>
-
-        <td>
-          <div class="admin-actions">
-            <button class="mini-btn blue" type="button" onclick="openUserDetails('${u.id}')">View</button>
-            <button class="mini-btn purple" type="button" onclick="openUserEdit('${u.id}')">Edit</button>
-            <button class="mini-btn green" type="button" onclick="manualActivate('${u.id}')">Premium</button>
-            <button class="mini-btn red" type="button" onclick="deleteUserById('${u.id}')">Delete</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-    }
-// =========================
-// RENDER DOUBTS / TESTS / CONTACTS
-// =========================
-
-function renderDoubts(doubts) {
-  const box = document.getElementById("adminDoubts");
-  if (!box) return;
-
-  if (!doubts.length) {
-    box.innerHTML = "No doubts found.";
-    return;
-  }
-
-  box.innerHTML = doubts.map((d) => `
-    <div class="admin-section">
-      <strong>${esc(d.userName || d.userEmail || d.userId || "User")}</strong>
-      <p>${esc(d.question || "Image doubt")}</p>
-      <p class="muted">Type: ${esc(d.type || "-")} | ${formatDate(d.createdAt)}</p>
-    </div>
-  `).join("");
-}
-
-function renderTests(tests) {
-  const box = document.getElementById("adminTests");
-  if (!box) return;
-
-  if (!tests.length) {
-    box.innerHTML = "No tests found.";
-    return;
-  }
-
-  box.innerHTML = tests.map((t) => `
-    <div class="admin-section">
-      <strong>${esc(t.chapter || t.title || "Math Test")}</strong>
-      <p>
-        User: ${esc(t.userName || t.userEmail || t.userId || "-")}<br>
-        Score: ${esc(t.score ?? "-")} / ${esc(t.totalQuestions ?? "-")}<br>
-        Attempted: ${esc(t.attempted ?? "-")} | Time: ${esc(t.timeTaken || "-")}
-      </p>
-      <p class="muted">${formatDate(t.createdAt)}</p>
-    </div>
-  `).join("");
-}
-
-function renderContacts(contacts) {
-  const box = document.getElementById("contactsList");
-  if (!box) return;
-
-  if (!contacts.length) {
-    box.innerHTML = "No contact messages found.";
-    return;
-  }
-
-  box.innerHTML = contacts.map((c) => `
-    <div class="admin-section">
-      <strong>${esc(c.name || "-")}</strong> — ${esc(c.email || "-")}
-      <p>${esc(c.message || "-")}</p>
-      <p class="muted">${formatDate(c.createdAt)}</p>
-    </div>
-  `).join("");
-}
-
-// =========================
-// PAYMENT ACTIONS
-// =========================
-
-function openPaymentReview(paymentId) {
-  const payment = adminCache.payments.find((p) => String(p.id) === String(paymentId));
-
-  if (!payment) {
-    alert("Payment not found");
-    return;
-  }
-
-  const userName = payment.userName || payment.user?.name || "-";
-  const userEmail = payment.userEmail || payment.user?.email || "-";
-  const screenshot = payment.screenshotPath || payment.screenshot || "";
-
-  document.getElementById("paymentId").value = payment.id;
-  document.getElementById("paymentUser").value = `${userName} (${userEmail})`;
-  document.getElementById("paymentPlan").value = planName(payment.planId);
-  document.getElementById("paymentAmount").value = `₹${payment.amount || 0}`;
-  document.getElementById("paymentUtr").value = payment.utr || "";
-  document.getElementById("paymentAdminNote").value = payment.adminNote || "";
-
-  const box = document.getElementById("paymentScreenshotBox");
-
-  if (box) {
-    if (screenshot) {
-      const url = getScreenshotUrl(screenshot);
-      box.innerHTML = `
-        <a href="${url}" target="_blank">
-          <img src="${url}" alt="Payment Screenshot">
-        </a>
-      `;
-    } else {
-      box.innerHTML = "No screenshot uploaded.";
-    }
-  }
-
-  openModal("paymentModal");
-}
-
-async function approvePayment(paymentId) {
-  if (!confirm("Payment approve karke premium activate karna hai?")) return;
-
-  try {
-    await adminReq(`/api/admin/payments/${paymentId}/approve`, {
-      method: "POST",
-      body: JSON.stringify({
-        adminNote: document.getElementById("paymentAdminNote")?.value || ""
-      })
-    });
-
-    closeModal("paymentModal");
-    alert("Payment approved. Premium activated.");
-    await loadAdminDashboard();
-
-  } catch (err) {
-    alert("Approve error: " + err.message);
-  }
-}
-
-async function rejectPayment(paymentId) {
-  if (!confirm("Payment reject karna hai?")) return;
-
-  try {
-    await adminReq(`/api/admin/payments/${paymentId}/reject`, {
-      method: "POST",
-      body: JSON.stringify({
-        adminNote: document.getElementById("paymentAdminNote")?.value || ""
-      })
-    });
-
-    closeModal("paymentModal");
-    alert("Payment rejected.");
-    await loadAdminDashboard();
-
-  } catch (err) {
-    alert("Reject error: " + err.message);
-  }
-}
-
-function setupPaymentModalButtons() {
-  const approveBtn = document.getElementById("approvePaymentBtn");
-  const rejectBtn = document.getElementById("rejectPaymentBtn");
-
-  if (approveBtn) {
-    approveBtn.addEventListener("click", () => {
-      const id = document.getElementById("paymentId").value;
-      approvePayment(id);
-    });
-  }
-
-  if (rejectBtn) {
-    rejectBtn.addEventListener("click", () => {
-      const id = document.getElementById("paymentId").value;
-      rejectPayment(id);
-    });
-  }
-}
-
-// =========================
-// USER ACTIONS
-// =========================
-
-function openUserDetails(userId) {
-  const user = adminCache.users.find((u) => String(u.id) === String(userId));
-
-  if (!user) {
-    alert("User not found");
-    return;
-  }
-
-  const box = document.getElementById("userDetailsContent");
-
-  box.innerHTML = `
-    <div class="admin-section">
-      <h3>Basic Details</h3>
-      <p><strong>Name:</strong> ${esc(user.name || "-")}</p>
-      <p><strong>Email:</strong> ${esc(user.email || "-")}</p>
-      <p><strong>Mobile:</strong> ${esc(user.mobile || "-")}</p>
-      <p><strong>Class:</strong> ${esc(user.className || user.class || "-")}</p>
-      <p><strong>User ID:</strong> ${esc(user.id || "-")}</p>
-      <p><strong>Created:</strong> ${formatDate(user.createdAt)}</p>
-    </div>
-
-    <div class="admin-section">
-      <h3>Plan Details</h3>
-      <p><strong>Plan:</strong> ${esc(planName(user.planId || "free"))}</p>
-      <p><strong>Premium Active:</strong> ${user.premiumActive ? "Yes" : "No"}</p>
-      <p><strong>Plan Expiry:</strong> ${esc(user.planExpiry || "-")}</p>
-      <p><strong>Payment Status:</strong> ${esc(user.paymentStatus || "-")}</p>
-    </div>
-
-    <div class="admin-section">
-      <h3>Usage Details</h3>
-      <p><strong>Text Used:</strong> ${esc(user.textUsed || 0)}</p>
-      <p><strong>Image Used:</strong> ${esc(user.imageUsed || 0)}</p>
-      <p><strong>Tests Used:</strong> ${esc(user.testUsed || 0)}</p>
-      <p><strong>Extra Text:</strong> ${esc(user.extraText || 0)}</p>
-      <p><strong>Extra Image:</strong> ${esc(user.extraImage || 0)}</p>
-      <p><strong>Extra Tests:</strong> ${esc(user.extraTests || 0)}</p>
-    </div>
-  `;
-
-  openModal("userDetailsModal");
-}
-
 function openUserEdit(userId) {
   const user = adminCache.users.find((u) => String(u.id) === String(userId));
 
@@ -634,12 +328,15 @@ function openUserEdit(userId) {
     return;
   }
 
+  hideBox("editUserMsg");
+
   document.getElementById("editUserId").value = user.id || "";
   document.getElementById("editName").value = user.name || "";
   document.getElementById("editEmail").value = user.email || "";
   document.getElementById("editMobile").value = user.mobile || "";
-  document.getElementById("editClass").value = user.className || user.class || "";
+  document.getElementById("editClass").value = getUserClass(user) || "";
   document.getElementById("editPlanId").value = user.planId || "free";
+
   document.getElementById("editPlanExpiry").value = user.planExpiry
     ? String(user.planExpiry).slice(0, 10)
     : "";
@@ -667,9 +364,14 @@ function setupEditUserForm() {
       name: document.getElementById("editName").value.trim(),
       email: document.getElementById("editEmail").value.trim(),
       mobile: document.getElementById("editMobile").value.trim(),
-      className: document.getElementById("editClass").value.trim(),
+      classLevel: document.getElementById("editClass").value.trim(),
       planId: document.getElementById("editPlanId").value,
       planExpiry: document.getElementById("editPlanExpiry").value,
+      premiumActive: document.getElementById("editPlanId").value !== "free",
+      paymentStatus:
+        document.getElementById("editPlanId").value !== "free"
+          ? "approved"
+          : "free",
       extraText: Number(document.getElementById("editExtraText").value || 0),
       extraImage: Number(document.getElementById("editExtraImage").value || 0),
       extraTests: Number(document.getElementById("editExtraTests").value || 0),
@@ -678,173 +380,231 @@ function setupEditUserForm() {
     };
 
     try {
-      await adminReq(`/api/admin/users/${userId}`, {
-        method: "PUT",
+      await adminReq(`/api/admin/user/${userId}/update`, {
+        method: "POST",
         body: JSON.stringify(payload)
       });
 
       showBox("editUserMsg", "User updated successfully.", "success");
       await loadAdminDashboard();
-
     } catch (err) {
       showBox("editUserMsg", err.message || "User update failed", "error");
     }
   });
 }
 
-async function manualActivate(userId) {
-  if (!confirm("Is user ko premium manually activate karna hai?")) return;
+async function resetUserUsage() {
+  const userId = document.getElementById("editUserId")?.value;
+
+  if (!userId) {
+    showBox("editUserMsg", "User ID missing.", "error");
+    return;
+  }
+
+  if (!confirm("Is user ka usage reset karna hai?")) return;
 
   try {
-    await adminReq(`/api/admin/users/${userId}/activate`, {
-      method: "POST",
-      body: JSON.stringify({
-        planId: "popular_3m"
-      })
+    await adminReq(`/api/admin/user/${userId}/reset-usage`, {
+      method: "POST"
     });
 
-    alert("Premium activated.");
+    showBox("editUserMsg", "Usage reset successfully.", "success");
     await loadAdminDashboard();
 
+    const updatedUser = adminCache.users.find((u) => String(u.id) === String(userId));
+    if (updatedUser) openUserEdit(userId);
   } catch (err) {
-    alert("Manual activate error: " + err.message);
+    showBox("editUserMsg", err.message || "Reset usage failed", "error");
   }
 }
 
+async function deleteUserFromEdit() {
+  const userId = document.getElementById("editUserId")?.value;
+
+  if (!userId) {
+    showBox("editUserMsg", "User ID missing.", "error");
+    return;
+  }
+
+  await deleteUserById(userId);
+}
+
 async function deleteUserById(userId) {
-  if (!confirm("User delete karna hai? Ye action risky hai.")) return;
+  if (!userId) return;
+
+  if (!confirm("User delete karna hai? Iska account remove ho jayega.")) return;
 
   try {
-    await adminReq(`/api/admin/users/${userId}`, {
+    await adminReq(`/api/admin/user/${userId}/delete`, {
       method: "DELETE"
     });
 
     closeModal("userEditModal");
-    alert("User deleted.");
+    alert("User deleted successfully.");
     await loadAdminDashboard();
-
   } catch (err) {
+    showBox("editUserMsg", err.message || "Delete user failed", "error");
     alert("Delete error: " + err.message);
   }
 }
 
-function setupDeleteAndResetButtons() {
-  const deleteBtn = document.getElementById("deleteUserBtn");
-  const resetBtn = document.getElementById("resetUserUsageBtn");
+async function manualActivate(userId) {
+  const user = adminCache.users.find((u) => String(u.id) === String(userId));
 
-  if (deleteBtn) {
-    deleteBtn.addEventListener("click", () => {
-      const userId = document.getElementById("editUserId").value;
-      deleteUserById(userId);
-    });
+  if (!user) {
+    alert("User not found");
+    return;
   }
 
-  if (resetBtn) {
-    resetBtn.addEventListener("click", async () => {
-      const userId = document.getElementById("editUserId").value;
+  if (!confirm("Is user ko ₹199 / 3 Months premium activate karna hai?")) return;
 
-      if (!confirm("Is user ka usage reset karna hai?")) return;
+  const expiry = new Date();
+  expiry.setMonth(expiry.getMonth() + 3);
 
-      try {
-        await adminReq(`/api/admin/users/${userId}/reset-usage`, {
-          method: "POST"
-        });
+  const payload = {
+    name: user.name || "",
+    email: user.email || "",
+    mobile: user.mobile || "",
+    classLevel: getUserClass(user) || "",
+    planId: "popular_3m",
+    planExpiry: expiry.toISOString().slice(0, 10),
+    premiumActive: true,
+    paymentStatus: "approved",
+    extraText: Number(user.extraText || 0),
+    extraImage: Number(user.extraImage || 0),
+    extraTests: Number(user.extraTests || 0),
+    status: user.status || "active",
+    adminNote: "Manual premium activated by admin"
+  };
 
-        alert("Usage reset done.");
-        await loadAdminDashboard();
-
-      } catch (err) {
-        alert("Reset error: " + err.message);
-      }
+  try {
+    await adminReq(`/api/admin/user/${userId}/update`, {
+      method: "POST",
+      body: JSON.stringify(payload)
     });
+
+    alert("Premium activated successfully.");
+    await loadAdminDashboard();
+  } catch (err) {
+    alert("Premium activation failed: " + err.message);
   }
 }
 
 // =========================
-// FILTERS / REFRESH
+// FILTERS / SEARCH
 // =========================
 
-function setupFiltersAndRefresh() {
-  const refreshButtons = [
-    document.getElementById("refreshPaymentsBtn"),
-    document.getElementById("refreshUsersBtn"),
-    document.getElementById("refreshDoubtsBtn"),
-    document.getElementById("refreshTestsBtn"),
-    document.getElementById("refreshContactsBtn")
-  ];
+function setupUserSearch() {
+  const input = document.getElementById("userSearchInput");
+  const btn = document.getElementById("userFilterBtn");
+  const refreshBtn = document.getElementById("refreshUsersBtn");
 
-  refreshButtons.forEach((btn) => {
-    if (btn) btn.addEventListener("click", loadAdminDashboard);
-  });
+  function applySearch() {
+    const q = String(input?.value || "").trim().toLowerCase();
 
-  const applyPaymentFilterBtn = document.getElementById("applyPaymentFilterBtn");
-  const applyUserFilterBtn = document.getElementById("applyUserFilterBtn");
+    if (!q) {
+      renderUsers(adminCache.users);
+      return;
+    }
 
-  if (applyPaymentFilterBtn) {
-    applyPaymentFilterBtn.addEventListener("click", () => {
-      const q = document.getElementById("paymentSearch").value.toLowerCase().trim();
-      const status = document.getElementById("paymentStatusFilter").value;
-      const plan = document.getElementById("paymentPlanFilter").value;
-
-      const filtered = adminCache.payments.filter((p) => {
-        const text = `${p.userName || ""} ${p.userEmail || ""} ${p.utr || ""}`.toLowerCase();
-
-        const matchText = !q || text.includes(q);
-        const matchStatus = !status || String(p.status || "pending") === status;
-        const matchPlan = !plan || String(p.planId || "") === plan;
-
-        return matchText && matchStatus && matchPlan;
-      });
-
-      renderPayments(filtered);
+    const filtered = adminCache.users.filter((u) => {
+      return (
+        String(u.name || "").toLowerCase().includes(q) ||
+        String(u.email || "").toLowerCase().includes(q) ||
+        String(u.mobile || "").toLowerCase().includes(q) ||
+        String(u.id || "").toLowerCase().includes(q)
+      );
     });
+
+    renderUsers(filtered);
   }
 
-  if (applyUserFilterBtn) {
-    applyUserFilterBtn.addEventListener("click", () => {
-      const q = document.getElementById("userSearch").value.toLowerCase().trim();
-      const plan = document.getElementById("userPlanFilter").value;
-      const status = document.getElementById("userStatusFilter").value;
+  if (input) {
+    input.addEventListener("input", applySearch);
+  }
 
-      const filtered = adminCache.users.filter((u) => {
-        const text = `${u.name || ""} ${u.email || ""} ${u.mobile || ""} ${u.className || ""} ${u.class || ""}`.toLowerCase();
+  if (btn) {
+    btn.addEventListener("click", applySearch);
+  }
 
-        const isPremium = u.premiumActive || (u.planId && u.planId !== "free");
-
-        const matchText = !q || text.includes(q);
-        const matchPlan = !plan || String(u.planId || "free") === plan;
-
-        let matchStatus = true;
-
-        if (status === "premium") matchStatus = Boolean(isPremium);
-        else if (status === "free") matchStatus = !isPremium;
-        else if (status) matchStatus = String(u.status || "active") === status;
-
-        return matchText && matchPlan && matchStatus;
-      });
-
-      renderUsers(filtered);
-    });
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", loadAdminDashboard);
   }
 }
+
+function setupPaymentFilters() {
+  const refreshBtn = document.getElementById("refreshPaymentsBtn");
+  const statusSelect = document.getElementById("paymentStatusFilter");
+
+  function applyFilter() {
+    const status = String(statusSelect?.value || "").trim();
+
+    if (!status || status === "all") {
+      renderPayments(adminCache.payments);
+      return;
+    }
+
+    const filtered = adminCache.payments.filter((p) => {
+      return String(p.status || "pending") === status;
+    });
+
+    renderPayments(filtered);
+  }
+
+  if (statusSelect) {
+    statusSelect.addEventListener("change", applyFilter);
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", loadAdminDashboard);
+  }
+}
+
+// =========================
+// GLOBAL FUNCTIONS FOR HTML onclick
+// =========================
+
+window.openPaymentReview = openPaymentReview;
+window.approvePayment = approvePayment;
+window.rejectPayment = rejectPayment;
+
+window.openUserDetails = openUserDetails;
+window.openUserEdit = openUserEdit;
+window.manualActivate = manualActivate;
+window.deleteUserById = deleteUserById;
+
+window.resetUserUsage = resetUserUsage;
+window.deleteUserFromEdit = deleteUserFromEdit;
+
+window.loadAdminDashboard = loadAdminDashboard;
 
 // =========================
 // INIT
 // =========================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   setupAdminLogin();
   setupAdminLogout();
   setupAdminTabs();
   setupModalCloseButtons();
   setupPaymentModalButtons();
   setupEditUserForm();
-  setupDeleteAndResetButtons();
-  setupFiltersAndRefresh();
+  setupUserSearch();
+  setupPaymentFilters();
+
+  const resetBtn = document.getElementById("resetUsageBtn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", resetUserUsage);
+  }
+
+  const deleteEditBtn = document.getElementById("deleteUserBtn");
+  if (deleteEditBtn) {
+    deleteEditBtn.addEventListener("click", deleteUserFromEdit);
+  }
 
   if (adminToken()) {
     setAdminView(true);
-    loadAdminDashboard();
+    await loadAdminDashboard();
   } else {
     setAdminView(false);
   }
