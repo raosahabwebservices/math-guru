@@ -304,6 +304,7 @@ const paymentUpload = multer({
     cb(null, true);
   }
 });
+
 // ==========================================
 // 5. AUTH ROUTES
 // ==========================================
@@ -415,6 +416,9 @@ async function signupHandler(req, res) {
 
 app.post("/api/signup", signupHandler);
 app.post("/api/auth/signup", signupHandler);
+// ==========================================
+// 6. LOGIN + PROFILE ROUTES
+// ==========================================
 
 async function loginHandler(req, res) {
   try {
@@ -499,7 +503,7 @@ app.get("/api/profile", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 6. AI DOUBT ROUTES
+// 7. AI DOUBT ROUTES
 // ==========================================
 
 async function textDoubtHandler(req, res) {
@@ -643,13 +647,15 @@ app.get("/api/doubts/history", requireAuth, async (req, res) => {
       doubts: myDoubts
     });
   } catch (err) {
+    console.error("Doubt History Error:", err);
     res.status(500).json({
-      message: "History Failed"
+      message: "History Failed: " + err.message
     });
   }
 });
+
 // ==========================================
-// 7. TEST GENERATOR ROUTES
+// 8. TEST GENERATOR ROUTES
 // ==========================================
 
 app.post("/api/test/generate", requireAuth, async (req, res) => {
@@ -715,6 +721,11 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
 
     const tests = await readJson("tests");
 
+    const questionCount =
+      test?.questions?.length ||
+      test?.test?.questions?.length ||
+      finalNumQuestions;
+
     const testRecord = {
       id: Date.now().toString(),
       userId: user.id,
@@ -732,7 +743,7 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
       score: 0,
       scorePercent: 0,
       attempted: 0,
-      totalQuestions: test?.questions?.length || finalNumQuestions,
+      totalQuestions: questionCount,
       wrongCount: 0,
       status: "generated",
       createdAt: new Date().toISOString()
@@ -755,7 +766,6 @@ app.post("/api/test/generate", requireAuth, async (req, res) => {
     });
   }
 });
-
 app.post("/api/test/submit/:testId", requireAuth, async (req, res) => {
   try {
     const { testId } = req.params;
@@ -876,7 +886,7 @@ app.get("/api/test/history", requireAuth, async (req, res) => {
 });
 
 // ==========================================
-// 8. PAYMENT ROUTES
+// 9. PAYMENT ROUTES
 // ==========================================
 
 app.post("/api/payment/request", requireAuth, paymentUpload.single("screenshot"), async (req, res) => {
@@ -889,7 +899,31 @@ app.post("/api/payment/request", requireAuth, paymentUpload.single("screenshot")
       });
     }
 
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Payment screenshot is required"
+      });
+    }
+
+    const cleanUtr = String(utr || "").trim();
+
+    if (!cleanUtr || cleanUtr.length < 10) {
+      return res.status(400).json({
+        message: "Valid UTR number is required"
+      });
+    }
+
     const payments = await readJson("payments");
+
+    const duplicateUtr = payments.find((p) => {
+      return String(p.utr || "").trim().toLowerCase() === cleanUtr.toLowerCase();
+    });
+
+    if (duplicateUtr) {
+      return res.status(400).json({
+        message: "This UTR is already submitted"
+      });
+    }
 
     const payment = {
       id: Date.now().toString(),
@@ -899,9 +933,9 @@ app.post("/api/payment/request", requireAuth, paymentUpload.single("screenshot")
       userMobile: req.user.mobile || "",
       planId,
       amount: Number(amount) || 0,
-      utr: String(utr || ""),
+      utr: cleanUtr,
       note: String(note || ""),
-      screenshotPath: req.file ? `/uploads/payments/${path.basename(req.file.path)}` : "",
+      screenshotPath: `/uploads/payments/${path.basename(req.file.path)}`,
       status: "pending",
       createdAt: new Date().toISOString()
     };
@@ -919,7 +953,7 @@ app.post("/api/payment/request", requireAuth, paymentUpload.single("screenshot")
     }
 
     res.json({
-      message: "Payment request submitted successfully",
+      message: "Payment request submitted successfully. Admin approval pending.",
       payment,
       user: user ? publicUser(user) : publicUser(req.user)
     });
@@ -932,7 +966,7 @@ app.post("/api/payment/request", requireAuth, paymentUpload.single("screenshot")
 });
 
 // ==========================================
-// 9. ADMIN ROUTES
+// 10. ADMIN ROUTES
 // ==========================================
 
 app.post("/api/admin/login", async (req, res) => {
@@ -1031,6 +1065,7 @@ app.post("/api/admin/payment/:paymentId/approve", requireAdmin, async (req, res)
       user: safeAdminUser(user)
     });
   } catch (err) {
+    console.error("Approve Payment Error:", err);
     res.status(500).json({
       message: "Approve payment failed: " + err.message
     });
@@ -1070,6 +1105,7 @@ app.post("/api/admin/payment/:paymentId/reject", requireAdmin, async (req, res) 
       payment
     });
   } catch (err) {
+    console.error("Reject Payment Error:", err);
     res.status(500).json({
       message: "Reject payment failed: " + err.message
     });
@@ -1077,7 +1113,7 @@ app.post("/api/admin/payment/:paymentId/reject", requireAdmin, async (req, res) 
 });
 
 // ==========================================
-// 10. STATIC FILES + START SERVER
+// 11. STATIC FILES + START SERVER
 // ==========================================
 
 app.use("/uploads", express.static(uploadDir));
@@ -1104,5 +1140,4 @@ connectDB()
     console.error("MongoDB connection failed:", err.message);
     process.exit(1);
   });
-
-    
+        
