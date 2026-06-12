@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Admin | MATHS GURU</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="admin.css" />
 </head>
 
 <body>
@@ -44,21 +45,33 @@
         </div>
       </div>
 
-      <form id="adminLoginForm" class="admin-login-card">
+      <form id="adminLoginForm" class="admin-login-card" onsubmit="return false;">
         <h2>Login to Dashboard</h2>
         <p class="muted">Enter admin credentials.</p>
 
         <div class="form-field">
           <label>Admin Email</label>
-          <input name="email" type="email" required placeholder="admin@mathsguru.com">
+          <input
+            name="email"
+            type="email"
+            placeholder="admin@mathsguru.com"
+            autocomplete="email"
+          />
         </div>
 
         <div class="form-field">
           <label>Password</label>
-          <input name="password" type="password" required placeholder="••••••••">
+          <input
+            name="password"
+            type="password"
+            required
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
         </div>
 
         <button class="btn full-btn" type="submit">Login to Dashboard</button>
+
         <div id="adminLoginMsg" class="hidden message-box"></div>
       </form>
     </section>
@@ -132,25 +145,12 @@
         </div>
 
         <div class="filter-row">
-          <input id="paymentSearch" type="text" placeholder="Search user, email, UTR...">
-
           <select id="paymentStatusFilter">
-            <option value="">All Status</option>
+            <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
           </select>
-
-          <select id="paymentPlanFilter">
-            <option value="">All Plans</option>
-            <option value="starter">₹79 Starter</option>
-            <option value="popular_3m">₹199 / 3 Months</option>
-            <option value="half_year">₹349 / 6 Months</option>
-            <option value="yearly">₹699 / Year</option>
-            <option value="unlimited">₹299 Unlimited</option>
-          </select>
-
-          <button class="btn" type="button" id="applyPaymentFilterBtn">Filter</button>
         </div>
 
         <div class="table-wrap">
@@ -175,8 +175,7 @@
           </table>
         </div>
       </section>
-
-      <!-- USERS -->
+     <!-- USERS -->
       <section class="admin-section admin-tab-section hidden" id="tab-users">
         <div class="section-head">
           <div>
@@ -188,27 +187,13 @@
         </div>
 
         <div class="filter-row">
-          <input id="userSearch" type="text" placeholder="Search name, email, mobile, class...">
+          <input
+            id="userSearchInput"
+            type="text"
+            placeholder="Search name, email, mobile, user ID..."
+          />
 
-          <select id="userPlanFilter">
-            <option value="">All Plans</option>
-            <option value="free">Free</option>
-            <option value="starter">Starter</option>
-            <option value="popular_3m">3 Months</option>
-            <option value="half_year">Half Year</option>
-            <option value="yearly">Yearly</option>
-            <option value="unlimited">Unlimited</option>
-          </select>
-
-          <select id="userStatusFilter">
-            <option value="">All Users</option>
-            <option value="active">Active</option>
-            <option value="blocked">Blocked</option>
-            <option value="premium">Premium</option>
-            <option value="free">Free</option>
-          </select>
-
-          <button class="btn" type="button" id="applyUserFilterBtn">Filter</button>
+          <button class="btn" type="button" id="userFilterBtn">Search</button>
         </div>
 
         <div class="table-wrap">
@@ -242,7 +227,7 @@
             <p>Users ke text/image doubts aur AI usage tracking.</p>
           </div>
 
-          <button class="btn ghost" type="button" id="refreshDoubtsBtn">Refresh</button>
+          <button class="btn ghost" type="button" id="refreshDoubtsBtn" onclick="loadAdminDashboard()">Refresh</button>
         </div>
 
         <div id="adminDoubts">Loading doubts...</div>
@@ -256,7 +241,7 @@
             <p>Users ne kaunse AI tests generate/submit kiye.</p>
           </div>
 
-          <button class="btn ghost" type="button" id="refreshTestsBtn">Refresh</button>
+          <button class="btn ghost" type="button" id="refreshTestsBtn" onclick="loadAdminDashboard()">Refresh</button>
         </div>
 
         <div id="adminTests">Loading tests...</div>
@@ -270,7 +255,7 @@
             <p>Support, payment approval queries and feedback.</p>
           </div>
 
-          <button class="btn ghost" type="button" id="refreshContactsBtn">Refresh</button>
+          <button class="btn ghost" type="button" id="refreshContactsBtn" onclick="loadAdminDashboard()">Refresh</button>
         </div>
 
         <div id="contactsList">Loading contacts...</div>
@@ -287,28 +272,28 @@
         <button class="mini-btn gray" type="button" data-close-modal="userEditModal">Close</button>
       </div>
 
-      <form id="editUserForm">
-        <input type="hidden" id="editUserId">
+      <form id="editUserForm" onsubmit="return false;">
+        <input type="hidden" id="editUserId" />
 
         <div class="modal-grid">
           <div>
             <label>Name</label>
-            <input id="editName" type="text" placeholder="User name">
+            <input id="editName" type="text" placeholder="User name" />
           </div>
 
           <div>
             <label>Email</label>
-            <input id="editEmail" type="email" placeholder="User email">
+            <input id="editEmail" type="email" placeholder="User email" />
           </div>
 
           <div>
             <label>Mobile</label>
-            <input id="editMobile" type="text" placeholder="Mobile number">
+            <input id="editMobile" type="text" placeholder="Mobile number" />
           </div>
 
           <div>
             <label>Class</label>
-            <input id="editClass" type="text" placeholder="Class">
+            <input id="editClass" type="text" placeholder="Class" />
           </div>
 
           <div>
@@ -325,22 +310,22 @@
 
           <div>
             <label>Plan Expiry</label>
-            <input id="editPlanExpiry" type="date">
+            <input id="editPlanExpiry" type="date" />
           </div>
 
           <div>
             <label>Extra Text Doubts</label>
-            <input id="editExtraText" type="number" min="0" placeholder="e.g. 50">
+            <input id="editExtraText" type="number" min="0" placeholder="e.g. 50" />
           </div>
 
           <div>
             <label>Extra Image Doubts</label>
-            <input id="editExtraImage" type="number" min="0" placeholder="e.g. 20">
+            <input id="editExtraImage" type="number" min="0" placeholder="e.g. 20" />
           </div>
 
           <div>
             <label>Extra Tests</label>
-            <input id="editExtraTests" type="number" min="0" placeholder="e.g. 10">
+            <input id="editExtraTests" type="number" min="0" placeholder="e.g. 10" />
           </div>
 
           <div>
@@ -359,7 +344,7 @@
 
         <div class="modal-actions">
           <button class="btn" type="submit">Save User Changes</button>
-          <button class="btn ghost" type="button" id="resetUserUsageBtn">Reset Usage</button>
+          <button class="btn ghost" type="button" id="resetUsageBtn">Reset Usage</button>
         </div>
 
         <div class="danger-zone">
@@ -371,8 +356,7 @@
         <div id="editUserMsg" class="hidden message-box"></div>
       </form>
     </div>
-  </div>
-
+  </div> 
   <!-- PAYMENT MODAL -->
   <div class="modal-backdrop" id="paymentModal">
     <div class="modal">
@@ -381,27 +365,27 @@
         <button class="mini-btn gray" type="button" data-close-modal="paymentModal">Close</button>
       </div>
 
-      <input type="hidden" id="paymentId">
+      <input type="hidden" id="paymentId" />
 
       <div class="modal-grid">
         <div>
           <label>User</label>
-          <input id="paymentUser" type="text" readonly>
+          <input id="paymentUser" type="text" readonly />
         </div>
 
         <div>
           <label>Plan</label>
-          <input id="paymentPlan" type="text" readonly>
+          <input id="paymentPlan" type="text" readonly />
         </div>
 
         <div>
           <label>Amount</label>
-          <input id="paymentAmount" type="text" readonly>
+          <input id="paymentAmount" type="text" readonly />
         </div>
 
         <div>
           <label>UTR</label>
-          <input id="paymentUtr" type="text" readonly>
+          <input id="paymentUtr" type="text" readonly />
         </div>
 
         <div class="full">
@@ -440,7 +424,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
-  <script src="admin.js"></script>
+  <script src="admin.js?v=12"></script>
 </body>
-          </html>
+</html>
