@@ -9,29 +9,122 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
+    /* --- NEW TRENDY ANIMATED HERO BACKGROUND --- */
     .hero {
-      min-height: 82vh;
+      min-height: 85vh;
       display: flex;
       align-items: center;
-      background:
-        radial-gradient(circle at top left, rgba(0, 86, 179, 0.45), transparent 35%),
-        linear-gradient(135deg, #07152f, #0a192f 45%, #003b73);
+      /* Premium Dark Space Gradient */
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(0, 86, 179, 0.4), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.25), transparent 45%),
+        linear-gradient(135deg, #050c1a, #0a192f 50%, #02162e);
       color: white;
       overflow: hidden;
       position: relative;
     }
 
-    .hero::after {
+    /* Cyber Tech Grid Overlay */
+    .hero::before {
       content: "";
       position: absolute;
-      width: 420px;
-      height: 420px;
-      right: -120px;
-      bottom: -120px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 50%;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 45px 45px;
+      pointer-events: none;
     }
 
+    /* Floating Glassmorphism Shapes & Math Symbols Base */
+    .bg-shape, .bg-symbol {
+      position: absolute;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+    }
+
+    /* Glass Spheres (Gole) */
+    .bg-shape-1 {
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15), rgba(0, 86, 179, 0.05));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      top: 15%;
+      right: 12%;
+      animation: float-slow 8s ease-in-out infinite alternate;
+    }
+
+    .bg-shape-2 {
+      width: 110px;
+      height: 110px;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(124, 58, 237, 0.05));
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 38% 62% 63% 37% / 41% 44% 56% 59%; /* Trendy organic morphing shape */
+      bottom: 12%;
+      left: 8%;
+      animation: morph-float 12s ease-in-out infinite alternate;
+    }
+
+    /* Glowing Math Symbols */
+    .sym-1 {
+      font-size: 64px;
+      font-weight: bold;
+      color: rgba(0, 150, 255, 0.25);
+      text-shadow: 0 0 20px rgba(0, 150, 255, 0.6);
+      top: 25%;
+      left: 15%;
+      animation: float-slow 7s ease-in-out infinite alternate;
+    }
+
+    .sym-2 {
+      font-size: 56px;
+      font-weight: bold;
+      color: rgba(124, 58, 237, 0.25);
+      text-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+      bottom: 25%;
+      right: 20%;
+      animation: float-reverse 9s ease-in-out infinite alternate;
+    }
+
+    .sym-3 {
+      font-size: 42px;
+      font-family: serif;
+      color: rgba(255, 255, 255, 0.15);
+      top: 55%;
+      left: 45%;
+      animation: float-slow 10s ease-in-out infinite;
+    }
+
+    /* Animations Core Keyframes */
+    @keyframes float-slow {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(-25px) rotate(15deg); }
+    }
+
+    @keyframes float-reverse {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(25px) rotate(-20deg); }
+    }
+
+    @keyframes morph-float {
+      0% { transform: translateY(0px) scale(1); border-radius: 38% 62% 63% 37% / 41% 44% 56% 59%; }
+      50% { transform: translateY(-15px) scale(1.05); border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%; }
+      100% { transform: translateY(-30px) scale(1); border-radius: 38% 62% 63% 37% / 41% 44% 56% 59%; }
+    }
+
+    /* Taaki text content animations ke peeche na dhab jaye */
+    .hero .container {
+      position: relative;
+      z-index: 5;
+    }
+
+    /* --- PURANE STYLES (NO CHANGES) --- */
     .hero-title {
       font-size: clamp(52px, 9vw, 110px);
       font-weight: 950;
@@ -68,182 +161,39 @@
       border-radius: 999px;
       font-weight: 800;
       font-size: 14px;
+      backdrop-filter: blur(4px);
     }
 
-    .section-space {
-      padding-top: 58px;
-      padding-bottom: 58px;
-    }
-
-    .feature-card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 5px 18px rgba(0,0,0,0.06);
-      transition: 0.25s;
-    }
-
-    .feature-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 26px rgba(0,0,0,0.09);
-      border-color: #0056b3;
-    }
-
-    .feature-icon {
-      font-size: 34px;
-      margin-bottom: 10px;
-    }
-
-    .steps {
-      counter-reset: step;
-    }
-
-    .step-card {
-      background: #f8fafc;
-      border-left: 5px solid #0056b3;
-      border-radius: 12px;
-      padding: 18px;
-      position: relative;
-    }
-
-    .step-card h3 {
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-
-    .pricing-grid-home {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      margin-top: 28px;
-    }
-
-    .price-card {
-      background: #ffffff;
-      border: 2px solid #e5e7eb;
-      border-radius: 18px;
-      padding: 24px;
-      position: relative;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-      transition: 0.25s;
-    }
-
-    .price-card:hover {
-      transform: translateY(-4px);
-      border-color: #0056b3;
-      box-shadow: 0 8px 24px rgba(0,86,179,0.14);
-    }
-
-    .price-card.popular {
-      border: 3px solid #0056b3;
-      background: #eef6ff;
-      transform: scale(1.03);
-    }
-
-    .price-card.recommended {
-      border: 3px solid #16a34a;
-      background: #f0fdf4;
-    }
-
-    .price-card.unlimited {
-      border: 3px solid #7c3aed;
-      background: linear-gradient(135deg, #f5f3ff, #ffffff);
-    }
-
-    .tag {
-      position: absolute;
-      top: -12px;
-      right: 16px;
-      background: #ff5722;
-      color: white;
-      padding: 5px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-    }
-
-    .tag.green {
-      background: #16a34a;
-    }
-
-    .tag.purple {
-      background: #7c3aed;
-    }
-
-    .plan-name {
-      font-size: 22px;
-      font-weight: 900;
-      margin-bottom: 12px;
-    }
-
-    .old-price {
-      color: #777;
-      text-decoration: line-through;
-      font-weight: 700;
-      margin-right: 8px;
-      font-size: 17px;
-    }
-
-    .new-price {
-      color: #0056b3;
-      font-size: 34px;
-      font-weight: 900;
-    }
-
-    .duration {
-      color: #555;
-      font-size: 14px;
-      font-weight: 700;
-      margin: 8px 0 12px;
-    }
-
-    .save-text {
-      display: inline-block;
-      background: #e8f5e9;
-      color: #1b5e20;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      margin-bottom: 14px;
-    }
-
-    .features p {
-      margin: 6px 0;
-      color: #333;
-    }
-
-    .cta-strip {
-      background: linear-gradient(135deg, #0056b3, #003b73);
-      color: white;
-      border-radius: 22px;
-      padding: 34px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,86,179,0.25);
-    }
-
-    .footer {
-      text-align: center;
-      padding: 24px;
-      background: #07152f;
-      color: white;
-      margin-top: 40px;
-    }
+    .section-space { padding-top: 58px; padding-bottom: 58px; }
+    .feature-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; padding: 24px; box-shadow: 0 5px 18px rgba(0,0,0,0.06); transition: 0.25s; }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 10px 26px rgba(0,0,0,0.09); border-color: #0056b3; }
+    .feature-icon { font-size: 34px; margin-bottom: 10px; }
+    .steps { counter-reset: step; }
+    .step-card { background: #f8fafc; border-left: 5px solid #0056b3; border-radius: 12px; padding: 18px; position: relative; }
+    .step-card h3 { font-weight: 900; margin-bottom: 6px; }
+    .pricing-grid-home { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 28px; }
+    .price-card { background: #ffffff; border: 2px solid #e5e7eb; border-radius: 18px; padding: 24px; position: relative; box-shadow: 0 4px 16px rgba(0,0,0,0.06); transition: 0.25s; }
+    .price-card:hover { transform: translateY(-4px); border-color: #0056b3; box-shadow: 0 8px 24px rgba(0,86,179,0.14); }
+    .price-card.popular { border: 3px solid #0056b3; background: #eef6ff; transform: scale(1.03); }
+    .price-card.recommended { border: 3px solid #16a34a; background: #f0fdf4; }
+    .price-card.unlimited { border: 3px solid #7c3aed; background: linear-gradient(135deg, #f5f3ff, #ffffff); }
+    .tag { position: absolute; top: -12px; right: 16px; background: #ff5722; color: white; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 900; }
+    .tag.green { background: #16a34a; }
+    .tag.purple { background: #7c3aed; }
+    .plan-name { font-size: 22px; font-weight: 900; margin-bottom: 12px; }
+    .old-price { color: #777; text-decoration: line-through; font-weight: 700; margin-right: 8px; font-size: 17px; }
+    .new-price { color: #0056b3; font-size: 34px; font-weight: 900; }
+    .duration { color: #555; font-size: 14px; font-weight: 700; margin: 8px 0 12px; }
+    .save-text { display: inline-block; background: #e8f5e9; color: #1b5e20; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 900; margin-bottom: 14px; }
+    .features p { margin: 6px 0; color: #333; }
+    .cta-strip { background: linear-gradient(135deg, #0056b3, #003b73); color: white; border-radius: 22px; padding: 34px; text-align: center; box-shadow: 0 10px 30px rgba(0,86,179,0.25); }
+    .footer { text-align: center; padding: 24px; background: #07152f; color: white; margin-top: 40px; }
 
     @media (max-width: 850px) {
-      .pricing-grid-home {
-        grid-template-columns: 1fr;
-      }
-
-      .price-card.popular {
-        transform: none;
-      }
-
-      .hero {
-        min-height: auto;
-        padding: 70px 0;
-      }
+      .pricing-grid-home { grid-template-columns: 1fr; }
+      .price-card.popular { transform: none; }
+      .hero { min-height: auto; padding: 70px 0; }
+      .bg-shape, .bg-symbol { display: none; } /* Mobile par smooth performance ke liye hidden */
     }
   </style>
 </head>
@@ -252,7 +202,6 @@
   <nav class="nav">
     <div class="nav-inner">
       <a class="brand" href="index.html">MATHS GURU</a>
-
       <div class="links">
         <a href="ask-doubt.html">Ask Doubt</a>
         <a href="test-generator.html">Test Generator</a>
@@ -264,9 +213,14 @@
   </nav>
 
   <main>
-
-    <!-- HERO -->
     <section class="hero">
+      <div class="bg-shape bg-shape-1"></div>
+      <div class="bg-shape bg-shape-2"></div>
+      
+      <div class="bg-symbol sym-1">√</div>
+      <div class="bg-symbol sym-2">π</div>
+      <div class="bg-symbol sym-3">∑</div>
+
       <div class="container">
         <h1 class="hero-title fade-in">MATHS<br>GURU</h1>
 
@@ -294,169 +248,71 @@
       </div>
     </section>
 
-    <!-- FEATURES -->
     <section class="container section-space">
       <h2 class="section-title">Built for fast maths learning</h2>
-      <p class="muted">
-        Math Guru helps students solve doubts, understand formulas, and practice with AI-generated tests.
-      </p>
-
+      <p class="muted">Math Guru helps students solve doubts, understand formulas, and practice with AI-generated tests.</p>
       <div class="grid" style="margin-top:24px">
-        <div class="feature-card">
-          <div class="feature-icon">✍️</div>
-          <h3>Text Doubt Solver</h3>
-          <p class="muted">
-            Type any maths problem and get simple step-by-step explanation with formula used.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">📷</div>
-          <h3>Image Doubt Solver</h3>
-          <p class="muted">
-            Upload notebook or question photo. AI reads the image and explains the solution clearly.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🧠</div>
-          <h3>AI Test Generator</h3>
-          <p class="muted">
-            Select class, chapter, difficulty and question type. Create MCQ, short, long or mixed tests.
-          </p>
-        </div>
+        <div class="feature-card"><div class="feature-icon">✍️</div><h3>Text Doubt Solver</h3><p class="muted">Type any maths problem and get simple step-by-step explanation with formula used.</p></div>
+        <div class="feature-card"><div class="feature-icon">📷</div><h3>Image Doubt Solver</h3><p class="muted">Upload notebook or question photo. AI reads the image and explains the solution clearly.</p></div>
+        <div class="feature-card"><div class="feature-icon">🧠</div><h3>AI Test Generator</h3><p class="muted">Select class, chapter, difficulty and question type. Create MCQ, short, long or mixed tests.</p></div>
       </div>
     </section>
 
-    <!-- HOW IT WORKS -->
     <section class="container section-space">
       <h2 class="section-title">How Math Guru Works</h2>
       <p class="muted">Simple process. No confusion.</p>
-
       <div class="grid steps" style="margin-top:24px">
-        <div class="step-card">
-          <h3>1. Ask or Upload</h3>
-          <p class="muted">Type your maths doubt or upload question image.</p>
-        </div>
-
-        <div class="step-card">
-          <h3>2. Get Explanation</h3>
-          <p class="muted">AI gives formula, steps, simple explanation and final answer.</p>
-        </div>
-
-        <div class="step-card">
-          <h3>3. Practice Test</h3>
-          <p class="muted">Generate your own chapter-wise test and check your answers.</p>
-        </div>
+        <div class="step-card"><h3>1. Ask or Upload</h3><p class="muted">Type your maths doubt or upload question image.</p></div>
+        <div class="step-card"><h3>2. Get Explanation</h3><p class="muted">AI gives formula, steps, simple explanation and final answer.</p></div>
+        <div class="step-card"><h3>3. Practice Test</h3><p class="muted">Generate your own chapter-wise test and check your answers.</p></div>
       </div>
     </section>
 
-    <!-- PRICING HOME ONLY 3 PLANS -->
     <section class="container section-space">
       <h2 class="section-title">Best Plans for Students</h2>
-      <p class="muted">
-        Homepage par sirf top plans. Full list ke liye See All Plans open karo.
-      </p>
-
+      <p class="muted">Homepage par sirf top plans. Full list ke liye See All Plans open karo.</p>
       <div class="pricing-grid-home">
-
-        <!-- 199 PLAN -->
         <div class="price-card popular">
           <span class="tag">Most Popular</span>
-
           <div class="plan-name">🔥 3 Months Plan</div>
-
-          <div>
-            <span class="old-price">₹299</span>
-            <span class="new-price">₹199</span>
-          </div>
-
+          <div><span class="old-price">₹299</span><span class="new-price">₹199</span></div>
           <div class="duration">Valid for 3 Months</div>
           <span class="save-text">Save ₹100</span>
-
-          <div class="features">
-            <p>✅ 300 Text Doubts</p>
-            <p>✅ 75 Image Doubts</p>
-            <p>✅ 40 AI Tests</p>
-            <p>✅ Best for regular students</p>
-          </div>
-
+          <div class="features"><p>✅ 300 Text Doubts</p><p>✅ 75 Image Doubts</p><p>✅ 40 AI Tests</p><p>✅ Best for regular students</p></div>
           <a class="btn" href="upgrade.html?plan=popular_3m">Get ₹199 Plan</a>
         </div>
-
-        <!-- 349 PLAN -->
         <div class="price-card recommended">
           <span class="tag green">Recommended</span>
-
           <div class="plan-name">💎 Half Year Plan</div>
-
-          <div>
-            <span class="old-price">₹499</span>
-            <span class="new-price">₹349</span>
-          </div>
-
+          <div><span class="old-price">₹499</span><span class="new-price">₹349</span></div>
           <div class="duration">Valid for 6 Months</div>
           <span class="save-text">Save ₹150</span>
-
-          <div class="features">
-            <p>✅ 700 Text Doubts</p>
-            <p>✅ 150 Image Doubts</p>
-            <p>✅ 100 AI Tests</p>
-            <p>✅ Best for exam preparation</p>
-          </div>
-
+          <div class="features"><p>✅ 700 Text Doubts</p><p>✅ 150 Image Doubts</p><p>✅ 100 AI Tests</p><p>✅ Best for exam preparation</p></div>
           <a class="btn" href="upgrade.html?plan=half_year">Get ₹349 Plan</a>
         </div>
-
-        <!-- 299 UNLIMITED -->
         <div class="price-card unlimited">
           <span class="tag purple">Unlimited</span>
-
           <div class="plan-name">🚀 Unlimited*</div>
-
-          <div>
-            <span class="old-price">₹499</span>
-            <span class="new-price">₹299</span>
-          </div>
-
+          <div><span class="old-price">₹499</span><span class="new-price">₹299</span></div>
           <div class="duration">Valid for 1 Month</div>
           <span class="save-text">Save ₹200</span>
-
-          <div class="features">
-            <p>✅ Fair Use Unlimited Text Doubts</p>
-            <p>✅ Fair Use Unlimited Image Doubts</p>
-            <p>✅ Fair Use Unlimited AI Tests</p>
-            <p>✅ Best for heavy users</p>
-          </div>
-
+          <div class="features"><p>✅ Fair Use Unlimited Text Doubts</p><p>✅ Fair Use Unlimited Image Doubts</p><p>✅ Fair Use Unlimited AI Tests</p><p>✅ Best for heavy users</p></div>
           <a class="btn" href="upgrade.html?plan=unlimited">Get Unlimited Plan</a>
         </div>
-
       </div>
-
-      <div style="text-align:center; margin-top:28px;">
-        <a class="btn ghost" href="pricing.html">See All Plans</a>
-      </div>
+      <div style="text-align:center; margin-top:28px;"><a class="btn ghost" href="pricing.html">See All Plans</a></div>
     </section>
 
-    <!-- TEST GENERATOR CTA -->
     <section class="container section-space">
       <div class="cta-strip">
-        <h2 style="font-size:30px; font-weight:900; margin-bottom:10px;">
-          🧠 Create Your Own Maths Test
-        </h2>
-
-        <p style="max-width:680px; margin:0 auto 20px; color:rgba(255,255,255,0.88);">
-          Class, chapter, difficulty and question type choose karo. Math Guru AI tumhare liye custom test generate karega.
-        </p>
-
+        <h2 style="font-size:30px; font-weight:900; margin-bottom:10px;">🧠 Create Your Own Maths Test</h2>
+        <p style="max-width:680px; margin:0 auto 20px; color:rgba(255,255,255,0.88);">Class, chapter, difficulty and question type choose karo. Math Guru AI tumhare liye custom test generate karega.</p>
         <div class="row" style="justify-content:center;">
           <a class="btn secondary" href="test-generator.html">Generate Test Now</a>
           <a class="btn ghost" style="color:white;border-color:white" href="ask-doubt.html">Ask Doubt First</a>
         </div>
       </div>
     </section>
-
   </main>
 
   <footer class="footer">
@@ -467,4 +323,4 @@
 
   <script src="script.js"></script>
 </body>
-  </html>
+</html>
