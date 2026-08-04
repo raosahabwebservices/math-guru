@@ -450,8 +450,7 @@
       margin-bottom: 7px;
     }
 
-    .input-group input {
-      width: 100%;
+    .input-group input, .input-group select {
       border: 1px solid #dbe3ef;
       background: white;
       padding: 13px 14px;
@@ -461,9 +460,25 @@
       font-size: 15px;
     }
 
-    .input-group input:focus {
+    .input-group input {
+      width: 100%;
+    }
+
+    .input-group input:focus, .input-group select:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    /* Country code flex layout */
+    .mobile-input-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    .country-select {
+      width: 130px;
+      flex-shrink: 0;
+      cursor: pointer;
     }
 
     .btn-main {
@@ -634,7 +649,6 @@
 
     <section class="signup-card">
       <h2 class="form-title">Create Account</h2>
-      
 
       <form id="signupForm" autocomplete="on">
         <div class="input-group">
@@ -649,15 +663,26 @@
 
         <div class="input-group">
           <label>Mobile Number</label>
-          <input
-            id="signupMobile"
-            name="mobile"
-            type="tel"
-            placeholder="Enter 10 digit mobile number"
-            required
-            maxlength="10"
-            pattern="[0-9]{10}"
-          />
+          <div class="mobile-input-container">
+            <select id="countryCode" name="countryCode" class="country-select">
+              <option value="+91" selected>🇮🇳 +91</option>
+              <option value="+92">🇵🇰 +92</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+971">🇦🇪 +971</option>
+              <option value="+880">🇧🇩 +880</option>
+              <option value="+977">🇳🇵 +977</option>
+            </select>
+            <input
+              id="signupMobile"
+              name="mobile"
+              type="tel"
+              placeholder="Enter 10 digit mobile number"
+              required
+              maxlength="10"
+              pattern="[0-9]{10}"
+            />
+          </div>
         </div>
 
         <div class="input-group">
@@ -699,6 +724,7 @@
 
     const nameInput = document.getElementById("signupName");
     const emailInput = document.getElementById("signupEmail");
+    const countryCodeSelect = document.getElementById("countryCode");
     const mobileInput = document.getElementById("signupMobile");
     const passwordInput = document.getElementById("signupPassword");
 
@@ -712,22 +738,38 @@
       formMsg.className = "msg";
     }
 
-    function getCleanMobile() {
-      return mobileInput.value.replace(/\D/g, "").slice(0, 10);
+    // Dynamic field attribute updates on country code change
+    function updateMobileValidation() {
+      const code = countryCodeSelect.value;
+      if (code === "+91") {
+        mobileInput.placeholder = "Enter 10 digit mobile number";
+        mobileInput.setAttribute("maxlength", "10");
+        mobileInput.setAttribute("pattern", "[0-9]{10}");
+        mobileInput.setAttribute("required", "required");
+      } else {
+        mobileInput.placeholder = "Enter phone number";
+        mobileInput.removeAttribute("maxlength");
+        mobileInput.removeAttribute("pattern");
+        mobileInput.removeAttribute("required");
+      }
     }
 
+    countryCodeSelect.addEventListener("change", updateMobileValidation);
+
+    // Sanitize input to numbers only
     mobileInput.addEventListener("input", () => {
-      mobileInput.value = getCleanMobile();
+      mobileInput.value = mobileInput.value.replace(/\D/g, "");
     });
 
     function validateBasicFields() {
       const name = nameInput.value.trim();
       const email = emailInput.value.trim();
-      const mobile = getCleanMobile();
+      const countryCode = countryCodeSelect.value;
+      const rawMobile = mobileInput.value.trim();
       const password = passwordInput.value.trim();
 
-      if (!name || !email || !mobile || !password) {
-        showMsg("Name, email, mobile number and password required.");
+      if (!name || !email || !password) {
+        showMsg("Name, email, and password are required.");
         return null;
       }
 
@@ -741,9 +783,22 @@
         return null;
       }
 
-      if (!/^[6-9]\d{9}$/.test(mobile)) {
-        showMsg("Valid 10 digit Indian mobile number enter karo.");
-        return null;
+      // India-specific 10-digit validation check
+      if (countryCode === "+91") {
+        if (!rawMobile) {
+          showMsg("Mobile number is required for India.");
+          return null;
+        }
+        if (!/^[6-9]\d{9}$/.test(rawMobile)) {
+          showMsg("Valid 10 digit Indian mobile number enter karo.");
+          return null;
+        }
+      } else {
+        // Optional validation for non-Indian numbers if filled
+        if (rawMobile && !/^\d{4,15}$/.test(rawMobile)) {
+          showMsg("Valid mobile number enter karo.");
+          return null;
+        }
       }
 
       if (password.length < 6) {
@@ -751,10 +806,13 @@
         return null;
       }
 
+      // Construct full international phone number string
+      const fullMobile = rawMobile ? `${countryCode}${rawMobile}` : "";
+
       return {
         name,
         email,
-        mobile,
+        mobile: fullMobile,
         password
       };
     }
@@ -787,7 +845,7 @@
           return;
         }
 
-        localStorage.setItem("mg_token", data.token);
+      localStorage.setItem("mg_token", data.token);
         localStorage.setItem("mg_user", JSON.stringify(data.user));
 
         showMsg("Signup successful. Redirecting...", "success");
@@ -802,6 +860,9 @@
         showMsg("Network error. Please try again.");
       }
     });
+
+    // Run on load
+    updateMobileValidation();
   </script>
 </body>
 </html>
