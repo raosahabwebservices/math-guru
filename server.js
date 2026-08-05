@@ -41,36 +41,41 @@ if (!fsSync.existsSync(paymentUploadDir)) {
 // 2. HELPERS
 // ==========================================
 
-function normalizeEmail(email) {
-  return String(email || "").trim().toLowerCase();
+function normalizeMobile(mobile) {
+  let val = String(mobile || "").trim();
+  if (!val) return "";
+  
+  const hasPlus = val.startsWith("+");
+  let digits = val.replace(/\D/g, "");
+
+  if (!hasPlus && digits.length === 12 && digits.startsWith("91")) {
+    return "+" + digits;
+  }
+  
+  return hasPlus ? "+" + digits : digits;
 }
 
-function normalizeMobile(mobile) {
-  let digits = String(mobile || "").replace(/\D/g, "");
+function validateMobileNumber(fullMobile) {
+  if (!fullMobile) return { valid: true };
 
-  if (digits.length === 12 && digits.startsWith("91")) {
-    digits = digits.slice(2);
+  if (fullMobile.startsWith("+91")) {
+    const rawDigits = fullMobile.replace("+91", "");
+    const isValid = /^[6-9]\d{9}$/.test(rawDigits);
+    return {
+      valid: isValid,
+      message: "Valid 10 digit Indian mobile number required for +91"
+    };
   }
 
-  return digits;
-}
+  const numberPart = fullMobile.replace(/^\+\d+/, "");
+  if (numberPart && !/^\d{4,15}$/.test(numberPart)) {
+    return {
+      valid: false,
+      message: "Invalid mobile number format for the selected country"
+    };
+  }
 
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function isValidMobile(mobile) {
-  return /^[6-9]\d{9}$/.test(mobile);
-}
-
-function isHashedPassword(password) {
-  return typeof password === "string" && password.startsWith("$2");
-}
-
-function signToken(payload) {
-  return jwt.sign(payload, process.env.JWT_SECRET || "secret123", {
-    expiresIn: "7d"
-  });
+  return { valid: true };
 }
 
 function isFakeEmail(email) {
@@ -347,11 +352,14 @@ async function signupHandler(req, res) {
       });
     }
 
-    if (!isValidMobile(mobile)) {
+        // Dynamic Mobile Verification
+    const phoneCheck = validateMobileNumber(mobile);
+    if (!phoneCheck.valid) {
       return res.status(400).json({
-        message: "Invalid mobile number. Enter valid 10 digit Indian mobile number"
+        message: phoneCheck.message
       });
     }
+    
 
     if (String(password).length < 6) {
       return res.status(400).json({
